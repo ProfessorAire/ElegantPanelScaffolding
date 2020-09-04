@@ -1,0 +1,38 @@
+﻿<Window x:Class="EPS.UI.HelpAbout"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EPS"
+        mc:Ignorable="d"
+        Title="HelpAbout" Height="450" Width="800">
+    <Grid>
+        <TabControl TabStripPlacement="Left">
+            <TabItem Header="About" Padding="8">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="Elegant Panel Scaffolding" FontSize="32" />
+                    <TextBlock Text="Copyright Christopher McNeely" FontSize="16" />
+                    <TextBlock x:Name="Version" Text="" FontSize="14" />
+                    <TextBlock Text="Contributers:" Margin="0,8,0,0" />
+                    <TextBlock Text="Christopher McNeely" />
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Help" MinWidth="120" Padding="8">
+                <WebBrowser x:Name="Tips" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
+            </TabItem>
+            <TabItem Header="Licenses" Padding="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Select a License to View" HorizontalAlignment="Center" />
+                        <ComboBox x:Name="LicenseSelection" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="200" Margin="8,4,8,8" SelectionChanged="LicenseSelection_SelectionChanged" />
+                    </StackPanel>
+                    <TextBox x:Name="LicenseView" Grid.Row="1" Padding="8" TextWrapping="Wrap" IsReadOnly="True" VerticalScrollBarVisibility="Visible" />
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

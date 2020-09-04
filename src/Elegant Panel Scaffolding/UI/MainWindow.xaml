@@ -1,0 +1,59 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="clr-namespace:EPS.UI.Controls"
+        xmlns:local1="clr-namespace:EPS.UI" x:Class="EPS.UI.MainWindow"
+        mc:Ignorable="d"
+        Title="Elegant Panel Scaffolding" MinHeight="440" Height="440" Width="800" MinWidth="700">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                <Button Click="Save_Click" x:Name="Save" ToolTip="Save Current Configuration" Margin="6" Padding="0" Width="28" Height="28" Background="Transparent" BorderBrush="Transparent">
+                    <Viewbox Width="24" Height="24">
+                        <Canvas Width="24" Height="24">
+                            <Path Data="M7 22H9V24H7V22M11 22H13V24H11V22M15 22H17V24H15V22M17 2H5C3.89 2 3 2.9 3 4V18C3 19.1 3.89 20 5 20H19C20.1 20 21 19.1 21 18V6L17 2M19 18H5V4H16.17L19 6.83V18M12 11C10.34 11 9 12.34 9 14S10.34 17 12 17 15 15.66 15 14 13.66 11 12 11M6 5H15V9H6V5Z" Fill="Black" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+                <Button Click="Load_Click" x:Name="Load" ToolTip="Load Configuration" Margin="6" Padding="0" Width="28" Height="28" Background="Transparent" BorderBrush="Transparent">
+                    <Viewbox Width="24" Height="24">
+                        <Canvas Width="24" Height="24">
+                            <Path Data="M6.1,10L4,18V8H21A2,2 0 0,0 19,6H12L10,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H19C19.9,20 20.7,19.4 20.9,18.5L23.2,10H6.1M19,18H6L7.6,12H20.6L19,18Z" Fill="Black" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+                <Button Click="Help_Click" x:Name="Help"  ToolTip="Help and About" Margin="6" Padding="0" Width="28" Height="28" Background="Transparent" BorderBrush="Transparent">
+                    <Viewbox Width="24" Height="48">
+                        <Canvas Width="24" Height="24">
+                            <Path Data="M10,19H13V22H10V19M12,2C17.35,2.22 19.68,7.62 16.5,11.67C15.67,12.67 14.33,13.33 13.67,14.17C13,15 13,16 13,17H10C10,15.33 10,13.92 10.67,12.92C11.33,11.92 12.67,11.33 13.5,10.67C15.92,8.43 15.32,5.26 12,5A3,3 0 0,0 9,8H6A6,6 0 0,1 12,2Z" Fill="Black" />
+                        </Canvas>
+                    </Viewbox>
+                </Button>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="1">
+            <TextBlock TextWrapping="Wrap" FontSize="24" Text="Select a touchpanel project to compile into your classes." Margin="8" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+        </Grid>
+
+        <Border x:Name="ToastContainer" Grid.Column="0" Grid.Row="0" Margin="4" Padding="4" MaxWidth="300" BorderBrush="Black" BorderThickness="1" CornerRadius="4" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top">
+            <TextBlock x:Name="ToastText" TextAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" />
+        </Border>
+
+        <ui:PropertyBrowser x:Name="Properties" MaxWidth="800" Margin="16,0,0,0" Grid.Column="0" Grid.Row="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" PropertyObject="{Binding Options, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local1:MainWindow}}}" />
+
+        <StackPanel Orientation="Horizontal" Grid.Column="0" Grid.Row="3" HorizontalAlignment="Center" VerticalAlignment="Top">
+            <Button x:Name="Preview" Content="PREVIEW" Background="Transparent" Margin="8" Padding="16" Click="Preview_Click" />
+            <Button x:Name="Compile" Content="COMPILE" Background="Transparent" Margin="8" Padding="16" Click="Compile_Click" />
+        </StackPanel>
+        <ProgressBar x:Name="ProgressMeter" Grid.Column="2" Grid.Row="4" VerticalAlignment="Center" Height="8" Visibility="Collapsed" IsIndeterminate="True" />
+    </Grid>
+</Window>

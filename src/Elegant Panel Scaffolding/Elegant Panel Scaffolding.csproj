@@ -1,0 +1,103 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>EPS</RootNamespace>
+    <TargetFramework>net48</TargetFramework>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <AssemblyTitle>Elegant Panel Scaffolding</AssemblyTitle>
+    <Product>Elegant Panel Scaffolding</Product>
+    <Copyright>Copyright © Christopher McNeely</Copyright>
+    <AssemblyTitle>Elegant Panel Scaffolding</AssemblyTitle>
+    <Product>Elegant Panel Scaffolding</Product>
+    <Copyright>Copyright © Christopher McNeely</Copyright>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <StartupObject>EPS.App</StartupObject>
+    <ApplicationIcon>EPS_Icon.ico</ApplicationIcon>
+    <SignAssembly>false</SignAssembly>
+    <DelaySign>false</DelaySign>
+    <Authors>Christopher McNeely</Authors>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Resources\BooleanValueChangedEventArgs.g.cs" />
+    <Compile Remove="Resources\DeviceHelper.g.cs" />
+    <Compile Remove="Resources\ObjectEventArgs.g.cs" />
+    <Compile Remove="Resources\PanelUIBase.g.cs" />
+    <Compile Remove="Resources\PanelUIData.g.cs" />
+    <Compile Remove="Resources\StringValueChangedEventArgs.g.cs" />
+    <Compile Remove="Resources\UShortValueChangedEventArgs.g.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Help\Help.css" />
+    <None Remove="Help\Help.md" />
+    <None Remove="Help\syntax.css" />
+    <None Remove="Licenses\AvalonEdit.License.txt" />
+    <None Remove="Licenses\ColorCode-Universal.License.txt" />
+    <None Remove="Licenses\Elegant Panel Scaffolding.License.txt" />
+    <None Remove="Licenses\Newtsonft Json.NET.License.txt" />
+    <None Remove="Licenses\SharpZipLib.License.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\DeviceHelper.g.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AvalonEdit" Version="6.0.1" />
+    <PackageReference Include="ColorCode.HTML" Version="2.0.6" />
+    <PackageReference Include="Markdig" Version="0.20.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="SharpZipLib" Version="1.2.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\BooleanValueChangedEventArgs.g.cs" />
+    <Resource Include="Resources\ObjectEventArgs.g.cs" />
+    <Resource Include="Resources\PanelUIBase.g.cs" />
+    <Resource Include="Resources\PanelUIData.g.cs" />
+    <Resource Include="Resources\StringValueChangedEventArgs.g.cs" />
+    <Resource Include="Resources\UShortValueChangedEventArgs.g.cs" />
+    <EmbeddedResource Include="Help\Help.css" />
+    <EmbeddedResource Include="Help\Help.md" />
+    <EmbeddedResource Include="Help\syntax.css" />
+    <EmbeddedResource Include="Licenses\AvalonEdit.License.txt" />
+    <EmbeddedResource Include="Licenses\ColorCode-Universal.License.txt" />
+    <EmbeddedResource Include="Licenses\Elegant Panel Scaffolding.License.txt" />
+    <EmbeddedResource Include="Licenses\Newtsonft Json.NET.License.txt" />
+    <EmbeddedResource Include="Licenses\SharpZipLib.License.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+</Project>

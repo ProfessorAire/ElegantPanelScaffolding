@@ -1,0 +1,22 @@
+﻿<Window x:Class="EPS.UI.Preview"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EPS"
+        xmlns:avalon="http://icsharpcode.net/sharpdevelop/avalonedit"
+        xmlns:av2="clr-namespace:ICSharpCode.AvalonEdit.Highlighting.Xshd;assembly=ICSharpCode.AvalonEdit"
+        mc:Ignorable="d"
+        Title="Preview" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <TreeView x:Name="Items" Grid.Column="0" SelectedItemChanged="Items_SelectedItemChanged" ItemsSource="{Binding}" DisplayMemberPath="Name" />
+        <GridSplitter Grid.Column="0" HorizontalAlignment="Right" Width="3" Background="Orange" />
+        <avalon:TextEditor ShowLineNumbers="True" x:Name="TextViewer" Grid.Column="1"  />
+
+    </Grid>
+</Window>

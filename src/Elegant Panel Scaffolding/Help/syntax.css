@@ -1,0 +1,45 @@
+﻿pre code {
+    /*    white-space: normal;*/
+    line-height: 22px;
+    white-space: pre;
+}
+
+code {
+    margin: 0 2px;
+    padding: 0 5px;
+    border: 1px solid #eaeaea;
+    background-color: #f8f8f8;
+    border-radius: 3px;
+    font-family: Consolas, 'Liberation Mono', Courier, monospace;
+    color: #000000;
+    font-size: 16px;
+}
+
+.codeblock {
+    font-size: 18px;
+}
+
+.csharp {
+    display: inline;
+    padding: 2px 4px;
+    margin-right: 2px;
+    line-height: 22px;
+}
+
+.keyword {
+    /*    color: #60bfc7;*/
+    color: #0077AA;
+    font-weight: bold;
+}
+
+.comment {
+    color: #70809F;
+}
+
+.number {
+    color: #B71555;
+}
+
+.string {
+    color: #669970;
+}
