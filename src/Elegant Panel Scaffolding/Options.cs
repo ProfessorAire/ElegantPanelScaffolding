@@ -91,11 +91,10 @@ namespace EPS
             set => SetField(ref hardkeyNames, value);
         }
 
-        private bool compileNotificationsOnlyOnValueChange = true;
-        [Description("If enabled then property change notification events are only fired when the value actually changes.")]
-        [DisplayName("Notify of Property Change on Actual Change")]
-        [Browsable(false)]
-        public bool CompileNotificationsOnlyOnValueChange { get => compileNotificationsOnlyOnValueChange; set => SetField(ref compileNotificationsOnlyOnValueChange, value); }
+        private string fieldPrefixes = "";
+        [Description("Prefix to prepend to private field names.")]
+        [DisplayName("Field Prefixes")]
+        public string FieldPrefixes { get => fieldPrefixes; set => SetField(ref fieldPrefixes, value); }
 
         private string applicationTouchpanelPath = "";
         [Description("The path to the touchpanel to generate classes from.")]

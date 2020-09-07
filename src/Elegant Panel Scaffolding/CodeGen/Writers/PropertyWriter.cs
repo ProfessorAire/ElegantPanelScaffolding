@@ -137,11 +137,12 @@ namespace EPS.CodeGen.Writers
                             fieldName = $"this.{fieldName}";
                         }
 
-                        if (UsePropertyChangeEvent && Options.Current.CompileNotificationsOnlyOnValueChange)
+                        if (UsePropertyChangeEvent)
                         {
                             _ = sb.Append(indent.GetTabs());
                             _ = sb.AppendLine($"var isChanged = {fieldName} != value;");
                         }
+
                         foreach (var l in Setter)
                         {
                             if (!string.IsNullOrEmpty(l))
@@ -161,6 +162,7 @@ namespace EPS.CodeGen.Writers
                                 _ = sb.AppendLine();
                             }
                         }
+
                         if (UsePropertyChangeEvent)
                         {
                             var argType = "Boolean";
@@ -172,14 +174,14 @@ namespace EPS.CodeGen.Writers
                             {
                                 argType = "String";
                             }
-                            if (Options.Current.CompileNotificationsOnlyOnValueChange)
-                            {
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine($"if(isChanged)");
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine("{");
-                                indent++;
-                            }
+
+                            // Check for notifications
+                            _ = sb.Append(indent.GetTabs());
+                            _ = sb.AppendLine($"if(isChanged)");
+                            _ = sb.Append(indent.GetTabs());
+                            _ = sb.AppendLine("{");
+                            indent++;
+
                             _ = sb.Append(indent.GetTabs());
                             _ = sb.AppendLine($"if({Name}Changed != null)");
                             _ = sb.Append(indent.GetTabs());
@@ -190,13 +192,12 @@ namespace EPS.CodeGen.Writers
                             indent--;
                             _ = sb.Append(indent.GetTabs());
                             _ = sb.AppendLine("}");
-                            if (Options.Current.CompileNotificationsOnlyOnValueChange)
-                            {
-                                indent--;
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine("}");
-                            }
+
+                            indent--;
+                            _ = sb.Append(indent.GetTabs());
+                            _ = sb.AppendLine("}");
                         }
+
                         indent--;
                         _ = sb.Append(indent.GetTabs());
                         _ = sb.AppendLine("}");

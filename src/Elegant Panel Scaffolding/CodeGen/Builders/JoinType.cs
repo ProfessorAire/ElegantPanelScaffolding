@@ -4,9 +4,11 @@
     {
         Analog,
         Digital,
+        DigitalButton,
         Serial,
         SmartAnalog,
         SmartDigital,
+        SmartDigitalButton,
         SmartSerial,
         SrlVisibility,
         SrlEnable,
