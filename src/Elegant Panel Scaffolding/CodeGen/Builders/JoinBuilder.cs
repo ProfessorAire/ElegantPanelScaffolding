@@ -105,127 +105,43 @@ namespace EPS.CodeGen.Builders
                 return new List<WriterBase>(0);
             }
 
-            switch (JoinType)
-            {
-                case JoinType.Analog:
-                case JoinType.SmartAnalog:
-                    return GetAnalogWriters();
-                case JoinType.Digital:
-                case JoinType.SmartDigital:
-                    return GetDigitalWriters();
-                case JoinType.DigitalButton:
-                case JoinType.SmartDigitalButton:
-                    return GetDigitalButtonWriters();
-                case JoinType.Serial:
-                case JoinType.SmartSerial:
-                    return GetSerialWriters();
-                case JoinType.SrlEnable:
-                case JoinType.SrlVisibility:
-                    return GetSpecialtyWriters();
-            }
-        }
-
-        /// <summary>
-        /// Gets a list of <see cref="WriterBase"/> objects used to construct the analog join data for this object.
-        /// </summary>
-        /// <returns>A list of <see cref="WriterBase"/> objects.</returns>
-        private List<WriterBase> GetAnalogWriters()
-        {
-            var sigType = "ushort";
-            var sigTypeName = "UShort";
-            var offsetText = IsListElement ? " + analogOffset" : "";
-
-            var result = new List<WriterBase>();
-
             if (JoinDirection == JoinDirection.ToPanel)
             {
-                result.AddRange(GetWritersToPanel(sigType, sigTypeName, offsetText));
+                return GetWritersToPanel();
             }
-
-            return result;
+            else if (JoinDirection == JoinDirection.FromPanel)
+            {
+                return GetWritersFromPanel();
+            }
+            else if (JoinDirection == JoinDirection.Both)
+            {
+                return GetWritersForBoth();
+            }
         }
 
-        /// <summary>
-        /// Gets a list of <see cref="WriterBase"/> objects used to construct the digital data for this object.
-        /// </summary>
-        /// <returns>A list of <see cref="WriterBase"/> objects.</returns>
-        private List<WriterBase> GetDigitalWriters()
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Gets a list of <see cref="WriterBase"/> objects used to construct the digital button data for this object.
-        /// </summary>
-        /// <returns>A list of <see cref="WriterBase"/> objects.</returns>
-        private List<WriterBase> GetDigitalButtonWriters()
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Gets a list of <see cref="WriterBase"/> objects used to construct the serial data for this object.
-        /// </summary>
-        /// <returns>A list of <see cref="WriterBase"/> objects.</returns>
-        private List<WriterBase> GetSerialWriters()
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Gets a list of <see cref="WriterBase"/> objects used to construct the specialty data for this object.
-        /// </summary>
-        /// <returns>A list of <see cref="WriterBase"/> objects.</returns>
-        private List<WriterBase> GetSpecialtyWriters()
-        {
-            throw new NotImplementedException();
-        }
-
-        private List<WriterBase> GetWritersToPanel(string sigType, string sigTypeName, string offsetText)
+        private List<WriterBase> GetWritersToPanel()
         {
             var result = new List<WriterBase>();
+
+            var sigType = GetJoinTypeString();
+            var sigTypeName = GetJoinTypeNameString();
+            var offsetText = GetOffsetString();
 
             var args = $"{sigTypeName}ValueChangedEventArgs";
             var propertyName = FormatPropertyName(JoinName);
             var fieldName = FormatFieldName(JoinName);
+            var smartSuffix = SmartJoinNumber > 0 ? "Smart" : string.Empty;
+            var smartValue = SmartJoinNumber > 0 ? $"{SmartJoinNumber}, " : string.Empty;
+
+            var changeEventName = GetEventChangeName();
 
             // First create the EventWriter.
             // This handles change event notifications, which are triggered when the value going to the panel is changed.
-            var ew = new EventWriter($"{ChangeEventName}")
-            {
-                Handler = $"EventHandler<{args}>"
-            };
-
-            if (string.IsNullOrEmpty(ChangeEventName))
-            {
-                ew.Name = $"{propertyName}Changed";
-            }
-
-            ew.Help.Summary = $"Raised when the {propertyName} value changes.";
-            
-            result.Add(ew);
+            result.Add(GetEventWriter());
 
             // Next create the property and backing field writers.
-            var pw = new PropertyWriter(propertyName, sigType);
-            var fw = new FieldWriter(fieldName, sigType);
-
-            if (!string.IsNullOrEmpty(Description))
-            {
-                pw.Help.Summary = Description;
-            }
-            else
-            {
-                if (sigType == "bool")
-                {
-                    pw.Help.Summary = $"Gets or sets a value indicating whether the <see cref=\"{propertyName}\"/> join was last set to true or false.";
-                }
-                else
-                {
-                    pw.Help.Summary = $"Gets or sets a value indicating what the <see cref=\"{propertyName}\"/> join was last set to.";
-                }
-            }
-
-            fw.Help.Summary = $"Backing field for the <see cref=\"{propertyName}\"/> property.";
+            var pw = GetPropertyWriter();
+            var fw = GetFieldWriter();
 
             pw.Getter.Add($"return {fieldName};");
 
@@ -233,11 +149,6 @@ namespace EPS.CodeGen.Builders
             {
                 fieldName = $"this.{fieldName}";
             }
-
-            pw.Setter.Add($"{fieldName} = value;");
-
-            var smartSuffix = SmartJoinNumber > 0 ? "Smart" : string.Empty;
-            var smartValue = SmartJoinNumber > 0 ? $"{SmartJoinNumber}, " : string.Empty;
 
             pw.Setter.Add($"{fieldName} = value;");
             pw.Setter.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value);");
@@ -249,9 +160,9 @@ namespace EPS.CodeGen.Builders
             methodSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
             methodSetter.AddParameter("BasicTriListWithSmartObject", "panel", "The panel to change the associated join value on.");
             methodSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value, panel);");
-            methodSetter.MethodLines.Add($"if ({propertyName}Changed != null)");
+            methodSetter.MethodLines.Add($"if ({changeEventName} != null)");
             methodSetter.MethodLines.Add("{");
-            methodSetter.MethodLines.Add($"{propertyName}Changed(this, new {args}(value));");
+            methodSetter.MethodLines.Add($"{changeEventName}(this, new {args}(value));");
             methodSetter.MethodLines.Add("}");
 
             if (JoinType == JoinType.Digital && 
@@ -262,8 +173,214 @@ namespace EPS.CodeGen.Builders
                 pulseMw.MethodLines.Add($"ParentPanel.Pulse({smartSuffix}(uint)({JoinNumber}{offsetText}), duration);");
                 result.Add(pulseMw);
             }
+
             return result;
         }
+
+        private List<WriterBase> GetWritersFromPanel()
+        {
+            var result = new List<WriterBase>();
+
+            var sigType = GetJoinTypeString();
+            var sigTypeName = GetJoinTypeNameString();
+
+            var args = $"{sigTypeName}ValueChangedEventArgs";
+            var propertyName = FormatPropertyName(JoinName);
+            var fieldName = FormatFieldName(JoinName);
+            var smartSuffix = SmartJoinNumber > 0 ? "Smart" : string.Empty;
+            var smartValue = SmartJoinNumber > 0 ? $"{SmartJoinNumber}, " : string.Empty;
+
+            var changeEventName = GetEventChangeName();
+
+            // First create the EventWriter.
+            // This handles change event notifications, which are triggered when the value going to the panel is changed.
+            result.Add(GetEventWriter());
+
+            // Next create the property and backing field writers.
+            var pw = GetPropertyWriter();
+            var fw = GetFieldWriter();
+
+            pw.Getter.Add($"return {fieldName};");
+            pw.HasSetter = false;
+            result.Add(pw);
+            result.Add(fw);
+
+            if (fieldName == "value")
+            {
+                fieldName = $"this.{fieldName}";
+            }
+
+            var raiseMethod = new MethodWriter($"Raise{changeEventName}", $"Raises the {changeEventName} event.")
+            {
+                Accessor = Accessor.Private
+            };
+
+            raiseMethod.AddParameter($"{sigType}", "value", "The new value of the property.");
+
+            raiseMethod.MethodLines.Add($"{fieldName} = value;");
+            raiseMethod.MethodLines.Add($"if ({changeEventName} != null)");
+            raiseMethod.MethodLines.Add("{");
+            raiseMethod.MethodLines.Add($"{changeEventName}(this, new {args}(value));");
+            raiseMethod.MethodLines.Add("}");
+
+            result.Add(raiseMethod);
+
+            return result;
+        }
+
+        private List<WriterBase> GetWritersForBoth()
+        {
+            var result = GetWritersToPanel();
+
+            var fieldName = FormatFieldName(JoinName);
+            var changeEventName = GetEventChangeName();
+            var sigType = GetJoinTypeString();
+            var args = $"{GetJoinTypeNameString()}ValueChangedEventArgs";
+
+            if (fieldName == "value")
+            {
+                fieldName = $"this.{fieldName}";
+            }
+
+            var raiseMethod = new MethodWriter($"Raise{changeEventName}", $"Raises the {changeEventName} event.")
+            {
+                Accessor = Accessor.Private
+            };
+
+            raiseMethod.AddParameter($"{sigType}", "value", "The new value of the property.");
+
+            raiseMethod.MethodLines.Add($"{fieldName} = value;");
+            raiseMethod.MethodLines.Add($"if ({changeEventName} != null)");
+            raiseMethod.MethodLines.Add("{");
+            raiseMethod.MethodLines.Add($"{changeEventName}(this, new {args}(value));");
+            raiseMethod.MethodLines.Add("}");
+
+            result.Add(raiseMethod);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets a property writer correctly prepared for use with this join.
+        /// </summary>
+        /// <returns>A <see cref="PropertyWriter"/> object.</returns>
+        private PropertyWriter GetPropertyWriter()
+        {
+            var propertyName = FormatPropertyName(JoinName);
+
+            var propertyWriter = new PropertyWriter(
+                propertyName, GetJoinTypeString());
+
+            if (!string.IsNullOrEmpty(Description))
+            {
+                propertyWriter.Help.Summary = Description;
+            }
+            else
+            {
+                if (propertyWriter.Type == "bool")
+                {
+                    propertyWriter.Help.Summary = $"Gets or sets a value indicating whether the <see cref=\"{propertyName}\"/> join was last set to true or false.";
+                }
+                else
+                {
+                    propertyWriter.Help.Summary = $"Gets or sets a value indicating what the <see cref=\"{propertyName}\"/> join was last set to.";
+                }
+            }
+
+            return propertyWriter;
+        }
+
+        /// <summary>
+        /// Gets an event writer prepared for use with this join.
+        /// </summary>
+        /// <returns>A <see cref="FieldWriter"/> object.</returns>
+        private EventWriter GetEventWriter()
+        {
+            var propName = FormatPropertyName(JoinName);
+
+            var eventWriter = new EventWriter(GetEventChangeName())
+            {
+                Handler = $"EventHandler<{GetJoinTypeNameString()}ValueChangedEventArgs>"
+            };
+
+            eventWriter.Help.Summary = $"Raised when the {propName} value changes.";
+
+            return eventWriter;
+        }
+
+        /// <summary>
+        /// Gets a field writer prepared for use with this join.
+        /// </summary>
+        /// <returns>A <see cref="FieldWriter"/> object.</returns>
+        private FieldWriter GetFieldWriter()
+        {
+            var fieldWriter = new FieldWriter(FormatFieldName(JoinName), GetJoinTypeString());
+            fieldWriter.Help.Summary = $"Backing field for the <see cref=\"{FormatPropertyName(JoinName)}\"/> property.";
+
+            return fieldWriter;
+        }
+
+        /// <summary>
+        /// Gets the shorthand version of the signal class type.
+        /// </summary>
+        /// <returns>A string with the value "bool", "ushort", or "string".</returns>
+        private string GetJoinTypeString()
+        {
+            return JoinType == JoinType.Analog || JoinType == JoinType.SmartAnalog ? "ushort" :
+                JoinType == JoinType.Serial || JoinType == JoinType.SmartSerial ? "string" :
+                "bool";
+        }
+
+        /// <summary>
+        /// Gets the full name of a signal class type.
+        /// </summary>
+        /// <returns>A string with the value "Boolean", "UShort", or "String".</returns>
+        private string GetJoinTypeNameString()
+        {
+            return JoinType == JoinType.Analog || JoinType == JoinType.SmartAnalog ? "UShort" :
+                JoinType == JoinType.Serial || JoinType == JoinType.SmartSerial ? "String" :
+                "Boolean";
+        }
+
+        /// <summary>
+        /// Gets the offset string to use for the join's numeric value in offset calculations.
+        /// </summary>
+        /// <returns>A string representing the text to include in offset calculations.</returns>
+        private string GetOffsetString()
+        {
+            if(!IsListElement)
+            {
+                return string.Empty;
+            }
+
+            switch (JoinType)
+            {
+                case JoinType.Analog:
+                case JoinType.SmartAnalog:
+                    return " + analogOffset";
+                case JoinType.Digital:
+                case JoinType.DigitalButton:
+                case JoinType.SmartDigital:
+                case JoinType.SmartDigitalButton:
+                    return " + digitalOffset";
+                case JoinType.Serial:
+                case JoinType.SmartSerial:
+                    return " + serialOffset";
+                case JoinType.SrlVisibility:
+                    return " + itemOffset + 2010";
+                case JoinType.SrlEnable:
+                    return " + itemOffset + 10";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Gets a string with the correct change event name.
+        /// </summary>
+        /// <returns>A string to use as the property change event name.</returns>
+        private string GetEventChangeName() =>
+            string.IsNullOrEmpty(ChangeEventName) ? $"{FormatPropertyName(JoinName)}Changed" : ChangeEventName;
 
         /// <summary>
         /// Formats a string with an uppercase first letter.
