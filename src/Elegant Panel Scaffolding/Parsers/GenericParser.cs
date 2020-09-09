@@ -135,54 +135,71 @@ namespace EPS.Parsers
                     {
                         if (name.StartsWith("digitalpresshigh", StringComparison.InvariantCulture))
                         {
-                            builder.AddEvent(new EventElement($"Raise", join, builder.SmartJoin, JoinType.Digital, true));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Raise", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
                         }
                         else if (name.StartsWith("digitalpresslow", StringComparison.InvariantCulture))
                         {
-                            builder.AddEvent(new EventElement($"Lower", join, builder.SmartJoin, JoinType.Digital, true));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Lower", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
                         }
                         else if (name.StartsWith("digitalpress", StringComparison.InvariantCulture))
                         {
-                            builder.AddEvent(new EventElement($"", join, builder.SmartJoin, JoinType.Digital, true));
+                            builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
                             if (child.Element("Properties")?.Element("ShowSelectFeedback")?.Value == "true")
                             {
-                                builder.AddProperty(new PropertyElement($"IsActive", join, builder.SmartJoin, JoinType.Digital));
+                                builder.AddJoin(
+                                    new JoinBuilder(join, $"IsActive", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
                             }
                         }
                         else if (name.StartsWith("digitalenable", StringComparison.InvariantCulture))
                         {
-                            builder.AddProperty(new PropertyElement($"IsEnabled", join, builder.SmartJoin, JoinType.Digital));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "IsEnabled", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
                         }
                         else if (name.StartsWith("digitalvisibility", StringComparison.InvariantCulture) || name.StartsWith("visibility", StringComparison.InvariantCulture))
                         {
-                            builder.AddProperty(new PropertyElement($"IsVisible", join, builder.SmartJoin, JoinType.Digital));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "IsVisible", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
                         }
                         else if (name.StartsWith("digitalonoff", StringComparison.InvariantCulture))
                         {
-                            builder.AddEvent(new EventElement($"OnOff", join, builder.SmartJoin, JoinType.Digital, false));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "OnOffToggle", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
                         }
                         else if (name.StartsWith("butoffdigitalpress", StringComparison.InvariantCulture))
                         {
-                            builder.AddEvent(new EventElement($"Off", join, builder.SmartJoin, JoinType.Digital, true));
-                            builder.AddProperty(new PropertyElement($"OffIsActive", join, builder.SmartJoin, JoinType.Digital));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Off", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "OffIsActive", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
                         }
                         else if (name.StartsWith("butondigitalpress", StringComparison.InvariantCulture))
                         {
-                            builder.AddEvent(new EventElement($"On", join, builder.SmartJoin, JoinType.Digital, true));
-                            builder.AddProperty(new PropertyElement($"OnIsActive", join, builder.SmartJoin, JoinType.Digital));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "On", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "OnIsActive", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
                         }
                         else if (name.StartsWith("checkedstate", StringComparison.InvariantCulture))
                         {
                             builder.AddEvent(new EventElement($"Toggle", join, builder.SmartJoin, JoinType.Digital, true));
                             builder.AddProperty(new PropertyElement($"IsChecked", join, builder.SmartJoin, JoinType.Digital));
+
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Toggle", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "IsChecked", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
                         }
                         else if (name.StartsWith("indirecttext", StringComparison.InvariantCulture))
                         {
-                            builder.AddProperty(new PropertyElement($"Text", join, builder.SmartJoin, JoinType.Serial));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Text", JoinType.Serial, JoinDirection.ToPanel, JoinMethod.Property));
                         }
                         else if (name.Contains("butonindirecttext"))
                         {
-                            builder.AddProperty(new PropertyElement($"OnText", join, builder.SmartJoin, JoinType.Serial));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "OnText", JoinType.Serial, JoinDirection.ToPanel, JoinMethod.Property));
                         }
                         else if (name.Contains("butofindirecttext"))
                         {

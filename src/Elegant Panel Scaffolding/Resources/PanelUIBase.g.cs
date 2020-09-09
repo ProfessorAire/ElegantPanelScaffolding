@@ -7,6 +7,7 @@ using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharp.Reflection;
 using Crestron.SimplSharpPro.CrestronThread;
+using System.Security.AccessControl;
 
 namespace SharpProTouchpanelDemo.UI.Core
 {
@@ -20,7 +21,6 @@ namespace SharpProTouchpanelDemo.UI.Core
     /// </summary>
     public abstract class PanelUIBase : IDisposable, IEnumerable<BasicTriListWithSmartObject>
     {
-
         #region CoreFunctionality
         /// <summary>
         /// Raised when an exception is encountered and not caught by the user's code.
@@ -32,14 +32,8 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// <summary>
         /// The basicQueue is used for processing all normal interactions from the panel.
         /// </summary>
-        private CrestronQueue<ObjectEventArgs> basicQueue = new CrestronQueue<ObjectEventArgs>(30);
+        private CrestronQueue<Action> panelProcessingQueue = new CrestronQueue<Action>(30);
         private Thread basicThread = null;
-
-        /// <summary>
-        /// The smartQueue is used for processing all SmartObject interactions from the panel.
-        /// </summary>
-        private CrestronQueue<ObjectEventArgs> smartQueue = new CrestronQueue<ObjectEventArgs>(30);
-        private Thread smartThread = null;
 
         /// <summary>
         /// If this is subscribed to, it is raised whenever the touchpanel sends data, like a touch or slider movement.
@@ -52,6 +46,10 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// </summary>
         protected List<BasicTriListWithSmartObject> panels = new List<BasicTriListWithSmartObject>();
 
+        /// <summary>
+        /// Holder for Actions associated with classes.
+        /// </summary>
+        internal PanelUIData Actions { get; private set; }
 
         private string description = "";
         /// <summary>
@@ -71,6 +69,11 @@ namespace SharpProTouchpanelDemo.UI.Core
                     p.Description = value;
                 }
             }
+        }
+
+        public PanelUIBase()
+        {
+            Actions = new PanelUIData();
         }
 
         /// <summary>
@@ -109,7 +112,7 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// </summary>
         /// <param name="panel">The <see cref="BasicTriListWithSmartObject"/> to remove.</param>
         /// <param name="UnregisterAndDispose">If true will unregister and dispose of the panel after it is removed.</param>
-       public void RemovePanel(BasicTriListWithSmartObject panel, bool UnregisterAndDispose)
+        public void RemovePanel(BasicTriListWithSmartObject panel, bool UnregisterAndDispose)
         {
             if (panels.Contains(panel))
             {
@@ -402,29 +405,143 @@ namespace SharpProTouchpanelDemo.UI.Core
         }
 
         /// <summary>
-        /// Adds a SigEventArgs object to the basic processing queue.
+        /// Adds a basic action object to the processing queue.
         /// </summary>
         /// <param name="currentDevice"></param>
         /// <param name="args"></param>
         protected void Enqueue(GenericBase currentDevice, SigEventArgs args)
         {
-            basicQueue.Enqueue(new ObjectEventArgs(args));
+            var join = args.Sig.Number;
+            switch (args.Event)
+            {
+                case eSigEvent.BoolChange:
+                    var bv = args.Sig.BoolValue;
+                    if (Actions.BoolActions.ContainsKey(join))
+                    {
+                        panelInteractionQueue.Enqueue(() =>
+                        {
+                            Actions.BoolActions[join].Invoke(bv);
+                        });
+                    }
+                    else
+                    {
+                        if (bv)
+                        {
+                            if (Actions.BoolPressActions.ContainsKey(join))
+                            {
+                                panelInteractionQueue.Enqueue(() =>
+                                {
+                                    Actions.BoolPressActions[join].Invoke(true);
+                                });
+                            }
+                        }
+                        else
+                        {
+                            if (Actions.BoolReleaseActions.ContainsKey(join))
+                            {
+                                panelInteractionQueue.Enqueue(() =>
+                                {
+                                    Actions.BoolReleaseActions[join].Invoke(false);
+                                });
+                            }
+                        }
+                    }
+                    break;
+                case eSigEvent.UShortChange:
+                    var uv = args.Sig.UShortValue;
+                    if (Actions.UShortActions.ContainsKey(join))
+                    {
+                        panelInteractionQueue.Enqueue(() =>
+                        {
+                            Actions.UShortActions[join].Invoke(uv);
+                        });
+                    }
+                    break;
+                case eSigEvent.StringChange:
+                    var sv = args.Sig.StringValue;
+                    if (Actions.StringActions.ContainsKey(join))
+                    {
+                        panelInteractionQueue.Enqueue(() =>
+                        {
+                            Actions.StringActions[join].Invoke(sv);
+                        });
+                    }
+                    break;
+            }
         }
 
         /// <summary>
-        /// Adds a SmartObjectEventArgs object to the smart objects processing queue.
+        /// Adds a smart object action to the processing queue.
         /// </summary>
         /// <param name="currentDevice"></param>
         /// <param name="args"></param>
         protected void Enqueue(GenericBase currentDevice, SmartObjectEventArgs args)
         {
-            smartQueue.Enqueue(new ObjectEventArgs(args));
+            var key = PanelUIData.GetSmartKey(args.Sig.Number, args.SmartObjectArgs.ID);
+
+            switch (args.Event)
+            {
+                case eSigEvent.BoolChange:
+                    var bv = args.Sig.BoolValue;
+                    if (Actions.BoolSmartActions.ContainsKey(key))
+                    {
+                        panelInteractionQueue.Enqueue(() =>
+                        {
+                            Actions.BoolSmartActions[key].Invoke(bv);
+                        });
+                    }
+                    else
+                    {
+                        if (bv)
+                        {
+                            if (Actions.BoolSmartPressActions.ContainsKey(key))
+                            {
+                                panelInteractionQueue.Enqueue(() =>
+                                {
+                                    Actions.BoolSmartPressActions[key].Invoke(true);
+                                });
+                            }
+                        }
+                        else
+                        {
+                            if (Actions.BoolSmartReleaseActions.ContainsKey(key))
+                            {
+                                panelInteractionQueue.Enqueue(() =>
+                                {
+                                    Actions.BoolSmartReleaseActions[key].Invoke(false);
+                                });
+                            }
+                        }
+                    }
+
+                    break;
+                case eSigEvent.UShortChange:
+                    var uv = args.Sig.UShortValue;
+                    if (Actions.UShortSmartActions.ContainsKey(key))
+                    {
+                        panelInteractionQueue.Enqueue(() =>
+                        {
+                            Actions.UShortSmartActions[key].Invoke(uv);
+                        });
+                    }
+                    break;
+                case eSigEvent.StringChange:
+                    var sv = args.Sig.StringValue;
+                    if (Actions.StringSmartActions.ContainsKey(key))
+                    {
+                        panelInteractionQueue.Enqueue(() =>
+                        {
+                            Actions.StringSmartActions[key].Invoke(sv);
+                        });
+                    }
+                    break;
+            }
         }
 
-        /// <summary>
-        /// Provides data on how many threads this class will use, so the threading requirements can be calculated at the program's startup.
-        /// </summary>
-        public const int ThreadQuantity = 2;
+/// <summary>
+/// Provides data on how many threads this class will use, so the threading requirements can be calculated at the program's startup.
+/// </summary>
+public const int ThreadQuantity = 2;
 
         /// <summary>
         /// Used internally to track if registration has been requested.
@@ -537,15 +654,6 @@ namespace SharpProTouchpanelDemo.UI.Core
             {
                 basicThread.Start();
             }
-            if (smartThread == null)
-            {
-                smartThread = new Thread(ProcessSmartInputQueue, null, Thread.eThreadStartOptions.Running);
-                smartThread.Name = "Panel Smart Processing Thread";
-            }
-            else
-            {
-                smartThread.Start();
-            }
         }
 
         /// <summary>
@@ -558,11 +666,6 @@ namespace SharpProTouchpanelDemo.UI.Core
                 basicThread.Abort();
                 basicQueue.Clear();
             }
-            if (smartThread != null)
-            {
-                smartThread.Abort();
-                smartQueue.Clear();
-            }
         }
 
         /// <summary>
@@ -574,15 +677,11 @@ namespace SharpProTouchpanelDemo.UI.Core
             {
                 try
                 {
-                    var args = basicQueue.Dequeue();
-                    if (args.GetType() == typeof(ObjectEventArgs))
+                    var action = basicQueue.Dequeue();
+                    CrestronInvoke.BeginInvoke((s) => { if (TouchEventReceived != null) { TouchEventReceived.Invoke(this, new EventArgs()); } });
+                    if(action != null)
                     {
-                        CrestronInvoke.BeginInvoke((s) => { if (TouchEventReceived != null) { TouchEventReceived.Invoke(this, new EventArgs()); } });
-                        ProcessSignal(args);
-                    }
-                    else
-                    {
-                        continue;
+                        action.Invoke();
                     }
                 }
                 catch (System.Threading.ThreadAbortException)
@@ -600,604 +699,6 @@ namespace SharpProTouchpanelDemo.UI.Core
                          UserCodeExceptionEncountered(this, new UnhandledExceptionEventArgs(ex, false));
                     }
                 }
-            }
-        }
-
-        /// <summary>
-        /// Used to check if the TouchEventReceived event needs to be invoked and hands the smart object data off to be processed.
-        /// Uses a queue object which blocks the thread while it is waiting for an object to be queued, if none are queued.
-        /// </summary>
-        private object ProcessSmartInputQueue(object obj)
-        {
-            while (true)
-            {
-                try
-                {
-                    var args = smartQueue.Dequeue();
-
-                    if (args.GetType() == typeof(ObjectEventArgs))
-                    {
-                        CrestronInvoke.BeginInvoke((s) => { if (TouchEventReceived != null) { TouchEventReceived.Invoke(this, new EventArgs()); } });
-                        ProcessSmartSignal(args);
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                }
-                catch (System.Threading.ThreadAbortException)
-                {
-                    CrestronConsole.PrintLine("Thread exited: {0}", smartThread.Name);
-                    if (!isDisposing)
-                    {
-                        ErrorLog.Notice("Touchpanel Smart Input Thread exited prematurely: {0}", smartThread.Name);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (UserCodeExceptionEncountered != null)
-                    {
-                        UserCodeExceptionEncountered(this, new UnhandledExceptionEventArgs(ex, false));
-                    }
-                }   
-            }
-
-        }
-
-        /// <summary>
-        /// Checks to see if the signal has an associated UserObject. If there is no object it returns without doing anything.
-        /// The UserObject is the method that gets assigned to it when a panel is being initialized.
-        /// This method is used to raise the corresponding event that can be subscribed to for notifications of touchpanel events.
-        /// </summary>
-        private void ProcessSignal(ObjectEventArgs args)
-        {
-            if (args.UserObject == null)
-            {
-                return;
-            }
-            var methods = (Action<ObjectEventArgs>[])args.UserObject;
-            foreach (var method in methods)
-            {
-                if (method != null)
-                {
-                    method.Invoke(args);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Checks to see if the smart object signal has an associated UserObject. If there is no object it returns without doing anything.
-        /// The UserObject is the method that gets assigned to it when a panel is being initialized.
-        /// This method is used to raise the corresponding event that can be subscribed to for notifications of touchpanel events.
-        /// </summary>
-        private void ProcessSmartSignal(ObjectEventArgs args)
-        {
-            if (args.UserObject == null)
-            {
-                return;
-            }
-            var methods = (Action<ObjectEventArgs>[])args.UserObject;
-            foreach (var method in methods)
-            {
-                if (method != null)
-                {
-                    method.Invoke(args);
-                }
-            }
-        }
-
-        #endregion
-
-        #region SetupAndConfigurationProcessing
-
-        /// <summary>
-        /// Tracks all of the <see cref="PanelUIData"/> objects associated with the project.
-        /// </summary>
-        private List<PanelUIData> PanelData { get; set; }
-
-        /// <summary>
-        /// Adds the associated <see cref="PanelUIData"/> object to the project.
-        /// </summary>
-        /// <param name="data">The <see cref="PanelUIData"/> object to add.</param>
-        /// <remarks>Used internally by generated code.</remarks>
-        internal void AddData(PanelUIData data)
-        {
-            if (PanelData == null)
-            {
-                PanelData = new List<PanelUIData>();
-            }
-            PanelData.Add(data);
-        }
-
-        /// <summary>
-        /// Gets a count of the number of boolean outputs are in the panel data list.
-        /// </summary>
-        /// <param name="join">The join # to check.</param>
-        /// <returns>A count of the number found.</returns>
-        private int GetBooleanOutputCount(ushort join)
-        {
-            var count = 0;
-            foreach (var data in PanelData)
-            {
-                if (data.boolOutputs != null)
-                {
-                    count += data.boolOutputs.Where(o => o.Value == join).Count();
-                }
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// Gets a count of the number of ushort outputs are in the panel data list.
-        /// </summary>
-        /// <param name="join">The join # to check.</param>
-        /// <returns>A count of the number found.</returns>
-        private int GetUShortOutputCount(ushort join)
-        {
-            var count = 0;
-            foreach (var data in PanelData)
-            {
-                if (data.ushortOutputs != null)
-                {
-                    count += data.ushortOutputs.Where(o => o.Value == join).Count();
-                }
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// Gets a count of the number of string outputs are in the panel data list.
-        /// </summary>
-        /// <param name="join">The join # to check.</param>
-        /// <returns>A count of the number found.</returns>
-        private int GetStringOutputCount(ushort join)
-        {
-            var count = 0;
-            foreach (var data in PanelData)
-            {
-                if (data.stringOutputs != null)
-                {
-                    count += data.stringOutputs.Where(o => o.Value == join).Count();
-                }
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// Gets a count of the number of smart object boolean outputs are in the panel data list.
-        /// </summary>
-        /// <param name="smartID">The smart object join # to look on.</param>
-        /// <param name="join">The join # to check.</param>
-        /// <returns>A count of the number found.</returns>
-        private int GetSmartBooleanOutputCount(ushort smartID, ushort join)
-        {
-            var count = 0;
-            foreach (var data in PanelData)
-            {
-                if (data.smartObjectBoolOutputs != null && data.smartObjectJoin == smartID)
-                {
-                    count += data.smartObjectBoolOutputs.Where(o => o.Value == join).Count();
-                }
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// Gets a count of the number of smart object ushort outputs are in the panel data list.
-        /// </summary>
-        /// <param name="smartID">The smart object join # to look on.</param>
-        /// <param name="join">The join # to check.</param>
-        /// <returns>A count of the number found.</returns>
-        private int GetSmartUShortOutputCount(ushort smartID, ushort join)
-        {
-            var count = 0;
-            foreach (var data in PanelData)
-            {
-                if (data.smartObjectUShortOutputs != null && data.smartObjectJoin == smartID)
-                {
-                    count += data.smartObjectUShortOutputs.Where(o => o.Value == join).Count();
-                }
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// Gets a count of the number of smart object string outputs are in the panel data list.
-        /// </summary>
-        /// <param name="smartID">The smart object join # to look on.</param>
-        /// <param name="join">The join # to check.</param>
-        /// <returns>A count of the number found.</returns>
-        private int GetSmartStringOutputCount(ushort smartID, ushort join)
-        {
-            var count = 0;
-            foreach (var data in PanelData)
-            {
-                if (data.smartObjectStringOutputs != null && data.smartObjectJoin == smartID)
-                {
-                    count += data.smartObjectStringOutputs.Where(o => o.Value == join).Count();
-                }
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// Handles processing all the data parsing for the touchpanel when it is being added to the project.
-        /// </summary>
-        /// <param name="targetPanel">The <see cref="BasicTriListWithSmartObject"/> to initialize data for.</param>
-        protected void InitializePanel(BasicTriListWithSmartObject targetPanel)
-        {
-            if (PanelData != null)
-            {
-                foreach (var data in PanelData)
-                {
-                    if (data == null)
-                    {
-                        continue;
-                    }
-                    var thisType = data.AssociatedClass.GetType().GetCType();
-                    if (thisType == null)
-                    {
-                        continue;
-                    }
-                    ProcessBoolOutputs(data, thisType, targetPanel);
-                    ProcessUShortOutputs(data, thisType, targetPanel);
-                    ProcessStringOutputs(data, thisType, targetPanel);
-
-                    if (data.smartObjectJoin > 0)
-                    {
-                        ProcessSmartBoolOutputs(data, thisType, targetPanel);
-                        ProcessSmartUShortOutputs(data, thisType, targetPanel);
-                        ProcessSmartStringOutputs(data, thisType, targetPanel);
-                    }
-                }
-                var smartJoins = PanelData.Select((o, a) => o.smartObjectJoin).Where((o, a) => o > 0).Distinct();
-                foreach (var sj in smartJoins)
-                {
-                    targetPanel.SmartObjects[sj].SigChange += Enqueue;
-                }
-                targetPanel.SigChange += Enqueue;
-            }
-        }
-
-        /// <summary>
-        /// Processes the list of boolean data in the DemoPanelData class.
-        /// Since booleans go high and then low, this class assumes that your
-        /// list will have a Press and Release method for each join. This is
-        /// done so that the press or release event can be fired from within
-        /// the same action, instead of requiring multiple actions be fired,
-        /// each testing the value of the boolean.
-        /// This makes more sense, since you only subscribe to the events
-        /// you care about, presses and/or releases, and you don't have to
-        /// worry about checking the boolean state.
-        /// </summary>
-        private void ProcessBoolOutputs(PanelUIData data, CType thisType, BasicTriList targetPanel)
-        {
-            try
-            {
-                if (data.boolOutputs == null) { return; }
-                for (var i = 0; i < data.boolOutputs.Count; i++)
-                {
-                    var methodName = data.boolOutputs.ElementAt(i).Key;
-                    var item = data.boolOutputs.ElementAt(i);
-
-                    //Find the methods with the associated names in this class. Must be non-public and unique to each class instance.
-                    //This is the method that will raise the associated event, and might be null.
-                    var eventMethod = thisType.GetMethod(methodName,
-                        BindingFlags.NonPublic
-                        | BindingFlags.Instance);
-
-                    if (eventMethod == null)
-                    {
-                        continue;
-                    }
-
-                    //Create the action that will be stored in the UserObject.
-                    //This action is the code that will be raised whenever the
-                    //corresponding join is triggered.
-                    var isButton = methodName.Contains("Pressed") || methodName.Contains("Released");
-                    var valueCheck = true;
-                    if (methodName.Contains("Released")) { valueCheck = false; }
-                    Action<ObjectEventArgs> action;
-                    if (isButton)
-                    {
-                        action = new Action<ObjectEventArgs>((b) =>
-                        {
-                            if (b.BoolValue == valueCheck && eventMethod != null)
-                            {
-                                //If the join is equal to the check and the event method was found (not null)
-                                //then invoke the method that was found. This method will raise the
-                                //corresponding event, which is what can be subscribed to by other classes.
-                                eventMethod.Invoke(data.AssociatedClass, null);
-                            }
-                        });
-                    }
-                    else
-                    {
-                        action = new Action<ObjectEventArgs>(b =>
-                        {
-                            if (eventMethod != null)
-                            {
-                                eventMethod.Invoke(data.AssociatedClass, new object[] { b.BoolValue });
-                            }
-                        });
-                    }
-                    //This checks to find the quantity of boolean events in the data list that have the same join #
-                    var count = GetBooleanOutputCount(item.Value); //data.boolOutputs.Where((k) => k.Value == item.Value).Count();
-
-                    //Prepare an array of Actions.
-                    Action<ObjectEventArgs>[] uo;
-
-                    //If the UserObject for the associated join is null then create a new array, using the object count above.
-                    if (targetPanel.BooleanOutput[item.Value].UserObject == null)
-                    {
-                        uo = new Action<ObjectEventArgs>[count];
-                        targetPanel.BooleanOutput[item.Value].UserObject = uo;
-                    }
-                    //If the UserObject for the associated join isn't null, then retrieve that array.
-                    else
-                    {
-                        uo = (Action<ObjectEventArgs>[])targetPanel.BooleanOutput[item.Value].UserObject;
-                    }
-
-                    //Add the Action created above to the list of actions in the next availabe slot.
-                    uo[uo.Where((e) => e != null).Count()] = action;
-
-                    //Why use multiple actions? Since buttons on different pages could have the same join, it is up
-                    //to the programmer to know where this happens and if they want different actions fired from the
-                    //same join. Every action associated with this join will be raised, everytime the join is fired.
-                    //There are cases (albeit edge cases) where you may want to be able to subscribe to different events
-                    //for different equipment, where it is easier to remember what you want to subscribe to by name,
-                    //and having two different events with different names fired from the same join is easier to
-                    //remember than an event with a name unrelated to a piece of equipment.
-
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorLog.Notice("Unable to configure Boolean Outputs");
-                throw ex;
-            }
-        }
-
-        /// <summary>
-        /// Process the list of ushort value changes on the panel. Unlike
-        /// boolean events, only one event is needed, since it is the
-        /// value that matters and needs to be passed to equipment.
-        /// </summary>
-        private void ProcessUShortOutputs(PanelUIData data, CType thisType, BasicTriList targetPanel)
-        {
-            try
-            {
-                if (data.ushortOutputs == null) { return; }
-                foreach (var item in data.ushortOutputs)
-                {
-                    var methodName = item.Key;
-
-                    var valueEvent = thisType.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (valueEvent == null) { continue; }
-
-                    var action = new Action<ObjectEventArgs>((b) =>
-                    {
-                        valueEvent.Invoke(data.AssociatedClass, new object[] { b.UShortValue });
-                    });
-
-                    var count = GetUShortOutputCount(item.Value); //data.ushortOutputs.Where((k) => k.Value == item.Value).Count();
-
-                    Action<ObjectEventArgs>[] uo;
-                    if (targetPanel.UShortOutput[item.Value].UserObject == null)
-                    {
-                        uo = new Action<ObjectEventArgs>[count];
-                        targetPanel.UShortOutput[item.Value].UserObject = uo;
-                    }
-                    else
-                    {
-                        uo = (Action<ObjectEventArgs>[])targetPanel.UShortOutput[item.Value].UserObject;
-                    }
-
-                    uo[uo.Where((e) => e != null).Count()] = action;
-
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorLog.Notice("Unable to configure Analog Outputs");
-                throw ex;
-            }
-        }
-
-        /// <summary>
-        /// Process the list of string value changes on the panel. Unlike
-        /// boolean events, only one event is needed, since it is the
-        /// value that matters and needs to be passed to equipment.
-        /// </summary>
-        private void ProcessStringOutputs(PanelUIData data, CType thisType, BasicTriList targetPanel)
-        {
-            try
-            {
-                if (data.stringOutputs == null) { return; }
-                foreach (var item in data.stringOutputs)
-                {
-                    if (item.Key == "" || item.Value <= 0)
-                    {
-                        continue;
-                    }
-                    var methodName = item.Key;
-
-                    var valueEvent = thisType.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (valueEvent == null) { continue; }
-
-                    var action = new Action<ObjectEventArgs>((b) =>
-                    {
-                        valueEvent.Invoke(data.AssociatedClass, new object[] { b.StringValue });
-                    });
-
-                    var count = GetStringOutputCount(item.Value); //data.stringOutputs.Where((k) => k.Value == item.Value).Count();
-
-                    Action<ObjectEventArgs>[] uo;
-                    if (targetPanel.StringOutput[item.Value].UserObject == null)
-                    {
-                        uo = new Action<ObjectEventArgs>[count];
-                        targetPanel.StringOutput[item.Value].UserObject = uo;
-                    }
-                    else
-                    {
-                        uo = (Action<ObjectEventArgs>[])targetPanel.StringOutput[item.Value].UserObject;
-                    }
-                    uo[uo.Where((e) => e != null).Count()] = action;
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorLog.Notice("Unable to configure String Outputs\n" + ex.Message);
-                throw ex;
-            }
-        }
-
-        /// <summary>
-        /// Processes the list of SmartObject boolean data.
-        /// </summary>
-        private void ProcessSmartBoolOutputs(PanelUIData data, CType thisType, BasicTriListWithSmartObject targetPanel)
-        {
-            try
-            {
-                if (data.smartObjectBoolOutputs == null) { return; }
-                for (var i = 0; i < data.smartObjectBoolOutputs.Count; i += 1)
-                {
-                    var item = data.smartObjectBoolOutputs.ElementAt(i);
-                    var methodName = item.Key;
-
-
-                    var eventPress = thisType.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-
-                    var isButton = methodName.Contains("Pressed") || methodName.Contains("Released");
-                    var valueCheck = true;
-                    if (methodName.Contains("Released")) { valueCheck = false; }
-                    Action<ObjectEventArgs> action;
-                    if (isButton)
-                    {
-                        action = new Action<ObjectEventArgs>((b) =>
-                        {
-                            if (b.BoolValue == valueCheck && eventPress != null)
-                            {
-                                eventPress.Invoke(data.AssociatedClass, null);
-                            }
-                        });
-                    }
-                    else
-                    {
-                        action = new Action<ObjectEventArgs>(b =>
-                        {
-                            if (eventPress != null)
-                            {
-                                eventPress.Invoke(data.AssociatedClass, new object[] { b.BoolValue });
-                            }
-                        });
-                    }
-                    Action<ObjectEventArgs>[] uo;
-                    if (targetPanel.SmartObjects[data.smartObjectJoin].BooleanOutput[item.Value].UserObject == null)
-                    {
-                        var count = GetSmartBooleanOutputCount(data.smartObjectJoin, item.Value);
-                        uo = new Action<ObjectEventArgs>[count];
-                        targetPanel.SmartObjects[data.smartObjectJoin].BooleanOutput[item.Value].UserObject = uo;
-                    }
-                    else
-                    {
-                        uo = (Action<ObjectEventArgs>[])targetPanel.SmartObjects[data.smartObjectJoin].BooleanOutput[item.Value].UserObject;
-                    }
-
-                    uo[uo.Where((e) => e != null).Count()] = action;
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorLog.Notice("Unable to configure Smart Boolean Outputs");
-                throw ex;
-            }
-        }
-
-        /// <summary>
-        /// Processes the list of SmartObject ushort data.
-        /// </summary>
-        private void ProcessSmartUShortOutputs(PanelUIData data, CType thisType, BasicTriListWithSmartObject targetPanel)
-        {
-            try
-            {
-                if (data.smartObjectUShortOutputs == null) { return; }
-                foreach (var item in data.smartObjectUShortOutputs)
-                {
-                    var methodName = item.Key;
-
-                    var valueEvent = thisType.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (valueEvent == null) { continue; }
-
-                    var action = new Action<ObjectEventArgs>((b) =>
-                    {
-                        valueEvent.Invoke(data.AssociatedClass, new object[] { b.UShortValue });
-                    });
-
-                    Action<ObjectEventArgs>[] uo;
-                    if (targetPanel.SmartObjects[data.smartObjectJoin].UShortOutput[item.Value].UserObject == null)
-                    {
-                        var count = GetSmartUShortOutputCount(data.smartObjectJoin, item.Value);
-                        uo = new Action<ObjectEventArgs>[count];
-                        targetPanel.SmartObjects[data.smartObjectJoin].UShortOutput[item.Value].UserObject = uo;
-                    }
-                    else
-                    {
-                        uo = (Action<ObjectEventArgs>[])targetPanel.SmartObjects[data.smartObjectJoin].UShortOutput[item.Value].UserObject;
-                    }
-
-                    uo[uo.Where((e) => e != null).Count()] = action;
-
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorLog.Notice("Unable to configure Smart Analog Outputs");
-                throw ex;
-            }
-        }
-
-        /// <summary>
-        /// Processes the list of SmartObject string data.
-        /// </summary>
-        private void ProcessSmartStringOutputs(PanelUIData data, CType thisType, BasicTriListWithSmartObject targetPanel)
-        {
-            try
-            {
-                if (data.smartObjectStringOutputs == null) { return; }
-                foreach (var item in data.smartObjectStringOutputs)
-                {
-                    var methodName = item.Key;
-
-                    var valueEvent = thisType.GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (valueEvent == null) { continue; }
-
-                    var action = new Action<ObjectEventArgs>((b) =>
-                    {
-                        valueEvent.Invoke(data.AssociatedClass, new object[] { b.StringValue });
-                    });
-
-                    Action<ObjectEventArgs>[] uo;
-                    if (targetPanel.SmartObjects[data.smartObjectJoin].StringOutput[item.Value].UserObject == null)
-                    {
-                        var count = GetSmartStringOutputCount(data.smartObjectJoin, item.Value);
-                        uo = new Action<ObjectEventArgs>[count];
-                        targetPanel.SmartObjects[data.smartObjectJoin].StringOutput[item.Value].UserObject = uo;
-                    }
-                    else
-                    {
-                        uo = (Action<ObjectEventArgs>[])targetPanel.SmartObjects[data.smartObjectJoin].StringOutput[item.Value].UserObject;
-                    }
-
-                    uo[uo.Where((e) => e != null).Count()] = action;
-
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorLog.Notice("Unable to configure Smart String Outputs");
-                throw ex;
             }
         }
 

@@ -38,6 +38,8 @@ namespace EPS.CodeGen.Builders
         protected List<Writers.MethodWriter> MethodWriters { get; } = new List<Writers.MethodWriter>();
         protected List<Writers.TextWriter> OtherWriters { get; } = new List<Writers.TextWriter>();
 
+        protected List<JoinBuilder> Joins { get; } = new List<JoinBuilder>();
+
         public bool IsValid
         {
             get
@@ -57,6 +59,14 @@ namespace EPS.CodeGen.Builders
         public ClassType ClassType { get; set; } = ClassType.Touchpanel;
 
         public ClassBuilder(ClassType classType) => ClassType = classType;
+
+        public void AddJoin(JoinBuilder join)
+        {
+            if(!Joins.Contains(join))
+            {
+                Joins.Add(join);
+            }
+        }
 
         public void AddWriter(Writers.WriterBase writer)
         {
@@ -307,13 +317,28 @@ namespace EPS.CodeGen.Builders
             // Data Bits
             if (ClassType != ClassType.SrlElement)
             {
-                ctor.MethodLines.Add($"data = new {ClassName}Data() {{ AssociatedClass = this }};");
+                //ctor.MethodLines.Add($"data = new {ClassName}Data() {{ AssociatedClass = this }};");
+            }
+
+            if(ClassType == ClassType.Touchpanel)
+            {
+                foreach (var j in Joins)
+                {
+                    ctor.MethodLines.Add(j.GetInitializers().ToString().Replace("ParentPanel.AddData", "AddData"));
+                }
+            }
+            else
+            {
+                foreach (var j in Joins)
+                {
+                    ctor.MethodLines.Add(j.GetInitializers().ToString());
+                }
             }
 
             // Pages and Controls
             if (ClassType == ClassType.Touchpanel)
             {
-                ctor.MethodLines.Add("AddData(data);");
+                //ctor.MethodLines.Add("AddData(data);");
                 foreach (var p in Pages)
                 {
                     ctor.MethodLines.Add($"{p.ClassName} = new {p.ClassName}(this);");
@@ -325,7 +350,7 @@ namespace EPS.CodeGen.Builders
             }
             else if (ClassType == ClassType.Page)
             {
-                ctor.MethodLines.Add("ParentPanel.AddData(data);");
+                //ctor.MethodLines.Add("ParentPanel.AddData(data);");
                 foreach (var p in Pages)
                 {
                     ctor.MethodLines.Add($"{p.ClassName} = new {p.ClassName}(ParentPanel);");
@@ -420,23 +445,31 @@ namespace EPS.CodeGen.Builders
             }
             initValuesMethod.MethodLines.Add("_InitializeValues();");
 
-            // Other Events
-            foreach (var e in Events.OfType<EventElement>())
-            {
-                foreach (var w in e.GetWriters())
-                {
-                    AddWriter(w);
-                }
-            }
+            //// Other Events
+            //foreach (var e in Events.OfType<EventElement>())
+            //{
+            //    foreach (var w in e.GetWriters())
+            //    {
+            //        AddWriter(w);
+            //    }
+            //}
 
-            // Other Properties
-            foreach (var p in Properties.OfType<PropertyElement>())
+            //// Other Properties
+            //foreach (var p in Properties.OfType<PropertyElement>())
+            //{
+            //    if (ClassType == ClassType.SrlElement)
+            //    {
+            //        p.IsListElement = true;
+            //    }
+            //    foreach (var w in p.GetWriters())
+            //    {
+            //        AddWriter(w);
+            //    }
+            //}
+
+            foreach(var join in Joins)
             {
-                if (ClassType == ClassType.SrlElement)
-                {
-                    p.IsListElement = true;
-                }
-                foreach (var w in p.GetWriters())
+                foreach(var w in join.GetWriters())
                 {
                     AddWriter(w);
                 }
@@ -506,7 +539,7 @@ namespace EPS.CodeGen.Builders
                 }
             }
 
-            // Add the writers to the classes.
+            // Add the writers to the class.
             mainClass.Properties.AddRange(PropertyWriters);
             mainClass.Fields.AddRange(FieldWriters);
             mainClass.Events.AddRange(EventWriters);
