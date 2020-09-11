@@ -48,7 +48,8 @@ namespace EPS.CodeGen.Builders
                     (Properties.Count > 0 ||
                     Events.Count > 0 ||
                     Pages.Count > 0 ||
-                    Controls.Count > 0))
+                    Controls.Count > 0 ||
+                    Joins.Count > 0))
                 {
                     return true;
                 }
@@ -469,6 +470,7 @@ namespace EPS.CodeGen.Builders
 
             foreach(var join in Joins)
             {
+                join.IsListElement = ClassType == ClassType.SrlElement;
                 foreach(var w in join.GetWriters())
                 {
                     AddWriter(w);
@@ -507,6 +509,7 @@ namespace EPS.CodeGen.Builders
                 {
                     subMW.MethodLines.Add($"{p.Name}Changed = null;");
                 }
+
                 foreach (var e in Events.OfType<EventElement>())
                 {
                     var names = e.GetEventNames();

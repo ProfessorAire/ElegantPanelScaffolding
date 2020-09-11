@@ -35,12 +35,13 @@ namespace EPS.Parsers
             return 0;
         }
 
-        public static EventElement? GetTransitionCompleteProperty(XElement? propertiesElement)
+        public static JoinBuilder? GetTransitionCompleteProperty(XElement? propertiesElement)
         {
             if (ushort.TryParse(propertiesElement?.Element("TransitionCompleteJoin").Value, out var join) && join > 0)
             {
-                return new EventElement("TransitionComplete", join, 0, JoinType.None);
+                return new JoinBuilder(join, "TransitionComplete", JoinType.Digital, JoinDirection.FromPanel);
             }
+
             return null;
         }
 
@@ -53,11 +54,11 @@ namespace EPS.Parsers
 
             if (ushort.TryParse(propertiesElement?.Element("Themes")?.Element("ProjectThemeJoin")?.Value, out var joinNumber) && joinNumber > 0)
             {
-                var theme = new PropertyElement("Theme", joinNumber, builder.SmartJoin, JoinType.Analog)
-                {
-                    Description = "Gets/Sets the theme number used for the project."
-                };
-                builder.AddProperty(theme);
+                builder.AddJoin(
+                    new JoinBuilder(joinNumber, builder.SmartJoin, "Theme", JoinType.Analog, JoinDirection.Both)
+                    {
+                        Description = "Gets or sets the theme number used for the project."
+                    });
             }
         }
 
@@ -71,24 +72,40 @@ namespace EPS.Parsers
             // First dynamic serial join
             if (ushort.TryParse(propertiesElement?.Element("Backgrounds")?.Element("DynamicGraphicsSerial")?.Value, out var backgroundSerialJoin) && backgroundSerialJoin > 0)
             {
-                builder.AddProperty(new PropertyElement("BackgroundPath", backgroundSerialJoin, builder.SmartJoin, JoinType.Serial) { Description = "Gets/Sets the serial join for the background dynamic graphic path." });
+                builder.AddJoin(
+                    new JoinBuilder(backgroundSerialJoin, builder.SmartJoin, "BackgroundPath", JoinType.Serial, JoinDirection.Both)
+                    {
+                        Description = "Gets or sets the the background path used for the page or subpage."
+                    });
             }
             // Then analog join
             if (ushort.TryParse(propertiesElement?.Element("Backgrounds")?.Element("BackgroundAnalogJoin")?.Value, out var backgroundAnalogJoin) && backgroundSerialJoin > 0)
             {
-                builder.AddProperty(new PropertyElement("BackgroundNumber", backgroundAnalogJoin, builder.SmartJoin, JoinType.Analog) { Description = "Gets/Sets the analog join for background selection." });
+                builder.AddJoin(
+                    new JoinBuilder(backgroundAnalogJoin, builder.SmartJoin, "BackgroundNumber", JoinType.Analog, JoinDirection.Both)
+                    {
+                        Description = "Gets or sets the analog number used for background selection."
+                    });
             }
 
             // Projects also potentially have rotated background joins.
             // First dynamic serial join
             if (ushort.TryParse(propertiesElement?.Element("RotatedBackgrounds")?.Element("DynamicGraphicsSerial")?.Value, out var rotatedBackgroundSerialJoin) && rotatedBackgroundSerialJoin > 0)
             {
-                builder.AddProperty(new PropertyElement("RotatedBackgroundPath", rotatedBackgroundSerialJoin, builder.SmartJoin, JoinType.Serial) { Description = "Gets/Sets the serial join for the background dynamic graphic path." });
+                builder.AddJoin(
+                    new JoinBuilder(rotatedBackgroundSerialJoin, builder.SmartJoin, "RotatedBackgroundPath", JoinType.Serial, JoinDirection.Both)
+                    {
+                        Description = "Gets or sets the the background path used for the rotated page or subpage."
+                    });
             }
             // Then analog join
             if (ushort.TryParse(propertiesElement?.Element("RotatedBackgrounds")?.Element("BackgroundAnalogJoin")?.Value, out var rotatedBackgroundAnalogJoin) && rotatedBackgroundSerialJoin > 0)
             {
-                builder.AddProperty(new PropertyElement("RotatedBackgroundNumber", rotatedBackgroundAnalogJoin, builder.SmartJoin, JoinType.Analog) { Description = "Gets/Sets the analog join for background selection." });
+                builder.AddJoin(
+                    new JoinBuilder(rotatedBackgroundAnalogJoin, builder.SmartJoin, "RotatedBackgroundNumber", JoinType.Analog, JoinDirection.Both)
+                    {
+                        Description = "Gets or sets the analog number used for rotated background selection."
+                    });
             }
         }
 
@@ -136,269 +153,320 @@ namespace EPS.Parsers
                         if (name.StartsWith("digitalpresshigh", StringComparison.InvariantCulture))
                         {
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "Raise", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "Raise", JoinType.DigitalButton, JoinDirection.FromPanel));
                         }
                         else if (name.StartsWith("digitalpresslow", StringComparison.InvariantCulture))
                         {
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "Lower", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "Lower", JoinType.DigitalButton, JoinDirection.FromPanel));
                         }
                         else if (name.StartsWith("digitalpress", StringComparison.InvariantCulture))
                         {
-                            builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
+                            builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"", JoinType.DigitalButton, JoinDirection.FromPanel));
                             if (child.Element("Properties")?.Element("ShowSelectFeedback")?.Value == "true")
                             {
                                 builder.AddJoin(
-                                    new JoinBuilder(join, $"IsActive", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
+                                    new JoinBuilder(join, $"IsActive", JoinType.Digital, JoinDirection.ToPanel));
                             }
                         }
                         else if (name.StartsWith("digitalenable", StringComparison.InvariantCulture))
                         {
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "IsEnabled", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "IsEnabled", JoinType.Digital, JoinDirection.ToPanel));
                         }
                         else if (name.StartsWith("digitalvisibility", StringComparison.InvariantCulture) || name.StartsWith("visibility", StringComparison.InvariantCulture))
                         {
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "IsVisible", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "IsVisible", JoinType.Digital, JoinDirection.ToPanel));
                         }
                         else if (name.StartsWith("digitalonoff", StringComparison.InvariantCulture))
                         {
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "OnOffToggle", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "OnOffToggle", JoinType.DigitalButton, JoinDirection.FromPanel));
                         }
                         else if (name.StartsWith("butoffdigitalpress", StringComparison.InvariantCulture))
                         {
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "Off", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "Off", JoinType.DigitalButton, JoinDirection.FromPanel));
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "OffIsActive", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "OffIsActive", JoinType.Digital, JoinDirection.ToPanel));
                         }
                         else if (name.StartsWith("butondigitalpress", StringComparison.InvariantCulture))
                         {
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "On", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "On", JoinType.DigitalButton, JoinDirection.FromPanel));
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "OnIsActive", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "OnIsActive", JoinType.Digital, JoinDirection.ToPanel));
                         }
                         else if (name.StartsWith("checkedstate", StringComparison.InvariantCulture))
                         {
-                            builder.AddEvent(new EventElement($"Toggle", join, builder.SmartJoin, JoinType.Digital, true));
-                            builder.AddProperty(new PropertyElement($"IsChecked", join, builder.SmartJoin, JoinType.Digital));
-
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "Toggle", JoinType.DigitalButton, JoinDirection.FromPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "Toggle", JoinType.DigitalButton, JoinDirection.FromPanel));
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "IsChecked", JoinType.Digital, JoinDirection.ToPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "IsChecked", JoinType.Digital, JoinDirection.ToPanel));
                         }
                         else if (name.StartsWith("indirecttext", StringComparison.InvariantCulture))
                         {
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "Text", JoinType.Serial, JoinDirection.ToPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "Text", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name.Contains("butonindirecttext"))
                         {
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "OnText", JoinType.Serial, JoinDirection.ToPanel, JoinMethod.Property));
+                                new JoinBuilder(join, builder.SmartJoin, "OnText", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name.Contains("butofindirecttext"))
                         {
-                            builder.AddProperty(new PropertyElement($"OffText", join, builder.SmartJoin, JoinType.Serial));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "OffText", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name.Contains("analogmode"))
                         {
-                            builder.AddProperty(new PropertyElement($"Mode", join, builder.SmartJoin, JoinType.Analog));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Mode", JoinType.Analog, JoinDirection.ToPanel));
                         }
                         else if (name == "analogchildpositionjoin")
                         {
-                            builder.AddProperty(new PropertyElement($"ChildPosition", join, builder.SmartJoin, JoinType.Analog));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "ChildPosition", JoinType.Analog, JoinDirection.ToPanel));
                         }
                         else if (name == "primarylabeljoin")
                         {
-                            builder.AddProperty(new PropertyElement($"LeftLabel", join, builder.SmartJoin, JoinType.Serial));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "LeftLabel", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name == "primarychildlabeljoin")
                         {
-                            builder.AddProperty(new PropertyElement($"LeftChildLabel", join, builder.SmartJoin, JoinType.Serial));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "LeftChildLabel", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name == "secondarylabeljoin")
                         {
-                            builder.AddProperty(new PropertyElement($"CenterLabel", join, builder.SmartJoin, JoinType.Serial));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "CenterLabel", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name == "secondarychildlabeljoin")
                         {
-                            builder.AddProperty(new PropertyElement($"CenterChildLabel", join, builder.SmartJoin, JoinType.Serial));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "CenterChildLabel", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name == "tertiarylabeljoin")
                         {
-                            builder.AddProperty(new PropertyElement($"RightLabel", join, builder.SmartJoin, JoinType.Serial));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "RightLabel", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name == "tertiarychildlabeljoin")
                         {
-                            builder.AddProperty(new PropertyElement($"RightChildLabel", join, builder.SmartJoin, JoinType.Serial));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "RightChildLabel", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name.Contains("digitalswipeup"))
                         {
-                            builder.AddEvent(new EventElement($"SwipedUp", join, builder.SmartJoin, JoinType.Digital, false));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "SwipedUp", JoinType.DigitalButton, JoinDirection.FromPanel));
                         }
                         else if (name.Contains("digitalswipedown"))
                         {
-                            builder.AddEvent(new EventElement($"SwipedDown", join, builder.SmartJoin, JoinType.Digital, false));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "SwipedDown", JoinType.DigitalButton, JoinDirection.FromPanel));
                         }
                         else if (name.Contains("digitalswipeleft"))
                         {
-                            builder.AddEvent(new EventElement($"SwipedLeft", join, builder.SmartJoin, JoinType.Digital, false));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "SwipedLeft", JoinType.DigitalButton, JoinDirection.FromPanel));
                         }
                         else if (name.Contains("digitalswiperight"))
                         {
-                            builder.AddEvent(new EventElement($"SwipedRight", join, builder.SmartJoin, JoinType.Digital, false));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "SwipedRight", JoinType.DigitalButton, JoinDirection.FromPanel));
                         }
                         else if (name.StartsWith("analogfeedbackjoin1", StringComparison.InvariantCulture))
                         {
-                            builder.AddProperty(new PropertyElement($"LowValue", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.Both));
-                            //builder.AddEvent(new EventElement("LowValue", join, builder.SmartJoin, JoinType.Analog));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "LowValue", JoinType.Analog, JoinDirection.Both));
                         }
                         else if (name.StartsWith("analogfeedbackjoin2", StringComparison.InvariantCulture))
                         {
-                            builder.AddProperty(new PropertyElement($"HighValue", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.Both));
-                            //builder.AddEvent(new EventElement("HighValue", join, builder.SmartJoin, JoinType.Analog));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "HighValue", JoinType.Analog, JoinDirection.Both));
                         }
                         else if (name.StartsWith("analogminvalue", StringComparison.InvariantCulture))
                         {
-                            builder.AddProperty(new PropertyElement($"MinValue", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.ToPanel));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "MinValue", JoinType.Analog, JoinDirection.ToPanel));
                         }
                         else if (name.StartsWith("analogmaxvalue", StringComparison.InvariantCulture))
                         {
-                            builder.AddProperty(new PropertyElement($"MaxValue", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.ToPanel));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "MaxValue", JoinType.Analog, JoinDirection.ToPanel));
                         }
                         else if (name.StartsWith("digitalanimation", StringComparison.InvariantCulture))
                         {
-                            builder.AddProperty(new PropertyElement($"IsAnimating", join, builder.SmartJoin, JoinType.Digital));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "IsAnimating", JoinType.Digital, JoinDirection.ToPanel));
                         }
                         else if (name.StartsWith("serialmode", StringComparison.InvariantCulture))
                         {
-                            builder.AddProperty(new PropertyElement($"Mode", join, builder.SmartJoin, JoinType.Analog));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Mode", JoinType.Analog, JoinDirection.ToPanel));
                         }
                         else if (name.StartsWith("enterkeypress", StringComparison.InvariantCulture))
                         {
-                            builder.AddEvent(new EventElement($"Enter", join, builder.SmartJoin, JoinType.Digital, true));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Enter", JoinType.DigitalButton, JoinDirection.FromPanel));
                         }
                         else if (name.StartsWith("esckeypress", StringComparison.InvariantCulture))
                         {
-                            builder.AddEvent(new EventElement($"Escape", join, builder.SmartJoin, JoinType.Digital, true));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Escape", JoinType.DigitalButton, JoinDirection.FromPanel));
                         }
                         else if (name == "serialjoin")
                         {
-                            builder.AddProperty(new PropertyElement($"TextOverride", join, builder.SmartJoin, JoinType.Serial, PropertyMethod.ToPanel, true));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "TextOverride", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name == "serialindirecttextjoin")
                         {
-                            builder.AddProperty(new PropertyElement($"Text", join, builder.SmartJoin, JoinType.Serial));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Text", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name == "serialoutputjoin")
                         {
-                            builder.AddEvent(new EventElement($"TextChanged", join, builder.SmartJoin, JoinType.Serial, false));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Text", JoinType.Serial, JoinDirection.FromPanel));
                         }
                         else if (name == "setfocusjoinon")
                         {
-                            var focuson = new PropertyElement($"Focus", join, builder.SmartJoin, JoinType.Digital, PropertyMethod.Void)
-                            {
-                                ContentOverride = $"public void {child.Element("ObjectName").Value}Focus()\n\t{{\n\t\tPulse({join}, 100);"
-                            };
-                            builder.AddProperty(focuson);
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "SetFocus", JoinType.DigitalPulse, JoinDirection.ToPanel));
+
+                            //var focuson = new PropertyElement($"Focus", join, builder.SmartJoin, JoinType.Digital, PropertyMethod.Void)
+                            //{
+                            //    ContentOverride = $"public void {child.Element("ObjectName").Value}Focus()\n\t{{\n\t\tPulse({join}, 100);"
+                            //};
+                            //builder.AddProperty(focuson);
                         }
                         else if (name == "setfocusjoinoff")
                         {
-                            var focusoff = new PropertyElement($"Focus", join, builder.SmartJoin, JoinType.Digital, PropertyMethod.Void)
-                            {
-                                ContentOverride = $"public void {child.Element("ObjectName").Value}Unfocus()\n\t{{\n\t\tPulse({join}, 100);"
-                            };
-                            builder.AddProperty(focusoff);
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "RemoveFocus", JoinType.DigitalPulse, JoinDirection.ToPanel));
+
+                            //var focusoff = new PropertyElement($"Focus", join, builder.SmartJoin, JoinType.Digital, PropertyMethod.Void)
+                            //{
+                            //    ContentOverride = $"public void {child.Element("ObjectName").Value}Unfocus()\n\t{{\n\t\tPulse({join}, 100);"
+                            //};
+                            //builder.AddProperty(focusoff);
                         }
                         else if (name == "hasfocusjoin")
                         {
+                            //if ((child.Element("Properties")?.Element("SetFocusJoinOn")?.Value == "0" || string.IsNullOrEmpty(child.Element("Properties")?.Element("SetFocusJoinOn")?.Value)) && (child.Element("Properties")?.Element("SetFocusJoinOff")?.Value == "0" || string.IsNullOrEmpty(child.Element("Properties")?.Element("SetFocusJoinOff")?.Value)))
+                            //{
+                            //    var focus1 = new PropertyElement($"IsFocused", join, builder.SmartJoin, JoinType.Digital, PropertyMethod.Void)
+                            //    {
+                            //        ContentOverride = $"public void Focus()\n{{\n\tParentPanel.Pulse({(builder.SmartJoin > 0 ? builder.SmartJoin + ", " : "")}{join}, 100);\n}}"
+                            //    };
+                            //    builder.AddProperty(focus1);
+                            //}
+                            //builder.AddEvent(new EventElement($"IsFocusedChanged", join, builder.SmartJoin, JoinType.Digital));
+
+                            var direction = JoinDirection.Both;
+                            
                             if ((child.Element("Properties")?.Element("SetFocusJoinOn")?.Value == "0" || string.IsNullOrEmpty(child.Element("Properties")?.Element("SetFocusJoinOn")?.Value)) && (child.Element("Properties")?.Element("SetFocusJoinOff")?.Value == "0" || string.IsNullOrEmpty(child.Element("Properties")?.Element("SetFocusJoinOff")?.Value)))
                             {
-                                var focus1 = new PropertyElement($"IsFocused", join, builder.SmartJoin, JoinType.Digital, PropertyMethod.Void)
-                                {
-                                    ContentOverride = $"public void Focus()\n{{\n\tParentPanel.Pulse({(builder.SmartJoin > 0 ? builder.SmartJoin + ", " : "")}{join}, 100);\n}}"
-                                };
-                                builder.AddProperty(focus1);
+                                direction = JoinDirection.FromPanel;
                             }
-                            builder.AddEvent(new EventElement($"IsFocusedChanged", join, builder.SmartJoin, JoinType.Digital));
+
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "IsFocused", JoinType.Digital, direction));
                         }
                         else if (name == "prependtextjoin")
                         {
-                            builder.AddProperty(new PropertyElement($"PrependText", join, builder.SmartJoin, JoinType.Serial, PropertyMethod.Void));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "PrependText", JoinType.SerialSet, JoinDirection.ToPanel));
                         }
                         else if (name == "appendtextjoin")
                         {
-                            builder.AddProperty(new PropertyElement($"AppendText", join, builder.SmartJoin, JoinType.Serial, PropertyMethod.Void));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "AppendText", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name == "serialgraphicsjoin")
                         {
-                            builder.AddProperty(new PropertyElement($"GraphicsPath", join, builder.SmartJoin, JoinType.Serial, PropertyMethod.Both));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "GraphicsPath", JoinType.Serial, JoinDirection.Both));
                         }
                         else if (name == "serialdynamicgraphicsjoin")
                         {
-                            builder.AddProperty(new PropertyElement($"GraphicsPath", join, builder.SmartJoin, JoinType.Serial, PropertyMethod.Both));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "GraphicsPath", JoinType.Serial, JoinDirection.Both));
                         }
                         else if (name == "serialdynamiciconjoin")
                         {
-                            builder.AddProperty(new PropertyElement($"IconName", join, builder.SmartJoin, JoinType.Serial, PropertyMethod.ToPanel));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "IconName", JoinType.Serial, JoinDirection.ToPanel));
                         }
                         else if (name == "analogdynamiciconjoin")
                         {
-                            builder.AddProperty(new PropertyElement($"IconNumber", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.ToPanel));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "IconNumber", JoinType.Analog, JoinDirection.ToPanel));
                         }
                         else if (name == "analogredjoin")
                         {
                             if (controlType == "COLOR_CHIP")
                             {
-                                builder.AddProperty(new PropertyElement($"Red", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.ToPanel));
+                                builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Red", JoinType.Analog, JoinDirection.ToPanel));
                             }
                             else
                             {
-                                builder.AddProperty(new PropertyElement($"Red", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.Both));
+                                builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Red", JoinType.Analog, JoinDirection.Both));
                             }
                         }
                         else if (name == "analoggreenjoin")
                         {
                             if (controlType == "COLOR_CHIP")
                             {
-                                builder.AddProperty(new PropertyElement($"Green", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.ToPanel));
+                                builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Green", JoinType.Analog, JoinDirection.ToPanel));
                             }
                             else
                             {
-                                builder.AddProperty(new PropertyElement($"Green", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.Both));
+                                builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Green", JoinType.Analog, JoinDirection.Both));
                             }
                         }
                         else if (name == "analogbluejoin")
                         {
                             if (controlType == "COLOR_CHIP")
                             {
-                                builder.AddProperty(new PropertyElement($"Blue", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.ToPanel));
+                                builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Blue", JoinType.Analog, JoinDirection.ToPanel));
                             }
                             else
                             {
-                                builder.AddProperty(new PropertyElement($"Blue", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.Both));
+                                builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Blue", JoinType.Analog, JoinDirection.Both));
                             }
                         }
                         else if (name.StartsWith("velocity", StringComparison.InvariantCulture))
                         {
-                            builder.AddProperty(new PropertyElement(e.Name.LocalName.Replace("Join", ""), join, builder.SmartJoin, JoinType.Analog, PropertyMethod.FromPanel));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, e.Name.LocalName.Replace("Join", ""), JoinType.Analog, JoinDirection.FromPanel));
                         }
                         else if (name.Contains("analogtouchfeedback"))
                         {
-                            builder.AddProperty(new PropertyElement(e.Name.LocalName.Replace("Feedback", ""), join, builder.SmartJoin, JoinType.Analog, PropertyMethod.FromPanel));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, e.Name.LocalName.Replace("Feedback", ""), JoinType.Analog, JoinDirection.FromPanel));
                         }
                         else if (name == "holdjoin")
                         {
-                            builder.AddEvent(new EventElement("Hold", join, builder.SmartJoin, JoinType.Digital));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Hold", JoinType.Digital, JoinDirection.FromPanel));
                         }
                         else if (name == "clickjoin")
                         {
-                            builder.AddEvent(new EventElement("Click", join, builder.SmartJoin, JoinType.Digital));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Click", JoinType.Digital, JoinDirection.FromPanel));
                         }
                         else if (name == "negxdigitaljoin" || name == "negydigitaljoin" || name == "posxdigitaljoin" || name == "posydigitaljoin")
                         {
@@ -407,11 +475,13 @@ namespace EPS.Parsers
                                 name == "posxdigitaljoin" ? "GestureRight" :
                                 name == "posydigitaljoin" ? "GestureUp" : "";
 
-                            builder.AddEvent(new EventElement(tempName, join, builder.SmartJoin, JoinType.Digital));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, tempName, JoinType.Digital, JoinDirection.FromPanel));
                         }
                         else if (name.Contains("analogfeedback") || name == "analogjoin")
                         {
-                            builder.AddProperty(new PropertyElement($"Value", join, builder.SmartJoin, JoinType.Analog, PropertyMethod.Both));
+                            builder.AddJoin(
+                                new JoinBuilder(join, builder.SmartJoin, "Value", JoinType.Analog, JoinDirection.Both));
                         }
                     }
 
@@ -419,9 +489,12 @@ namespace EPS.Parsers
                     if (ushort.TryParse(useModes?.Element("AnalogModeJoin")?.Value, out var modeJoin))
                     {
                         builder.AddProperty(new PropertyElement($"ControlMode", modeJoin, builder.SmartJoin, JoinType.Analog));
+                        builder.AddJoin(
+                                new JoinBuilder(modeJoin, builder.SmartJoin, "ControlMode", JoinType.Analog, JoinDirection.ToPanel));
                     }
                 }
             }
+
             rootBuilder.AddControl(builder);
         }
     }

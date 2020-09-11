@@ -36,11 +36,6 @@ namespace EPS.CodeGen.Builders
         public JoinDirection JoinDirection { get; set; } = JoinDirection.Unknown;
 
         /// <summary>
-        /// Gets or sets the <see cref="JoinMethod"/> the join uses. Defaults to <see cref="JoinMethod.Property"/>.
-        /// </summary>
-        public JoinMethod JoinMethod { get; set; } = JoinMethod.Property;
-
-        /// <summary>
         /// Gets or sets the base name of the join.
         /// </summary>
         public string JoinName { get; set; } = string.Empty;
@@ -73,8 +68,8 @@ namespace EPS.CodeGen.Builders
         /// <param name="joinType">The join's type.</param>
         /// <param name="joinDirection">The join's direction.</param>
         /// <param name="joinMethod">The join's interaction method.</param>
-        public JoinBuilder(uint joinNumber, string joinName, JoinType joinType, JoinDirection joinDirection, JoinMethod joinMethod)
-            :this(joinNumber, 0, joinName, joinType, joinDirection, joinMethod) 
+        public JoinBuilder(uint joinNumber, string joinName, JoinType joinType, JoinDirection joinDirection)
+            : this(joinNumber, 0, joinName, joinType, joinDirection)
         {
         }
 
@@ -87,14 +82,13 @@ namespace EPS.CodeGen.Builders
         /// <param name="joinType">The join's type.</param>
         /// <param name="joinDirection">The join's direction.</param>
         /// <param name="joinMethod">The join's interaction method.</param>
-        public JoinBuilder(uint joinNumber, uint smartId, string joinName, JoinType joinType, JoinDirection joinDirection, JoinMethod joinMethod)
+        public JoinBuilder(uint joinNumber, uint smartId, string joinName, JoinType joinType, JoinDirection joinDirection)
         {
             JoinNumber = joinNumber;
             SmartJoinNumber = smartId;
             JoinName = joinName;
             JoinType = joinType;
             JoinDirection = joinDirection;
-            JoinMethod = joinMethod;
         }
 
         /// <summary>
@@ -104,8 +98,8 @@ namespace EPS.CodeGen.Builders
         public TextWriter GetInitializers()
         {
             var writer = new TextWriter("");
-            
-            if(JoinDirection == JoinDirection.FromPanel || JoinDirection == JoinDirection.Both)
+
+            if (JoinDirection == JoinDirection.FromPanel || JoinDirection == JoinDirection.Both)
             {
                 var raiseMethod = $"Raise{GetEventChangeName()}";
 
@@ -187,6 +181,7 @@ namespace EPS.CodeGen.Builders
             var sigTypeName = GetJoinTypeNameString();
             var offsetText = GetOffsetString();
 
+
             var args = $"{sigTypeName}ValueChangedEventArgs";
             var propertyName = FormatPropertyName(JoinName);
             var fieldName = FormatFieldName(JoinName);
@@ -195,43 +190,71 @@ namespace EPS.CodeGen.Builders
 
             var changeEventName = GetEventChangeName();
 
-            // First create the EventWriter.
-            // This handles change event notifications, which are triggered when the value going to the panel is changed.
-            result.Add(GetEventWriter());
-
-            // Next create the property and backing field writers.
-            var pw = GetPropertyWriter();
-            var fw = GetFieldWriter();
-
-            pw.Getter.Add($"return {fieldName};");
-
-            if(fieldName == "value")
+            if (JoinType == JoinType.DigitalPulse || JoinType == JoinType.AnalogSet || JoinType == JoinType.SerialSet)
             {
-                fieldName = $"this.{fieldName}";
+                var prefix = JoinType == JoinType.DigitalPulse ? "Latch" : "";
+                var singleSetter = new MethodWriter($"{prefix}{propertyName}", $"Sends the value to a single touchpanel.");
+                singleSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
+                singleSetter.AddParameter("BasicTriListWithSmartObject", "panel", "The panel to change the associated join value on.");
+                singleSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value, panel);");
+
+                result.Add(singleSetter);
+
+                var allSetter = new MethodWriter($"{prefix}{propertyName}", $"Sends the value to all touchpanels.");
+                allSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
+                allSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value);");
+
+                result.Add(allSetter);
+
+                if (JoinType != JoinType.DigitalPulse)
+                {
+                    var pulseMw = new MethodWriter($"{propertyName}", $"Pulses the {propertyName} digital signal.");
+                    pulseMw.AddParameter("int", "duration", "The duration in milliseconds to pulse the signal for.");
+                    pulseMw.MethodLines.Add($"ParentPanel.Pulse({smartValue}(uint)({JoinNumber}{offsetText}), duration);");
+
+                    result.Add(pulseMw);
+                }
             }
-
-            pw.Setter.Add($"{fieldName} = value;");
-            pw.Setter.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value);");
-
-            result.Add(pw);
-            result.Add(fw);
-
-            var methodSetter = new MethodWriter($"Set{propertyName}", $"Sets the value of the <see cref=\"{propertyName}\"/> join on a single touchpanel.");
-            methodSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
-            methodSetter.AddParameter("BasicTriListWithSmartObject", "panel", "The panel to change the associated join value on.");
-            methodSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value, panel);");
-            methodSetter.MethodLines.Add($"if ({changeEventName} != null)");
-            methodSetter.MethodLines.Add("{");
-            methodSetter.MethodLines.Add($"{changeEventName}(this, new {args}(value));");
-            methodSetter.MethodLines.Add("}");
-
-            if (JoinType == JoinType.Digital && 
-                (JoinDirection == JoinDirection.ToPanel || JoinDirection == JoinDirection.Both))
+            else
             {
-                var pulseMw = new MethodWriter($"Pulse{propertyName}", $"Pulses the {propertyName} digital signal. Any local signal changed events won't be fired by this method.");
-                pulseMw.AddParameter("int", "duration", "The duration in milliseconds to pulse the signal for.");
-                pulseMw.MethodLines.Add($"ParentPanel.Pulse({smartSuffix}(uint)({JoinNumber}{offsetText}), duration);");
-                result.Add(pulseMw);
+                // First create the EventWriter.
+                // This handles change event notifications, which are triggered when the value going to the panel is changed.
+                result.Add(GetEventWriter());
+
+                // Next create the property and backing field writers.
+                var pw = GetPropertyWriter();
+                var fw = GetFieldWriter();
+
+                pw.Getter.Add($"return {fieldName};");
+
+                if (fieldName == "value")
+                {
+                    fieldName = $"this.{fieldName}";
+                }
+
+                pw.Setter.Add($"{fieldName} = value;");
+                pw.Setter.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value);");
+
+                result.Add(pw);
+                result.Add(fw);
+
+                var methodSetter = new MethodWriter($"Set{propertyName}", $"Sets the value of the <see cref=\"{propertyName}\"/> join on a single touchpanel.");
+                methodSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
+                methodSetter.AddParameter("BasicTriListWithSmartObject", "panel", "The panel to change the associated join value on.");
+                methodSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value, panel);");
+                methodSetter.MethodLines.Add($"if ({changeEventName} != null)");
+                methodSetter.MethodLines.Add("{");
+                methodSetter.MethodLines.Add($"{changeEventName}(this, new {args}(value));");
+                methodSetter.MethodLines.Add("}");
+
+                if ((JoinType == JoinType.Digital || JoinType == JoinType.DigitalPulse || JoinType == JoinType.SmartDigital) &&
+                    (JoinDirection == JoinDirection.ToPanel || JoinDirection == JoinDirection.Both))
+                {
+                    var pulseMw = new MethodWriter($"Pulse{propertyName}", $"Pulses the {propertyName} digital signal. Any local signal changed events won't be fired by this method.");
+                    pulseMw.AddParameter("int", "duration", "The duration in milliseconds to pulse the signal for.");
+                    pulseMw.MethodLines.Add($"ParentPanel.Pulse({smartValue}(uint)({JoinNumber}{offsetText}), duration);");
+                    result.Add(pulseMw);
+                }
             }
 
             return result;
@@ -243,7 +266,7 @@ namespace EPS.CodeGen.Builders
         /// <returns></returns>
         private List<WriterBase> GetWritersFromPanel()
         {
-            if(JoinType == JoinType.DigitalButton || JoinType == JoinType.SmartDigitalButton)
+            if (JoinType == JoinType.DigitalButton || JoinType == JoinType.SmartDigitalButton)
             {
                 return GetButtonWritersFromPanel();
             }
@@ -255,7 +278,7 @@ namespace EPS.CodeGen.Builders
 
             var args = $"{sigTypeName}ValueChangedEventArgs";
 
-            
+
             var propertyName = FormatPropertyName(JoinName);
             var fieldName = FormatFieldName(JoinName);
             var smartSuffix = SmartJoinNumber > 0 ? "Smart" : string.Empty;
@@ -374,7 +397,7 @@ namespace EPS.CodeGen.Builders
             pressedEvent.Help.Summary = "Raised when the button is pressed.";
 
             var releasedEvent = new EventWriter("Released")
-            { 
+            {
                 Handler = $"EventHandler<{args}>"
             };
 
@@ -478,7 +501,7 @@ namespace EPS.CodeGen.Builders
         /// <returns>A string representing the text to include in offset calculations.</returns>
         private string GetOffsetString()
         {
-            if(!IsListElement)
+            if (!IsListElement)
             {
                 return string.Empty;
             }
@@ -487,14 +510,17 @@ namespace EPS.CodeGen.Builders
             {
                 case JoinType.Analog:
                 case JoinType.SmartAnalog:
+                case JoinType.AnalogSet:
                     return " + analogOffset";
                 case JoinType.Digital:
                 case JoinType.DigitalButton:
+                case JoinType.DigitalPulse:
                 case JoinType.SmartDigital:
                 case JoinType.SmartDigitalButton:
                     return " + digitalOffset";
                 case JoinType.Serial:
                 case JoinType.SmartSerial:
+                case JoinType.SerialSet:
                     return " + serialOffset";
                 case JoinType.SrlVisibility:
                     return " + itemOffset + 2010";

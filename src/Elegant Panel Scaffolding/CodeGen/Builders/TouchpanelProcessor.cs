@@ -88,7 +88,7 @@ namespace EPS.CodeGen.Builders
                                 var key = HardkeyParser.ParseElement(hk, options);
                                 if (key != null)
                                 {
-                                    TouchpanelCore.AddEvent(key);
+                                    TouchpanelCore.AddJoin(key);
                                 }
                             }
                         }
@@ -136,10 +136,10 @@ namespace EPS.CodeGen.Builders
 
                         GenericParser.ParseBackgroundJoins(props, pageBuilder);
 
-                        var transitionEvent = GenericParser.GetTransitionCompleteProperty(props);
-                        if (transitionEvent != null)
+                        var transitionJoin = GenericParser.GetTransitionCompleteProperty(props);
+                        if(transitionJoin != null)
                         {
-                            pageBuilder.AddEvent(transitionEvent);
+                            pageBuilder.AddJoin(transitionJoin);
                         }
                     }
 
@@ -190,11 +190,11 @@ namespace EPS.CodeGen.Builders
                                 subBuilder.AnalogOffset = GenericParser.ParseAnalogOffset(subProps);
                                 subBuilder.SerialOffset = GenericParser.ParseSerialOffset(subProps);
 
-                                var transitionEvent = GenericParser.GetTransitionCompleteProperty(subProps);
+                                var transitionJoin = GenericParser.GetTransitionCompleteProperty(subProps);
 
-                                if (transitionEvent != null)
+                                if (transitionJoin != null)
                                 {
-                                    subBuilder.AddEvent(transitionEvent);
+                                    subBuilder.AddJoin(transitionJoin);
                                 }
                             }
 

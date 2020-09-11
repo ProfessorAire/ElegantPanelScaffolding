@@ -39,7 +39,7 @@ namespace EPS.CodeGen.Builders
                 var digital = (i * DigitalStep) + Control.DigitalOffset;
                 var analog = (i * AnalogStep) + Control.AnalogOffset;
                 var serial = (i * SerialStep) + Control.SerialOffset;
-                tw.Text.Add($"new {Control.ClassName}(ParentPanel, {digital}, {analog}, {serial}, {i}){(i < Quantity - 1 ? "," : "")}");
+                tw.Text.Add($"\tnew {Control.ClassName}(ParentPanel, {digital}, {analog}, {serial}, {i}){(i < Quantity - 1 ? "," : "")}");
             }
 
             tw.Text.Add("};");

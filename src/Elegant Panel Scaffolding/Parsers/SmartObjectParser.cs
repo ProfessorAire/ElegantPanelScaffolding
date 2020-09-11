@@ -72,29 +72,29 @@ namespace EPS.Parsers
                         joinType = JoinType.Digital;
                     }
 
-                    var propertyMethod = PropertyMethod.ToPanel;
+                    var joinDirection = JoinDirection.ToPanel;
                     if (isIn && isOut)
                     {
-                        propertyMethod = PropertyMethod.Both;
+                        joinDirection = JoinDirection.Both;
                     }
                     else if (isIn && !isOut)
                     {
-                        propertyMethod = PropertyMethod.ToPanel;
+                        joinDirection = JoinDirection.ToPanel;
                     }
                     else if (!isIn && isOut)
                     {
-                        propertyMethod = PropertyMethod.FromPanel;
+                        joinDirection = JoinDirection.FromPanel;
                     }
+
+                    if (j?.Name?.LocalName?.Contains("Button") ?? false)
+                    {
+                        joinType = JoinType.DigitalButton;
+                    }
+
                     if (!string.IsNullOrEmpty(joinName))
                     {
-                        if (isIn)
-                        {
-                            builder.AddProperty(new PropertyElement(joinName, joinNumber, builder.SmartJoin, joinType, propertyMethod));
-                        }
-                        if (isOut)
-                        {
-                            builder.AddEvent(new EventElement(joinName, joinNumber, builder.SmartJoin, joinType, j?.Name?.LocalName?.Contains("Button") ?? false));
-                        }
+                        builder.AddJoin(
+                            new JoinBuilder(joinNumber, builder.SmartJoin, joinName, joinType, joinDirection));
                     }
                 }
             }
@@ -142,32 +142,35 @@ namespace EPS.Parsers
                         joinType = JoinType.Digital;
                     }
 
-                    var propertyMethod = PropertyMethod.ToPanel;
+                    var joinDirection = JoinDirection.ToPanel;
                     if (isIn && isOut)
                     {
-                        propertyMethod = PropertyMethod.Both;
+                        joinDirection = JoinDirection.Both;
                     }
                     else if (isIn && !isOut)
                     {
-                        propertyMethod = PropertyMethod.ToPanel;
+                        joinDirection = JoinDirection.ToPanel;
                     }
                     else if (!isIn && isOut)
                     {
-                        propertyMethod = PropertyMethod.FromPanel;
-                    }
-
-                    if (j?.Name?.LocalName.Contains("Button") == false)
-                    {
-                        outName += "Changed";
+                        joinDirection = JoinDirection.FromPanel;
                     }
 
                     if (isIn)
                     {
-                        builder.AddProperty(new PropertyElement(inName, joinNumber, builder.SmartJoin, joinType, propertyMethod));
+                        builder.AddJoin(
+                            new JoinBuilder(joinNumber, builder.SmartJoin, inName, joinType, joinDirection));
                     }
+
+                    if (j?.Name?.LocalName?.Contains("Button") ?? false)
+                    {
+                        joinType = JoinType.DigitalButton;
+                    }
+
                     if (isOut)
                     {
-                        builder.AddEvent(new EventElement(outName, joinNumber, builder.SmartJoin, joinType, j?.Name?.LocalName.Contains("Button") ?? false));
+                        builder.AddJoin(
+                            new JoinBuilder(joinNumber, builder.SmartJoin, outName, joinType, joinDirection));
                     }
                 }
             }
@@ -332,8 +335,8 @@ namespace EPS.Parsers
                                 foreach (var j in groupJoins)
                                 {
                                     var name = j?.Element("SignalName")?.Value ?? "";
-                                    
-                                    if(string.IsNullOrEmpty(name))
+
+                                    if (string.IsNullOrEmpty(name))
                                     {
                                         continue;
                                     }
@@ -383,7 +386,7 @@ namespace EPS.Parsers
 
                                     name = SanitizeSignalName(name);
 
-                                    if(name.StartsWith("Is", StringComparison.InvariantCulture))
+                                    if (name.StartsWith("Is", StringComparison.InvariantCulture))
                                     {
                                         name = name.Remove(0, 2);
                                     }
