@@ -16,6 +16,11 @@ namespace EPS.CodeGen.Builders
     public class JoinBuilder
     {
         /// <summary>
+        /// Backing field for the <see cref="ChangeEventName"/> property.
+        /// </summary>
+        private string changeEventName = string.Empty;
+
+        /// <summary>
         /// Gets or sets the number that the join uses.
         /// </summary>
         public uint JoinNumber { get; set; }
@@ -43,12 +48,11 @@ namespace EPS.CodeGen.Builders
         /// <summary>
         /// Gets or sets the name of the join's change event. If an empty string this defaults to $"{JoinName}Changed"
         /// </summary>
-        public string ChangeEventName { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets content to override the builder using. If this is not empty it's the only text that will get output.
-        /// </summary>
-        public string ContentOverride { get; set; } = string.Empty;
+        public string ChangeEventName
+        {
+            get => string.IsNullOrWhiteSpace(changeEventName) ? $"{FormatPropertyName(JoinName)}Changed" : changeEventName;
+            set => changeEventName = value;
+        }
 
         /// <summary>
         /// Gets or sets a description to use for help text in certain cases.
@@ -97,19 +101,42 @@ namespace EPS.CodeGen.Builders
         /// <returns></returns>
         public TextWriter GetInitializers()
         {
-            var writer = new TextWriter("");
+            var writer = new TextWriter();
 
             if (JoinDirection == JoinDirection.FromPanel || JoinDirection == JoinDirection.Both)
             {
-                var raiseMethod = $"Raise{GetEventChangeName()}";
+                var raiseMethod = $"Raise{ChangeEventName}";
 
-                switch (JoinType)
+                var joinType = JoinType;
+
+                if (SmartJoinNumber > 0)
+                {
+                    if (joinType == JoinType.Digital)
+                    {
+                        joinType = JoinType.SmartDigital;
+                    }
+                    else if (joinType == JoinType.DigitalButton)
+                    {
+                        joinType = JoinType.SmartDigitalButton;
+                    }
+                    else if (joinType == JoinType.Analog)
+                    {
+                        joinType = JoinType.SmartAnalog;
+                    }
+                    else if (joinType == JoinType.Serial)
+                    {
+                        joinType = JoinType.SmartSerial;
+                    }
+                }
+
+                switch (joinType)
                 {
                     case JoinType.Digital:
                         writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, (value) => {raiseMethod}(this, new BooleanValueChangedEventArgs(value)));");
                         break;
                     case JoinType.DigitalButton:
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, (value) => {raiseMethod}(this, new BooleanValueChangedEventArgs(value)), true);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, (value) => RaisePressed(this, new BooleanValueChangedEventArgs(value)), true);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, (value) => RaiseReleased(this, new BooleanValueChangedEventArgs(value)), false);");
                         break;
                     case JoinType.Analog:
                         writer.Text.Add($"ParentPanel.Actions.AddUShort({JoinNumber}, (value) => {raiseMethod}(this, new UShortValueChangedEventArgs(value)));");
@@ -121,7 +148,8 @@ namespace EPS.CodeGen.Builders
                         writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(this, new BooleanValueChangedEventArgs(value)));");
                         break;
                     case JoinType.SmartDigitalButton:
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(this, new BooleanValueChangedEventArgs(value)), true);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => RaisePressed(this, new BooleanValueChangedEventArgs(value)), true);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => RaiseReleased(this, new BooleanValueChangedEventArgs(value)), false);");
                         break;
                     case JoinType.SmartAnalog:
                         writer.Text.Add($"ParentPanel.Actions.AddUShort({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(this, new UShortValueChangedEventArgs(value)));");
@@ -141,13 +169,6 @@ namespace EPS.CodeGen.Builders
         /// <returns>A list of <see cref="WriterBase"/> objects.</returns>
         public List<WriterBase> GetWriters()
         {
-            if (!string.IsNullOrEmpty(ContentOverride))
-            {
-                var tw = new TextWriter(ContentOverride);
-                tw.Help.Summary = Description;
-                return new List<WriterBase>() { tw };
-            }
-
             if (JoinNumber == 0 || JoinType == JoinType.None)
             {
                 return new List<WriterBase>(0);
@@ -188,7 +209,7 @@ namespace EPS.CodeGen.Builders
             var smartSuffix = SmartJoinNumber > 0 ? "Smart" : string.Empty;
             var smartValue = SmartJoinNumber > 0 ? $"{SmartJoinNumber}, " : string.Empty;
 
-            var changeEventName = GetEventChangeName();
+            var changeEventName = ChangeEventName;
 
             if (JoinType == JoinType.DigitalPulse || JoinType == JoinType.AnalogSet || JoinType == JoinType.SerialSet)
             {
@@ -280,7 +301,7 @@ namespace EPS.CodeGen.Builders
 
             var fieldName = FormatFieldName(JoinName);
 
-            var changeEventName = GetEventChangeName();
+            var changeEventName = ChangeEventName;
 
             // First create the EventWriter.
             // This handles change event notifications, which are triggered when the value going to the panel is changed.
@@ -333,7 +354,7 @@ namespace EPS.CodeGen.Builders
             }
 
             var fieldName = FormatFieldName(JoinName);
-            var changeEventName = GetEventChangeName();
+            var changeEventName = ChangeEventName;
             var sigType = GetJoinTypeString();
             var args = $"{GetJoinTypeNameString()}ValueChangedEventArgs";
 
@@ -399,12 +420,13 @@ namespace EPS.CodeGen.Builders
 
             releasedEvent.Help.Summary = "Raised when the button is released.";
 
-            var result = new List<WriterBase>();
-
-            result.Add(raisePressed);
-            result.Add(raiseReleased);
-            result.Add(pressedEvent);
-            result.Add(releasedEvent);
+            var result = new List<WriterBase>()
+            {
+                raisePressed,
+                raiseReleased,
+                pressedEvent,
+                releasedEvent
+            };
 
             return result;
         }
@@ -447,7 +469,7 @@ namespace EPS.CodeGen.Builders
         {
             var propName = FormatPropertyName(JoinName);
 
-            var eventWriter = new EventWriter(GetEventChangeName())
+            var eventWriter = new EventWriter(ChangeEventName)
             {
                 Handler = $"EventHandler<{GetJoinTypeNameString()}ValueChangedEventArgs>"
             };
@@ -526,13 +548,6 @@ namespace EPS.CodeGen.Builders
                     return string.Empty;
             }
         }
-
-        /// <summary>
-        /// Gets a string with the correct change event name.
-        /// </summary>
-        /// <returns>A string to use as the property change event name.</returns>
-        private string GetEventChangeName() =>
-            string.IsNullOrEmpty(ChangeEventName) ? $"{FormatPropertyName(JoinName)}Changed" : ChangeEventName;
 
         /// <summary>
         /// Formats a string with an uppercase first letter.

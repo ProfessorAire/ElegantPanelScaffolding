@@ -49,7 +49,7 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// <summary>
         /// Holder for Actions associated with classes.
         /// </summary>
-        internal PanelUIData Actions { get; private set; }
+        internal PanelActions Actions { get; private set; }
 
         private string description = "";
         /// <summary>
@@ -73,7 +73,7 @@ namespace SharpProTouchpanelDemo.UI.Core
 
         public PanelUIBase()
         {
-            Actions = new PanelUIData();
+            Actions = new PanelActions();
         }
 
         /// <summary>

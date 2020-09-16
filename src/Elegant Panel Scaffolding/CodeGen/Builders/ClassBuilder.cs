@@ -5,15 +5,6 @@ using System.Linq;
 
 namespace EPS.CodeGen.Builders
 {
-    public enum ClassType
-    {
-        Touchpanel,
-        Page,
-        Control,
-        SmartObject,
-        SrlElement
-    }
-
     public class ClassBuilder
     {
         public ushort DigitalOffset { get; set; }
@@ -25,8 +16,6 @@ namespace EPS.CodeGen.Builders
         public string ClassName { get => SanitizeName(className); set => className = value; }
         public string Namespace { get; set; } = "";
         public string NamespaceBase { get; set; } = "";
-        protected List<ElementBase> Properties { get; } = new List<ElementBase>();
-        protected List<ElementBase> Events { get; } = new List<ElementBase>();
 
         protected List<ClassBuilder> Pages { get; } = new List<ClassBuilder>();
         protected List<ClassBuilder> Controls { get; } = new List<ClassBuilder>();
@@ -45,9 +34,7 @@ namespace EPS.CodeGen.Builders
             get
             {
                 if (!string.IsNullOrEmpty(ClassName) &&
-                    (Properties.Count > 0 ||
-                    Events.Count > 0 ||
-                    Pages.Count > 0 ||
+                    (Pages.Count > 0 ||
                     Controls.Count > 0 ||
                     Joins.Count > 0))
                 {
@@ -176,11 +163,6 @@ namespace EPS.CodeGen.Builders
                 nsb.AddUsing("Crestron.SimplSharpPro.DeviceSupport");
             }
 
-            //if (ClassType == ClassType.Page)
-            //{
-            //    nsb.AddUsing($"{Namespace}");
-            //}
-
             nsb.AddUsing($"{options.PanelNamespace}.Core");
             if (ClassType == ClassType.Touchpanel)
             {
@@ -201,6 +183,7 @@ namespace EPS.CodeGen.Builders
             {
                 mainClass = new Writers.ClassWriter(ClassName);
             }
+
             mainClass.Modifier = Modifier.Partial;
             if (ClassType == ClassType.Touchpanel)
             {
@@ -230,45 +213,6 @@ namespace EPS.CodeGen.Builders
             };
             mainClass.Methods.Add(partialDispose);
 
-            // Dispose Method
-            Writers.MethodWriter disp;
-            if (ClassType == ClassType.Touchpanel)
-            {
-                disp = new Writers.MethodWriter("DisposeChildren", "Calls the partial void _Dispose in order to allow disposing of custom objects.", "void", 2)
-                {
-                    Accessor = Accessor.Protected,
-                    Modifier = Modifier.Override
-                };
-            }
-            else
-            {
-                disp = new Writers.MethodWriter("Dispose", "Calls the partial void _Dispose in order to allow disposing of custom objects.", "void", 2)
-                {
-                    Accessor = Accessor.Public,
-                    Modifier = Modifier.None
-                };
-            }
-            disp.MethodLines.Add("_Dispose();");
-            foreach (var p in Pages)
-            {
-                disp.MethodLines.Add($"{p.ClassName}.Dispose();");
-            }
-            foreach (var c in Controls)
-            {
-                disp.MethodLines.Add($"{c.ClassName.Replace(ClassName, "")}.Dispose();");
-            }
-            if (Lists.Count > 0)
-            {
-                disp.MethodLines.Add($"foreach (var i in Items)");
-                disp.MethodLines.Add("{");
-                foreach (var l in Lists)
-                {
-                    disp.MethodLines.Add($"i.Dispose();");
-                }
-                disp.MethodLines.Add("}");
-            }
-            mainClass.Methods.Add(disp);
-
             // Partial Initialize Values Method.
             var partialInit = new Writers.MethodWriter("_InitializeValues", "Implement in accompanying classes in order to send initial values to the touchpanels when the root class Threads are started.", "void", 2)
             {
@@ -276,12 +220,6 @@ namespace EPS.CodeGen.Builders
                 Accessor = Accessor.None
             };
             mainClass.Methods.Add(partialInit);
-
-            // Data Property
-            var classDataProp = new Writers.PropertyWriter("data", $"{ClassName}Data", 2);
-            classDataProp.Help.Summary = "Holds the data about the class. Registered with the parent panel.";
-            classDataProp.Accessor = Accessor.Internal;
-            mainClass.Properties.Add(classDataProp);
 
             // Parent Panel.
             if (ClassType != ClassType.Touchpanel)
@@ -293,31 +231,9 @@ namespace EPS.CodeGen.Builders
                 ctor.AddParameter("Panel", "parent", "The class that is the base parent of this one.");
             }
 
-            // Data Bits
-            if (ClassType != ClassType.SrlElement)
-            {
-                //ctor.MethodLines.Add($"data = new {ClassName}Data() {{ AssociatedClass = this }};");
-            }
-
-            if(ClassType == ClassType.Touchpanel)
-            {
-                foreach (var j in Joins)
-                {
-                    ctor.MethodLines.Add(j.GetInitializers().ToString().Replace("ParentPanel.AddData", "AddData"));
-                }
-            }
-            else
-            {
-                foreach (var j in Joins)
-                {
-                    ctor.MethodLines.Add(j.GetInitializers().ToString());
-                }
-            }
-
             // Pages and Controls
             if (ClassType == ClassType.Touchpanel)
             {
-                //ctor.MethodLines.Add("AddData(data);");
                 foreach (var p in Pages)
                 {
                     ctor.MethodLines.Add($"{p.ClassName} = new {p.ClassName}(this);");
@@ -329,7 +245,6 @@ namespace EPS.CodeGen.Builders
             }
             else if (ClassType == ClassType.Page)
             {
-                //ctor.MethodLines.Add("ParentPanel.AddData(data);");
                 foreach (var p in Pages)
                 {
                     ctor.MethodLines.Add($"{p.ClassName} = new {p.ClassName}(ParentPanel);");
@@ -341,10 +256,8 @@ namespace EPS.CodeGen.Builders
             }
             else if (ClassType == ClassType.Control || ClassType == ClassType.SmartObject)
             {
-                ctor.MethodLines.Add("ParentPanel.AddData(data);");
                 foreach (var l in Lists)
                 {
-                    //ctor.MethodLines.Add(l.GetElementText(options, $"{classNamePrefix}{l.Name}"));
                     foreach (var w in l.GetWriters())
                     {
                         AddWriter(w);
@@ -372,6 +285,11 @@ namespace EPS.CodeGen.Builders
                 ctor.AddParameter("ushort", "serialOffset", "The offset amount this item uses for its serial joins.");
                 ctor.AddParameter("ushort", "itemOffset", "The offset amount this item has.");
 
+                if (ctor.MethodLines.Last().Length > 0)
+                {
+                    ctor.MethodLines.Add("");
+                }
+
                 ctor.MethodLines.Add("this.digitalOffset = digitalOffset;");
                 ctor.MethodLines.Add("this.analogOffset = analogOffset;");
                 ctor.MethodLines.Add("this.serialOffset = serialOffset;");
@@ -385,11 +303,6 @@ namespace EPS.CodeGen.Builders
                 ctor.MethodLines.Add("this.serialOffset = itemOffset;");
                 ctor.MethodLines.Add("}");
                 ctor.MethodLines.Add("");
-                
-                ctor.MethodLines.Add($"data = new {ClassName}Data(this.digitalOffset, this.analogOffset, this.serialOffset) {{ AssociatedClass = this }};");
-                ctor.MethodLines.Add($"ParentPanel.AddData(data);");
-                ctor.MethodLines.Add("");
-
 
                 for (var i = 0; i < Controls.Count; i++)
                 {
@@ -400,10 +313,47 @@ namespace EPS.CodeGen.Builders
             // Before adding the ctor, all the TextWriters should be providing constructor lines, so we'll add them there.
             foreach (var w in OtherWriters)
             {
+                if (ctor.MethodLines.Last().Length > 0)
+                {
+                    ctor.MethodLines.Add("");
+                }
+
                 ctor.MethodLines.Add(w.ToString());
             }
 
+            // For any events from the panel we need to add Actions.
+            if (ctor.MethodLines.Last().Length > 0)
+            {
+                ctor.MethodLines.Add("");
+            }
+
+            foreach (var j in Joins)
+            {
+                var text = j.GetInitializers().ToString();
+
+                if (ClassType == ClassType.Touchpanel)
+                {
+                    text = text.Replace("ParentPanel.AddData", "AddData");
+                }
+                else if (ClassType == ClassType.SrlElement)
+                {
+                    text = text.Replace("AddBool(", "AddBool(digitalOffset + ");
+                    text = text.Replace("AddUShort(", "AddUShort(analogOffset + ");
+                    text = text.Replace("AddString(", "AddString(serialOffset + ");
+                }
+
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    ctor.MethodLines.Add(text);
+                }
+            }
+
             // Call _Setup Last
+            if(ctor.MethodLines.Last().Length > 0)
+            {
+                ctor.MethodLines.Add("");
+            }
+
             ctor.MethodLines.Add("_Setup();");
 
             mainClass.Constructors.Add(ctor);
@@ -423,28 +373,6 @@ namespace EPS.CodeGen.Builders
                 initValuesMethod.Accessor = Accessor.Internal;
             }
             initValuesMethod.MethodLines.Add("_InitializeValues();");
-
-            //// Other Events
-            //foreach (var e in Events.OfType<EventElement>())
-            //{
-            //    foreach (var w in e.GetWriters())
-            //    {
-            //        AddWriter(w);
-            //    }
-            //}
-
-            //// Other Properties
-            //foreach (var p in Properties.OfType<PropertyElement>())
-            //{
-            //    if (ClassType == ClassType.SrlElement)
-            //    {
-            //        p.IsListElement = true;
-            //    }
-            //    foreach (var w in p.GetWriters())
-            //    {
-            //        AddWriter(w);
-            //    }
-            //}
 
             foreach(var join in Joins)
             {
@@ -480,23 +408,71 @@ namespace EPS.CodeGen.Builders
             // Add initialize values method
             mainClass.Methods.Add(initValuesMethod);
 
-            if (Properties.Count > 0 || Events.Count > 0)
+            // Build Clear All Event Subscriptions method.
+            var fromJoins = Joins.Where(j => j.JoinDirection == JoinDirection.FromPanel);
+            if (fromJoins.Any())
             {
                 var subMW = new Writers.MethodWriter("ClearAllEventSubscriptions", "Clears all of the subscriptions on events.", "void");
-                foreach (var p in Properties.OfType<PropertyElement>())
+
+                foreach (var j in fromJoins)
                 {
-                    subMW.MethodLines.Add($"{p.Name}Changed = null;");
+                    subMW.MethodLines.Add($"{j.ChangeEventName} = null;");
                 }
 
-                foreach (var e in Events.OfType<EventElement>())
-                {
-                    var names = e.GetEventNames();
-                    foreach (var name in names)
-                    {
-                        subMW.MethodLines.Add($"{name} = null;");
-                    }
-                }
+                mainClass.Methods.Add(subMW);
             }
+
+            // Build Dispose Method
+
+
+            // Dispose Method
+            Writers.MethodWriter disp;
+            if (ClassType == ClassType.Touchpanel)
+            {
+                disp = new Writers.MethodWriter("DisposeChildren", "Calls the partial void _Dispose in order to allow disposing of custom objects.", "void", 2)
+                {
+                    Accessor = Accessor.Protected,
+                    Modifier = Modifier.Override
+                };
+            }
+            else
+            {
+                disp = new Writers.MethodWriter("Dispose", "Calls the partial void _Dispose in order to allow disposing of custom objects.", "void", 2)
+                {
+                    Accessor = Accessor.Public,
+                    Modifier = Modifier.None
+                };
+            }
+
+            disp.MethodLines.Add("_Dispose();");
+
+            foreach (var p in Pages)
+            {
+                disp.MethodLines.Add($"{p.ClassName}.Dispose();");
+            }
+
+            foreach (var c in Controls)
+            {
+                disp.MethodLines.Add($"{c.ClassName.Replace(ClassName, "")}.Dispose();");
+            }
+
+            if (Lists.Count > 0)
+            {
+                disp.MethodLines.Add($"foreach (var i in Items)");
+                disp.MethodLines.Add("{");
+                foreach (var l in Lists)
+                {
+                    disp.MethodLines.Add($"i.Dispose();");
+                }
+                disp.MethodLines.Add("}");
+            }
+
+            if (fromJoins.Any())
+            {
+                disp.MethodLines.Add($"ClearAllEventSubscriptions();");
+            }
+
+            mainClass.Methods.Add(disp);
 
             foreach (var c in Controls)
             {
@@ -527,121 +503,6 @@ namespace EPS.CodeGen.Builders
             mainClass.Methods.AddRange(MethodWriters);
 
             nsb.Classes.Add(mainClass);
-
-            var dataClass = new Writers.ClassWriter($"{ClassName}Data : PanelUIData");
-            dataClass.Help.Summary = $"Data class for the <see cref=\"{Namespace}.{ClassName}\"/> object.";
-
-            var dataCtor = new Writers.MethodWriter($"{ClassName}Data", "Creates a new instance of the data class object.", "");
-
-            var useOffsets = ClassType == ClassType.SrlElement;
-
-            if (useOffsets)
-            {
-                dataCtor.AddParameter("int", "digitalOffset", "The number of digital joins provided for this reference list item.");
-                dataCtor.AddParameter("int", "analogOffset", "The number of analog joins provided for this reference list item.");
-                dataCtor.AddParameter("int", "serialOffset", "The number of serial joins provided for this reference list item.");
-            }
-
-            if (SmartJoin > 0)
-            {
-                dataCtor.MethodLines.Add($"smartObjectJoin = {SmartJoin};");
-            }
-
-            if (Events.OfType<EventElement>().Where(ev => ev.ValueType == JoinType.Digital || ev.ValueType == JoinType.SmartDigital).Any() ||
-                Properties.OfType<PropertyElement>().Where(pr => (pr.PropertyType == JoinType.Digital || pr.PropertyType == JoinType.Digital) && (pr.PropertyMethod == PropertyMethod.Both || pr.PropertyMethod == PropertyMethod.FromPanel)).Any())
-            {
-                dataCtor.MethodLines.Add($"{(SmartJoin > 0 ? "smartObjectBool" : "bool")}Outputs = new Dictionary<string, ushort>()");
-                dataCtor.MethodLines.Add("{");
-                var events = Events.OfType<EventElement>().Where(ev => ev.ValueType == JoinType.Digital || ev.ValueType == JoinType.SmartDigital).ToArray();
-                var properties = Properties.OfType<PropertyElement>().Where(pr => (pr.PropertyType == JoinType.Digital || pr.PropertyType == JoinType.SmartDigital) && (pr.PropertyMethod == PropertyMethod.Both || pr.PropertyMethod == PropertyMethod.FromPanel)).ToArray();
-
-                for (var i = 0; i < events.Length; i++)
-                {
-                    var data = events[i].GetData();
-                    for (var j = 0; j < data.Length; j++)
-                    {
-                        var (name, join) = data[j];
-                        dataCtor.MethodLines.Add($"{{\"{name}\", (ushort)({join}{(useOffsets ? " + digitalOffset" : "")})}}{((j < data.Length - 1 || i < events.Length - 1) ? "," : "")}");
-                    }
-                }
-
-                for (var i = 0; i < properties.Length; i++)
-                {
-                    var data = properties[i].GetData();
-                    for (var j = 0; j < data.Length; j++)
-                    {
-                        var (name, join) = data[j];
-                        dataCtor.MethodLines.Add($"{{\"{name}\", (ushort)({join}{(useOffsets ? " + digitalOffset" : "")})}}{((j < data.Length - 1 || i < properties.Length - 1) ? "," : "")}");
-                    }
-                }
-
-                dataCtor.MethodLines.Add("};");
-            }
-
-            if (Events.OfType<EventElement>().Where(ev => ev.ValueType == JoinType.Analog || ev.ValueType == JoinType.SmartAnalog).Any() ||
-                Properties.OfType<PropertyElement>().Where(pr => (pr.PropertyType == JoinType.Analog || pr.PropertyType == JoinType.SmartAnalog) && (pr.PropertyMethod == PropertyMethod.Both || pr.PropertyMethod == PropertyMethod.FromPanel)).Any())
-            {
-                dataCtor.MethodLines.Add($"{(SmartJoin > 0 ? "smartObjectUShort" : "ushort")}Outputs = new Dictionary<string, ushort>()");
-                dataCtor.MethodLines.Add("{");
-                var events = Events.OfType<EventElement>().Where(ev => ev.ValueType == JoinType.Analog || ev.ValueType == JoinType.SmartAnalog).ToArray();
-                var properties = Properties.OfType<PropertyElement>().Where(pr => (pr.PropertyType == JoinType.Analog || pr.PropertyType == JoinType.SmartAnalog) && (pr.PropertyMethod == PropertyMethod.Both || pr.PropertyMethod == PropertyMethod.FromPanel)).ToArray();
-                for (var i = 0; i < events.Length; i++)
-                {
-                    var data = events[i].GetData();
-                    for (var j = 0; j < data.Length; j++)
-                    {
-                        var (name, join) = data[j];
-                        dataCtor.MethodLines.Add($"{{\"{name}\", (ushort)({join}{(useOffsets ? " + analogOffset" : "")})}}{((j < data.Length - 1 || i < events.Length - 1) ? "," : "")}");
-                    }
-                }
-
-                for (var i = 0; i < properties.Length; i++)
-                {
-                    var data = properties[i].GetData();
-                    for (var j = 0; j < data.Length; j++)
-                    {
-                        var (name, join) = data[j];
-                        dataCtor.MethodLines.Add($"{{\"{name}\", (ushort)({join}{(useOffsets ? " + analogOffset" : "")})}}{((j < data.Length - 1 || i < properties.Length - 1) ? "," : "")}");
-                    }
-                }
-
-                dataCtor.MethodLines.Add("};");
-            }
-
-            if (Events.OfType<EventElement>().Where(ev => ev.ValueType == JoinType.Serial || ev.ValueType == JoinType.SmartSerial).Any() ||
-                Properties.OfType<PropertyElement>().Where(pr => (pr.PropertyType == JoinType.Serial || pr.PropertyType == JoinType.SmartSerial) && (pr.PropertyMethod == PropertyMethod.Both || pr.PropertyMethod == PropertyMethod.FromPanel)).Any())
-            {
-                dataCtor.MethodLines.Add($"{(SmartJoin > 0 ? "smartObjectString" : "string")}Outputs = new Dictionary<string, ushort>()");
-                dataCtor.MethodLines.Add("{");
-                var events = Events.OfType<EventElement>().Where(ev => ev.ValueType == JoinType.Serial || ev.ValueType == JoinType.SmartSerial).ToArray();
-                var properties = Properties.OfType<PropertyElement>().Where(pr => (pr.PropertyType == JoinType.Serial || pr.PropertyType == JoinType.SmartSerial) && (pr.PropertyMethod == PropertyMethod.Both || pr.PropertyMethod == PropertyMethod.FromPanel)).ToArray();
-
-                for (var i = 0; i < events.Length; i++)
-                {
-                    var data = events[i].GetData();
-                    for (var j = 0; j < data.Length; j++)
-                    {
-                        var (name, join) = data[j];
-                        dataCtor.MethodLines.Add($"{{\"{name}\", (ushort)({join}{(useOffsets ? " + serialOffset" : "")})}}{((j < data.Length - 1 || i < events.Length - 1) ? "," : "")}");
-                    }
-                }
-
-                for (var i = 0; i < properties.Length; i++)
-                {
-                    var data = properties[i].GetData();
-                    for (var j = 0; j < data.Length; j++)
-                    {
-                        var (name, join) = data[j];
-                        dataCtor.MethodLines.Add($"{{\"{name}\", (ushort)({join}{(useOffsets ? " + serialOffset" : "")})}}{((j < data.Length - 1 || i < properties.Length - 1) ? "," : "")}");
-                    }
-                }
-
-                dataCtor.MethodLines.Add("};");
-            }
-
-            dataClass.Constructors.Add(dataCtor);
-
-            nsb.Classes.Add(dataClass);
 
             var path = "";
             if (ClassType == ClassType.Touchpanel)

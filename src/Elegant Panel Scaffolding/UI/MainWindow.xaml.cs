@@ -164,7 +164,7 @@ namespace EPS.UI
                         var file1 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/BooleanValueChangedEventArgs.g.cs"));
                         var file2 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/UShortValueChangedEventArgs.g.cs"));
                         var file3 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/StringValueChangedEventArgs.g.cs"));
-                        var file4 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/PanelUIData.g.cs"));
+                        var file4 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/PanelActions.g.cs"));
                         var file5 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/DeviceHelper.g.cs"));
                         var file6 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/ObjectEventArgs.g.cs"));
                         var file7 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/PanelUIBase.g.cs"));
@@ -174,7 +174,7 @@ namespace EPS.UI
                         WriteResourcesText(Path.Combine(dir.FullName, "BooleanValueChangedEventArgs.g.cs"), file1.Stream, replacement);
                         WriteResourcesText(Path.Combine(dir.FullName, "UShortValueChangedEventArgs.g.cs"), file2.Stream, replacement);
                         WriteResourcesText(Path.Combine(dir.FullName, "StringValueChangedEventArgs.g.cs"), file3.Stream, replacement);
-                        WriteResourcesText(Path.Combine(dir.FullName, "PanelUIData.g.cs"), file4.Stream, replacement);
+                        WriteResourcesText(Path.Combine(dir.FullName, "PanelActions.g.cs"), file4.Stream, replacement);
                         WriteResourcesText(Path.Combine(dir.FullName, "DeviceHelper.g.cs"), file5.Stream, replacement);
                         WriteResourcesText(Path.Combine(dir.FullName, "ObjectEventArgs.g.cs"), file6.Stream, replacement);
 

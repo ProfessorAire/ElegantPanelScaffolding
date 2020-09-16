@@ -270,7 +270,7 @@ namespace EPS.Parsers
 
                                 outName = SanitizeSignalName(outName);
 
-                                itemBuilder.AddJoin(new JoinBuilder(startJoin, itemBuilder.SmartJoin, inName, joinType, JoinDirection.FromPanel) { ChangeEventName = outName });
+                                itemBuilder.AddJoin(new JoinBuilder(startJoin, itemBuilder.SmartJoin, inName, joinType, joinDirection) { ChangeEventName = outName });
                             }
                         }
                         else if (groupJoins?.FirstOrDefault()?.Element("SignalName") != null)
