@@ -278,11 +278,7 @@ namespace EPS.CodeGen.Builders
 
             var args = $"{sigTypeName}ValueChangedEventArgs";
 
-
-            var propertyName = FormatPropertyName(JoinName);
             var fieldName = FormatFieldName(JoinName);
-            var smartSuffix = SmartJoinNumber > 0 ? "Smart" : string.Empty;
-            var smartValue = SmartJoinNumber > 0 ? $"{SmartJoinNumber}, " : string.Empty;
 
             var changeEventName = GetEventChangeName();
 

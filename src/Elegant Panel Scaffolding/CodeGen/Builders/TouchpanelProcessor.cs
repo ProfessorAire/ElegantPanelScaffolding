@@ -124,8 +124,7 @@ namespace EPS.CodeGen.Builders
 
                     if (ushort.TryParse(props?.Element("DigitalJoin").Value, out var pageJoin) && pageJoin > 0)
                     {
-                        var prop = new PropertyElement("IsVisible", pageJoin, pageBuilder.SmartJoin, JoinType.Digital);
-                        pageBuilder.AddProperty(prop);
+                        pageBuilder.AddJoin(new JoinBuilder(pageJoin, pageBuilder.SmartJoin, "IsVisible", JoinType.Digital, JoinDirection.ToPanel));
                     }
 
                     if (props != null)
@@ -136,7 +135,7 @@ namespace EPS.CodeGen.Builders
 
                         GenericParser.ParseBackgroundJoins(props, pageBuilder);
 
-                        var transitionJoin = GenericParser.GetTransitionCompleteProperty(props);
+                        var transitionJoin = GenericParser.GetTransitionCompleteJoin(props);
                         if(transitionJoin != null)
                         {
                             pageBuilder.AddJoin(transitionJoin);
@@ -182,15 +181,14 @@ namespace EPS.CodeGen.Builders
                             {
                                 if (ushort.TryParse(subProps?.Element("DigitalJoin").Value, out var subpageJoin) && subpageJoin > 0)
                                 {
-                                    var prop = new PropertyElement("IsVisible", subpageJoin, subBuilder.SmartJoin, JoinType.Digital);
-                                    subBuilder.AddProperty(prop);
+                                    subBuilder.AddJoin(new JoinBuilder(subpageJoin, subBuilder.SmartJoin, "IsVisible", JoinType.Digital, JoinDirection.ToPanel));
                                 }
 
                                 subBuilder.DigitalOffset = GenericParser.ParseDigitalOffset(subProps);
                                 subBuilder.AnalogOffset = GenericParser.ParseAnalogOffset(subProps);
                                 subBuilder.SerialOffset = GenericParser.ParseSerialOffset(subProps);
 
-                                var transitionJoin = GenericParser.GetTransitionCompleteProperty(subProps);
+                                var transitionJoin = GenericParser.GetTransitionCompleteJoin(subProps);
 
                                 if (transitionJoin != null)
                                 {

@@ -26,20 +26,20 @@ namespace EPS.Parsers
 
             if (ushort.TryParse(props?.Element("DigitalEnableJoin")?.Value, out var enableJoin) && enableJoin > 0)
             {
-                builder.AddProperty(new PropertyElement("IsEnabled", enableJoin, 0, JoinType.Digital, PropertyMethod.ToPanel));
+                builder.AddJoin(new JoinBuilder(enableJoin, "IsEnabled", JoinType.Digital, JoinDirection.ToPanel));
             }
             else if (ushort.TryParse(props?.Element("EnableDigitalJoin")?.Value, out var enableJoin2) && enableJoin2 > 0)
             {
-                builder.AddProperty(new PropertyElement("IsEnabled", enableJoin2, 0, JoinType.Digital, PropertyMethod.ToPanel));
+                builder.AddJoin(new JoinBuilder(enableJoin2, "IsEnabled", JoinType.Digital, JoinDirection.ToPanel));
             }
 
             if (ushort.TryParse(props?.Element("DigitalVisibilityJoin")?.Value, out var visibilityJoin) && visibilityJoin > 0)
             {
-                builder.AddProperty(new PropertyElement("IsVisible", visibilityJoin, 0, JoinType.Digital, PropertyMethod.ToPanel));
+                builder.AddJoin(new JoinBuilder(visibilityJoin, "IsVisible", JoinType.Digital, JoinDirection.ToPanel));
             }
             else if (ushort.TryParse(props?.Element("VisibilityDigitalJoin")?.Value, out var visibilityJoin2) && visibilityJoin2 > 0)
             {
-                builder.AddProperty(new PropertyElement("IsVisible", visibilityJoin2, 0, JoinType.Digital, PropertyMethod.ToPanel));
+                builder.AddJoin(new JoinBuilder(visibilityJoin2, "IsVisible", JoinType.Digital, JoinDirection.ToPanel));
             }
 
             var joinProps = props?.Elements().Where(e => e.Attribute("Type")?.Value == "JoinCommand");
@@ -156,22 +156,13 @@ namespace EPS.Parsers
                         joinDirection = JoinDirection.FromPanel;
                     }
 
-                    if (isIn)
-                    {
-                        builder.AddJoin(
-                            new JoinBuilder(joinNumber, builder.SmartJoin, inName, joinType, joinDirection));
-                    }
-
                     if (j?.Name?.LocalName?.Contains("Button") ?? false)
                     {
                         joinType = JoinType.DigitalButton;
                     }
 
-                    if (isOut)
-                    {
-                        builder.AddJoin(
-                            new JoinBuilder(joinNumber, builder.SmartJoin, outName, joinType, joinDirection));
-                    }
+                    builder.AddJoin(
+                        new JoinBuilder(joinNumber, builder.SmartJoin, inName, joinType, joinDirection));
                 }
             }
 
@@ -201,9 +192,6 @@ namespace EPS.Parsers
                     var isDynamicList = false;
                     if (groupJoins != null)
                     {
-
-                        //todo: This should get the element where all the list objects live.
-                        //It might be possible to grab all the elements with a "uid" attribute to get the items of the lists.
                         if (groupJoins?.FirstOrDefault()?.Element("InCueName") != null)
                         {
                             isDynamicList = true;
@@ -250,10 +238,24 @@ namespace EPS.Parsers
                                     outName = outName.Replace("Item %i ", "");
                                 }
 
-                                var isButton = false;
                                 if (outName.ToUpperInvariant().Contains("PRESSED") || outName.ToUpperInvariant().Contains("RELEASED"))
                                 {
-                                    isButton = true;
+                                    joinType = JoinType.SmartDigitalButton;
+                                }
+
+                                var joinDirection = JoinDirection.Unknown;
+
+                                if (isIn && !isOut)
+                                {
+                                    joinDirection = JoinDirection.ToPanel;
+                                }
+                                else if (!isIn && isOut)
+                                {
+                                    joinDirection = JoinDirection.FromPanel;
+                                }
+                                else if (isIn && isOut)
+                                {
+                                    joinDirection = JoinDirection.Both;
                                 }
 
                                 if (outName.ToUpperInvariant() == "PRESSED")
@@ -268,26 +270,20 @@ namespace EPS.Parsers
 
                                 outName = SanitizeSignalName(outName);
 
-                                if (isIn)
-                                {
-                                    itemBuilder.AddProperty(new PropertyElement(inName, startJoin, builder.SmartJoin, joinType));
-                                }
-                                if (isOut)
-                                {
-                                    itemBuilder.AddEvent(new EventElement(outName, startJoin, builder.SmartJoin, joinType, isButton));
-                                }
+                                itemBuilder.AddJoin(new JoinBuilder(startJoin, itemBuilder.SmartJoin, inName, joinType, JoinDirection.FromPanel) { ChangeEventName = outName });
                             }
                         }
                         else if (groupJoins?.FirstOrDefault()?.Element("SignalName") != null)
                         {
                             foreach (var j in groupJoins)
                             {
-                                var name = j?.Element("SignalName")?.Value ?? "";
+                                var joinName = j?.Element("SignalName")?.Value ?? "";
                                 var isIn = j?.Element("Direction")?.Value.Contains("In") ?? false;
                                 var isOut = j?.Element("Direction")?.Value.Contains("Out") ?? false;
-                                var join = ushort.Parse(j?.Element("JoinNumber")?.Value ?? "0", NumberFormatInfo.InvariantInfo);
+                                var joinNumber = ushort.Parse(j?.Element("JoinNumber")?.Value ?? "0", NumberFormatInfo.InvariantInfo);
                                 var jt = j?.Element("JoinType")?.Value ?? "";
                                 var joinType = JoinType.None;
+
                                 if (jt == "Digital")
                                 {
                                     joinType = JoinType.SmartDigital;
@@ -301,32 +297,41 @@ namespace EPS.Parsers
                                     joinType = JoinType.SmartSerial;
                                 }
 
-                                var isButton = false;
-                                if (name.ToUpperInvariant().Contains("PRESS"))
+                                var joinDirection = JoinDirection.Unknown;
+
+                                if (isIn && !isOut)
                                 {
-                                    name = "";
-                                    isButton = true;
+                                    joinDirection = JoinDirection.ToPanel;
                                 }
-                                else if (name.ToUpperInvariant().Contains("SELECT"))
+                                else if (!isIn && isOut)
                                 {
-                                    name = "Selected";
+                                    joinDirection = JoinDirection.FromPanel;
+                                }
+                                else if (isIn && isOut)
+                                {
+                                    joinDirection = JoinDirection.Both;
                                 }
 
-                                name = SanitizeSignalName(name);
+                                if (joinName.ToUpperInvariant().Contains("PRESS"))
+                                {
+                                    joinName = "";
+                                    joinType = JoinType.SmartDigitalButton;
+                                }
+                                else if (joinName.ToUpperInvariant().Contains("SELECT"))
+                                {
+                                    joinName = "Selected";
+                                }
 
-                                if (isIn)
+                                if (j?.Name?.LocalName?.Contains("Button") ?? false)
                                 {
-                                    itemBuilder.AddProperty(new PropertyElement(name, join, builder.SmartJoin, joinType));
+                                    joinType = JoinType.DigitalButton;
                                 }
-                                if (isOut)
-                                {
-                                    itemBuilder.AddEvent(new EventElement(name, join, builder.SmartJoin, joinType, isButton));
-                                }
+
+                                joinName = SanitizeSignalName(joinName);
+
+                                builder.AddJoin(
+                                    new JoinBuilder(joinNumber, builder.SmartJoin, joinName, joinType, joinDirection));
                             }
-                            //todo: Go through all the smart objects out there and gather a list of lists and the names of the important components. (ListName, ListElementName, ListElementCount, etc.)
-                            //todo: Process join groups.
-                            //These are used in lists of items. So you process the groups, then determine how many of each type of item (button, icon, etc) there are and create an object for each of them.
-                            //To handle this, need to make a list element of some sort, that can process lists...
                         }
                         else
                         {
@@ -334,18 +339,19 @@ namespace EPS.Parsers
                             {
                                 foreach (var j in groupJoins)
                                 {
-                                    var name = j?.Element("SignalName")?.Value ?? "";
+                                    var joinName = j?.Element("SignalName")?.Value ?? "";
 
-                                    if (string.IsNullOrEmpty(name))
+                                    if (string.IsNullOrEmpty(joinName))
                                     {
                                         continue;
                                     }
 
                                     var isIn = j?.Element("Direction")?.Value.Contains("In") ?? false;
                                     var isOut = j?.Element("Direction")?.Value.Contains("Out") ?? false;
-                                    var join = ushort.Parse(j?.Element("JoinNumber")?.Value ?? "0", NumberFormatInfo.InvariantInfo);
+                                    var joinNumber = ushort.Parse(j?.Element("JoinNumber")?.Value ?? "0", NumberFormatInfo.InvariantInfo);
                                     var jt = j?.Element("JoinType")?.Value ?? "";
                                     var joinType = JoinType.None;
+
                                     if (jt == "Digital")
                                     {
                                         joinType = JoinType.SmartDigital;
@@ -359,46 +365,53 @@ namespace EPS.Parsers
                                         joinType = JoinType.SmartSerial;
                                     }
 
-                                    if (name.StartsWith("Set Item %i ", StringComparison.InvariantCulture))
+                                    if (joinName.StartsWith("Set Item %i ", StringComparison.InvariantCulture))
                                     {
-                                        name = name.Replace("Set Item %i ", "");
+                                        joinName = joinName.Replace("Set Item %i ", "");
                                     }
-                                    else if (name.StartsWith("Item %i ", StringComparison.InvariantCulture))
+                                    else if (joinName.StartsWith("Item %i ", StringComparison.InvariantCulture))
                                     {
-                                        name = name.Replace("Item %i ", "Is");
-                                    }
-                                    if (name == "IsPressed")
-                                    {
-                                        name = "Pressed";
+                                        joinName = joinName.Replace("Item %i ", "Is");
                                     }
 
-                                    var isButton = false;
-
-                                    if (name.ToUpperInvariant().Contains("PRESS"))
+                                    if (joinName == "IsPressed")
                                     {
-                                        name = "";
-                                        isButton = true;
-                                    }
-                                    else if (name.ToUpperInvariant().Contains("SELECT"))
-                                    {
-                                        name = "Selected";
+                                        joinName = "Pressed";
                                     }
 
-                                    name = SanitizeSignalName(name);
-
-                                    if (name.StartsWith("Is", StringComparison.InvariantCulture))
+                                    if (joinName.ToUpperInvariant().Contains("PRESS"))
                                     {
-                                        name = name.Remove(0, 2);
+                                        joinName = "";
+                                        joinType = JoinType.SmartDigitalButton;
+                                    }
+                                    else if (joinName.ToUpperInvariant().Contains("SELECT"))
+                                    {
+                                        joinName = "Selected";
                                     }
 
-                                    if (isIn)
+                                    joinName = SanitizeSignalName(joinName);
+
+                                    if (joinName.StartsWith("Is", StringComparison.InvariantCulture))
                                     {
-                                        itemBuilder.AddProperty(new PropertyElement(name, join, builder.SmartJoin, joinType));
+                                        joinName = joinName.Remove(0, 2);
                                     }
-                                    if (isOut)
+
+                                    var joinDirection = JoinDirection.Unknown;
+
+                                    if (isIn && !isOut)
                                     {
-                                        itemBuilder.AddEvent(new EventElement(name, join, builder.SmartJoin, joinType, isButton));
+                                        joinDirection = JoinDirection.ToPanel;
                                     }
+                                    else if (!isIn && isOut)
+                                    {
+                                        joinDirection = JoinDirection.FromPanel;
+                                    }
+                                    else if (isIn && isOut)
+                                    {
+                                        joinDirection = JoinDirection.Both;
+                                    }
+
+                                    itemBuilder.AddJoin(new JoinBuilder(joinNumber, builder.SmartJoin, joinName, joinType, joinDirection));
                                 }
                             }
                         }

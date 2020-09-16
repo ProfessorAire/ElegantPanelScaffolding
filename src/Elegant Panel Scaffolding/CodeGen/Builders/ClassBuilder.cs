@@ -103,28 +103,6 @@ namespace EPS.CodeGen.Builders
 
         }
 
-        public void AddProperty(ElementBase element)
-        {
-            if (element != null && !element.Name.ToUpperInvariant().Contains("NULL"))
-            {
-                element.AnalogOffset = AnalogOffset;
-                element.DigitalOffset = DigitalOffset;
-                element.SerialOffset = SerialOffset;
-                Properties.Add(element);
-            }
-        }
-
-        public void AddEvent(ElementBase element)
-        {
-            if (element != null && !element.Name.ToUpperInvariant().Contains("NULL"))
-            {
-                element.AnalogOffset = AnalogOffset;
-                element.DigitalOffset = DigitalOffset;
-                element.SerialOffset = SerialOffset;
-                Events.Add(element);
-            }
-        }
-
         public void AddPage(ClassBuilder page)
         {
             if (page?.IsValid ?? false && !page.ClassName.ToUpperInvariant().Contains("NULL"))

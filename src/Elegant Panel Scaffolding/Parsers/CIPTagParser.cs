@@ -85,7 +85,7 @@ namespace EPS.Parsers
                         var joinText = item.Substring(0, index);
                         if (ushort.TryParse(joinText, out var join))
                         {
-                            builder.AddProperty(new PropertyElement($"String{count}", join, builder.SmartJoin, JoinType.Serial));
+                            builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"String{count}", JoinType.Serial, JoinDirection.ToPanel));
                             count++;
                         }
                     }
@@ -112,7 +112,7 @@ namespace EPS.Parsers
                         var joinText = item.Substring(0, index);
                         if (ushort.TryParse(joinText, out var join))
                         {
-                            builder.AddProperty(new PropertyElement($"UShort{count}", join, builder.SmartJoin, JoinType.Analog));
+                            builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"UShort{count}", JoinType.Analog, JoinDirection.ToPanel));
                             count++;
                         }
                     }
@@ -139,7 +139,7 @@ namespace EPS.Parsers
                         var joinText = item.Substring(0, index);
                         if (ushort.TryParse(joinText, out var join))
                         {
-                            builder.AddProperty(new PropertyElement($"Bool{count}", join, builder.SmartJoin, JoinType.Digital));
+                            builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"Bool{count}", JoinType.Digital, JoinDirection.ToPanel));
                             count++;
                         }
                     }

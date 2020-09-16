@@ -35,7 +35,7 @@ namespace EPS.Parsers
             return 0;
         }
 
-        public static JoinBuilder? GetTransitionCompleteProperty(XElement? propertiesElement)
+        public static JoinBuilder? GetTransitionCompleteJoin(XElement? propertiesElement)
         {
             if (ushort.TryParse(propertiesElement?.Element("TransitionCompleteJoin").Value, out var join) && join > 0)
             {
@@ -488,7 +488,6 @@ namespace EPS.Parsers
                     var useModes = child.Element("ModesOrDynamicGraphics")?.Element("UseModes");
                     if (ushort.TryParse(useModes?.Element("AnalogModeJoin")?.Value, out var modeJoin))
                     {
-                        builder.AddProperty(new PropertyElement($"ControlMode", modeJoin, builder.SmartJoin, JoinType.Analog));
                         builder.AddJoin(
                                 new JoinBuilder(modeJoin, builder.SmartJoin, "ControlMode", JoinType.Analog, JoinDirection.ToPanel));
                     }
