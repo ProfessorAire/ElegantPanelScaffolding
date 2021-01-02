@@ -14,7 +14,7 @@ namespace EPS
         public static Options Current = new Options();
 #pragma warning restore CA2211 // Non-constant fields should not be visible
 
-        private string version = "v0.1.0-beta";
+        private string version = "v0.1.1-beta";
         [JsonIgnore]
         [Browsable(false)]
         public string Version { get => version; set => SetField(ref version, value); }
@@ -42,28 +42,8 @@ namespace EPS
             set => SetField(ref previewFilePaths, value);
         }
 
-        private bool useInternalValueSetters;
-        [Description("When true, the PanelUIBase class's \"SendValue\" methods will be internal instead of public.")]
-        [DisplayName("Use Internal Value Setters")]
-        [Browsable(false)]
-        public bool UseInternalValueSetters
-        {
-            get => useInternalValueSetters;
-            set => SetField(ref useInternalValueSetters, value);
-        }
-
         [Browsable(false)]
         public string PanelNamespace { get; set; } = "";
-
-        private bool compileButtonReleaseEvents;
-        [Description("If enabled then events corresponding with button releases will be included in the classes generated.")]
-        [DisplayName("Include Button Release Events")]
-        [Browsable(false)]
-        public bool CompileButtonReleaseEvents
-        {
-            get => compileButtonReleaseEvents;
-            set => SetField(ref compileButtonReleaseEvents, value);
-        }
 
         private string hardkeyPrefix = "Hardkey";
         [Description("The prefix to associate with Hardkeys. Hardkeys are only compiled once per project, not on a per-page basis. If Hardkey Names are provided this prefix is ignored.")]
