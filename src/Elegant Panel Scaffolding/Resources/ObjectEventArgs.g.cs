@@ -7,13 +7,15 @@ using Crestron.SimplSharpPro;
 
 namespace SharpProTouchpanelDemo.UI.Core
 {
+    /// <summary>
+    /// Generic object event args.
+    /// </summary>
     public class ObjectEventArgs
     {
-        public object UserObject { get; set; }
-        public bool BoolValue { get; set; }
-        public ushort UShortValue { get; set; }
-        public string StringValue { get; set; }
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectEventArgs"/> class.
+        /// </summary>
+        /// <param name="args">The smart signal event args.</param>
         public ObjectEventArgs(SmartObjectEventArgs args)
         {
             UserObject = args.Sig.UserObject;
@@ -31,6 +33,10 @@ namespace SharpProTouchpanelDemo.UI.Core
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectEventArgs"/> class.
+        /// </summary>
+        /// <param name="args">The signal event args.</param>
         public ObjectEventArgs(SigEventArgs args)
         {
             UserObject = args.Sig.UserObject;
@@ -47,5 +53,25 @@ namespace SharpProTouchpanelDemo.UI.Core
                     break;
             }
         }
+
+        /// <summary>
+        /// Gets the user object.
+        /// </summary>
+        public object UserObject { get; private set; }
+
+        /// <summary>
+        /// Gets the boolean value.
+        /// </summary>
+        public bool BoolValue { get; private set; }
+
+        /// <summary>
+        /// Gets the ushort value.
+        /// </summary>
+        public ushort UShortValue { get; private set; }
+
+        /// <summary>
+        /// Gets the string value.
+        /// </summary>
+        public string StringValue { get; private set; }
     }
 }

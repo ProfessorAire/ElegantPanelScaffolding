@@ -44,11 +44,17 @@ namespace EPS.CodeGen.Writers
             _ = sb.Clear();
 
             // Help.
+            var help = Help.ToString(indent);
+            if (string.IsNullOrWhiteSpace(help))
+            {
+                Help.Summary = $"Auto-generated {Name} class.";
+            }
+
             _ = sb.Append(Help.ToString(indent));
 
             // Class Details.
             _ = sb.Append(indent.GetTabs());
-            _ = sb.Append($"{Accessor.GetTextValue()}{Modifier.GetTextValue()} class {Name}");
+            _ = sb.Append($"{Accessor.GetTextValue()}{Modifier.GetTextValue()}class {Name}");
             for (var i = 0; i < Implements.Count; i++)
             {
                 if (i == 0)

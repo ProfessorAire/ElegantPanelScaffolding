@@ -14,6 +14,8 @@ namespace EPS.CodeGen.Writers
 
         public string Name { get; set; }
 
+        public List<string> Headers { get; } = new List<string>();
+
         public NamespaceWriter(string name) => Name = name;
 
         public void AddUsing(string usingStatement)
@@ -24,11 +26,29 @@ namespace EPS.CodeGen.Writers
             }
         }
 
+        public void AddHeader(string headerText)
+        {
+            if (!Headers.Contains(headerText))
+            {
+                Headers.Add(headerText);
+            }
+        }
+
         public override string ToString() => ToString(0);
 
         public override string ToString(int indentLevel)
         {
             _ = sb.Clear();
+            foreach(var h in Headers)
+            {
+                sb.AppendLine(h);
+            }
+
+            if (Headers.Count > 0)
+            {
+                sb.AppendLine();
+            }
+
             Usings.Sort();
             foreach (var u in Usings)
             {

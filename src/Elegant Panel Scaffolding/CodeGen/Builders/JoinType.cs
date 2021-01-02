@@ -3,11 +3,16 @@
     public enum JoinType
     {
         Analog,
+        AnalogSet,
         Digital,
+        DigitalButton,
+        DigitalPulse,
+        SerialSet,
         Serial,
+        SmartSerial,
         SmartAnalog,
         SmartDigital,
-        SmartSerial,
+        SmartDigitalButton,
         SrlVisibility,
         SrlEnable,
         None

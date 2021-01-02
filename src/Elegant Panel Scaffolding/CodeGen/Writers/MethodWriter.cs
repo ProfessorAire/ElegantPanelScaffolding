@@ -79,6 +79,7 @@ namespace EPS.CodeGen.Writers
             for (var i = 0; i < MethodLines.Count; i++)
             {
                 var l = MethodLines[i];
+
                 if (l.Contains("}") && !l.Contains("{"))
                 {
                     indent--;

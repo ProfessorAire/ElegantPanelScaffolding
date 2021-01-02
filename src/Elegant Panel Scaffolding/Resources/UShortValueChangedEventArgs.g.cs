@@ -6,15 +6,23 @@ using Crestron.SimplSharp;
 
 namespace SharpProTouchpanelDemo.UI.Core
 {
+    /// <summary>
+    /// Used for all events where a ushort value is changed from the touchpanel. (Sliders, etc.)
+    /// </summary>
     public class UShortValueChangedEventArgs : EventArgs
     {
         /// <summary>
-        /// Used for all events where a ushort value is changed from the touchpanel. (Sliders, etc.)
+        /// Initializes a new instance of the <see cref="UShortValueChangedEventArgs"/> class.
         /// </summary>
-        public ushort Value { get; set; }
+        /// <param name="value">The ushort value.</param>
         public UShortValueChangedEventArgs(ushort value)
         {
             Value = value;
         }
+
+        /// <summary>
+        /// Gets the value.
+        /// </summary>
+        public ushort Value { get; private set; }
     }
 }

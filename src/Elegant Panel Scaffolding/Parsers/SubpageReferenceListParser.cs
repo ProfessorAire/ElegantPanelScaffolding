@@ -45,18 +45,18 @@ namespace EPS.Parsers
             {
                 if (ushort.TryParse(props?.Element("AnalogNumberOfItemsJoin")?.Element("JoinNumber")?.Value ?? "0", out var quantityJoin) && quantityJoin > 0)
                 {
-                    builder.AddProperty(new PropertyElement("ItemQuantity", quantityJoin, builder.SmartJoin, JoinType.Analog, PropertyMethod.ToPanel));
+                    builder.AddJoin(new JoinBuilder(quantityJoin, builder.SmartJoin, "ItemQuantity", JoinType.Analog, JoinDirection.ToPanel));
                 }
             }
 
             if (ushort.TryParse(props?.Element("AnalogSelectJoin")?.Element("JoinNumber")?.Value ?? "0", out var selectJoin) && selectJoin > 0)
             {
-                builder.AddEvent(new EventElement("ItemSelectionChanged", selectJoin, builder.SmartJoin, JoinType.Analog, false));
+                builder.AddJoin(new JoinBuilder(selectJoin, builder.SmartJoin, "ItemSelection", JoinType.Analog, JoinDirection.FromPanel));
             }
 
             if (ushort.TryParse(props?.Element("AnalogScrollJoin")?.Element("JoinNumber")?.Value ?? "0", out var scrollJoin) && selectJoin > 0)
             {
-                builder.AddProperty(new PropertyElement("ScrollToItem", scrollJoin, builder.SmartJoin, JoinType.Analog, PropertyMethod.Void));
+                builder.AddJoin(new JoinBuilder(scrollJoin, builder.SmartJoin, "ScrollToItem", JoinType.AnalogSet, JoinDirection.ToPanel));
             }
 
             var subpage = props?.Document?.Root?.Element("Properties")?.Element("Pages")?.Elements()?.Where(e => e.Name.LocalName.ToUpperInvariant() == "PAGE" && e.Element("ControlName")?.Value.ToUpperInvariant() == "SUBPAGE" && e.Attribute("uid")?.Value == pageReference)?.FirstOrDefault() ?? null;
@@ -84,11 +84,11 @@ namespace EPS.Parsers
 
             if (useVisible)
             {
-                subBuilder.AddProperty(new PropertyElement("IsVisible", 1, subBuilder.SmartJoin, JoinType.SrlVisibility, PropertyMethod.ToPanel));
+                subBuilder.AddJoin(new JoinBuilder(1, subBuilder.SmartJoin, "IsVisible", JoinType.SrlVisibility, JoinDirection.ToPanel));
             }
             if (useEnabled)
             {
-                subBuilder.AddProperty(new PropertyElement("IsEnabled", 1, subBuilder.SmartJoin, JoinType.SrlEnable, PropertyMethod.ToPanel));
+                subBuilder.AddJoin(new JoinBuilder(1, subBuilder.SmartJoin, "IsEnabled", JoinType.SrlEnable, JoinDirection.ToPanel));
             }
 
             subBuilder.DigitalOffset = (ushort)(digStart - 1);

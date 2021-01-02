@@ -13,6 +13,12 @@ namespace EPS.CodeGen.Writers
 
         private readonly int indentLevel;
 
+        public TextWriter(int indentLevel = 0)
+        {
+            this.indentLevel = indentLevel;
+            Help = new HelpWriter(indentLevel);
+        }
+
         public TextWriter(string text, int indentLevel = 0)
         {
             Text.Add(text);
@@ -24,6 +30,11 @@ namespace EPS.CodeGen.Writers
 
         public override string ToString(int indentLevel)
         {
+            if(Text.Count == 0)
+            {
+                return string.Empty;
+            }
+
             _ = sb.Clear();
             for (var i = 0; i < Text.Count; i++)
             {

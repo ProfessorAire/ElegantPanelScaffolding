@@ -6,7 +6,7 @@ namespace EPS.Parsers
 {
     public static class HardkeyParser
     {
-        public static ElementBase? ParseElement(XElement hardkeyElement, Options options)
+        public static JoinBuilder? ParseElement(XElement hardkeyElement, Options options)
         {
             if(options == null)
             {
@@ -21,11 +21,11 @@ namespace EPS.Parsers
                     var keys = Options.Current.HardkeyNames.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                     if (keys.Length > keyNumber - 1)
                     {
-                        return new EventElement($"{keys[keyNumber - 1]}", joinNumber, 0, JoinType.Digital, true);
+                        return new JoinBuilder(joinNumber, 0, $"{keys[keyNumber - 1]}", JoinType.DigitalButton, JoinDirection.FromPanel);
                     }
                     else
                     {
-                        return new EventElement($"{options.HardkeyPrefix}{keyNumber}", joinNumber, 0, JoinType.Digital, true);
+                        return new JoinBuilder(joinNumber, 0, $"{options.HardkeyPrefix}{keyNumber}", JoinType.DigitalButton, JoinDirection.FromPanel);
                     }
                 }
             }
