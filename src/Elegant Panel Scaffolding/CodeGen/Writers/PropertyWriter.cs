@@ -51,16 +51,16 @@ namespace EPS.CodeGen.Writers
         {
             _ = sb.Clear();
 
-            var hasBackingField = (HasGetter && Getter.Count > 0) || (HasSetter && Setter.Count > 0);
+//            var hasBackingField = (HasGetter && Getter.Count > 0) || (HasSetter && Setter.Count > 0);
 
-            // Backing Field.
-            if (hasBackingField)
-            {
-                _ = sb.Append(indent.GetTabs());
-#pragma warning disable CA1308 // Normalize strings to uppercase
-                _ = sb.AppendLine($"private {Type} {Name.ToLower(CultureInfo.InvariantCulture)[0]}{Name.Substring(1)}{(!string.IsNullOrEmpty(DefaultValue) ? $" = {DefaultValue}" : "")};");
-#pragma warning restore CA1308 // Normalize strings to uppercase
-            }
+//            // Backing Field.
+//            if (hasBackingField)
+//            {
+//                _ = sb.Append(indent.GetTabs());
+//#pragma warning disable CA1308 // Normalize strings to uppercase
+//                _ = sb.AppendLine($"private {Type} {Name.ToLower(CultureInfo.InvariantCulture)[0]}{Name.Substring(1)}{(!string.IsNullOrEmpty(DefaultValue) ? $" = {DefaultValue}" : "")};");
+//#pragma warning restore CA1308 // Normalize strings to uppercase
+//            }
 
             // Help Stuff.
             _ = sb.Append(Help.ToString(indent));

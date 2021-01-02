@@ -45,6 +45,7 @@ namespace EPS
         private bool useInternalValueSetters;
         [Description("When true, the PanelUIBase class's \"SendValue\" methods will be internal instead of public.")]
         [DisplayName("Use Internal Value Setters")]
+        [Browsable(false)]
         public bool UseInternalValueSetters
         {
             get => useInternalValueSetters;

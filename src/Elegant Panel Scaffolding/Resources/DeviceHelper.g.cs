@@ -9,6 +9,9 @@ using Crestron.SimplSharpProInternal;
 
 namespace SharpProTouchpanelDemo.UI.Core
 {
+    /// <summary>
+    /// Device helper methods.
+    /// </summary>
     public static class DeviceHelper
     {
         /// <summary>

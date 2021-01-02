@@ -7,7 +7,7 @@ using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharp.Reflection;
 using Crestron.SimplSharpPro.CrestronThread;
-using System.Security.AccessControl;
+using SharpProTouchpanelDemo.UI.Core;
 
 namespace SharpProTouchpanelDemo.UI.Core
 {
@@ -19,21 +19,34 @@ namespace SharpProTouchpanelDemo.UI.Core
     /// simplify navigation and other feedback by using a unique instance of helpers (like this project's
     /// Navigation class) to control things like page selections.
     /// </summary>
-    public abstract class PanelUIBase : IDisposable, IEnumerable<BasicTriListWithSmartObject>
+    public abstract class PanelUIBase : IDisposable, IEnumerable<BasicTriList>, IEnumerable<BasicTriListWithSmartObject>
     {
         #region CoreFunctionality
-        /// <summary>
-        /// Raised when an exception is encountered and not caught by the user's code.
-        /// Provides access to the exception for debugging purposes. This is caught
-        /// in order to prevent code exceptions from crashing the touchpanel process.
-        /// </summary>
-        public event UnhandledExceptionEventHandler UserCodeExceptionEncountered;
 
         /// <summary>
-        /// The basicQueue is used for processing all normal interactions from the panel.
+        /// Provides data on how many threads this class will use, so the threading requirements can be calculated at the program's startup.
+        /// </summary>
+        public const int ThreadQuantity = 2;
+
+        /// <summary>
+        /// Used to track if calling disposing, which can be used to ignore certain exceptions.
+        /// </summary>
+        private bool isDisposing = false;
+
+        /// <summary>
+        /// Used internally to track if registration has been requested.
+        /// </summary>
+        private bool isRegisterRequested = false;
+
+        /// <summary>
+        /// The queue is used for processing all normal interactions from the panel.
         /// </summary>
         private CrestronQueue<Action> panelProcessingQueue = new CrestronQueue<Action>(30);
-        private Thread basicThread = null;
+
+        /// <summary>
+        /// Processing thread.
+        /// </summary>
+        private Thread processingThread = null;
 
         /// <summary>
         /// If this is subscribed to, it is raised whenever the touchpanel sends data, like a touch or slider movement.
@@ -44,7 +57,7 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// <summary>
         /// This is a list of panels that have been added to the panel class using the <see cref="AddPanel" /> method.
         /// </summary>
-        protected List<BasicTriListWithSmartObject> panels = new List<BasicTriListWithSmartObject>();
+        protected List<BasicTriList> panels = new List<BasicTriList>();
 
         /// <summary>
         /// Holder for Actions associated with classes.
@@ -64,86 +77,90 @@ namespace SharpProTouchpanelDemo.UI.Core
             set
             {
                 description = value;
-                foreach (var p in panels.Where(p => p.Registered))
+                foreach (var p in panels.Where(p => !p.Registered))
                 {
                     p.Description = value;
                 }
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PanelUIBase"/> class.
+        /// </summary>
         public PanelUIBase()
         {
             Actions = new PanelActions();
         }
 
         /// <summary>
-        /// Used by implementing classes to dispose of all child objects as needed.
+        /// Raised when an exception is encountered and not caught by the user's code.
+        /// Provides access to the exception for debugging purposes. This is caught
+        /// in order to prevent code exceptions from crashing the touchpanel process.
         /// </summary>
-        protected abstract void DisposeChildren();
+        public event UnhandledExceptionEventHandler UserCodeExceptionEncountered;
 
         /// <summary>
-        /// Used by implementing classes to initialize values as needed.
+        /// Adds a <see cref="BasicTriList"/> to the project.
         /// </summary>
-        protected abstract void InitializeValues();
-
-        /// <summary>
-        /// Adds a <see cref="BasicTriListWithSmartObject"/> to the project.
-        /// </summary>
-        /// <param name="panel">The <see cref="BasicTriListWithSmartObject"/> to add to the list.</param>
-        public void AddPanel(BasicTriListWithSmartObject panel)
+        /// <param name="panel">The <see cref="BasicTriList"/> to add to the list.</param>
+        public virtual void AddPanel(BasicTriList panel)
         {
             if (!panels.Contains(panel))
             {
-                InitializePanel(panel);
+                ConfigureSigEvents(panel);
                 panels.Add(panel);
-                if (isRegisterRequested && !panel.Registered)
-                {
-                    panel.Register(panel.Name);
-                }
-                if (panel.Registered)
+
+                if (!panel.Registered)
                 {
                     panel.Description = Description;
+                }
+
+                if (isRegisterRequested && !panel.Registered)
+                {
+                    _Register(panel);
+                    panel.Register(!string.IsNullOrEmpty(panel.Description) ? panel.Description : panel.Name);
                 }
             }
         }
 
         /// <summary>
-        /// Removes a <see cref="BasicTriListWithSmartObject"/> from the project, optionally unregistering and disposing of it.
+        /// Removes a <see cref="BasicTriList"/> from the project, optionally unregistering and disposing of it.
         /// </summary>
-        /// <param name="panel">The <see cref="BasicTriListWithSmartObject"/> to remove.</param>
+        /// <param name="panel">The <see cref="BasicTriList"/> to remove.</param>
         /// <param name="UnregisterAndDispose">If true will unregister and dispose of the panel after it is removed.</param>
-        public void RemovePanel(BasicTriListWithSmartObject panel, bool UnregisterAndDispose)
+        public void RemovePanel(BasicTriList panel, bool UnregisterAndDispose)
         {
             if (panels.Contains(panel))
             {
+                panel.SigChange -= Enqueue;
+
                 foreach (var sig in panel.BooleanOutput.Where(sig => sig.UserObject != null))
                 {
                     sig.UserObject = null;
                 }
-                foreach(var sig in panel.UShortOutput.Where(sig => sig.UserObject != null))
+
+                foreach (var sig in panel.UShortOutput.Where(sig => sig.UserObject != null))
                 {
                     sig.UserObject = null;
                 }
-                foreach(var sig in panel.StringOutput.Where(sig => sig.UserObject != null))
+
+                foreach (var sig in panel.StringOutput.Where(sig => sig.UserObject != null))
                 {
                     sig.UserObject = null;
                 }
-                foreach (var so in panel.SmartObjects)
+
+                var smartPanel = panel as BasicTriListWithSmartObject;
+
+                if (smartPanel != null)
                 {
-                    foreach (var sig in so.Value.BooleanOutput.Where(sig => sig.UserObject != null))
-                {
-                    sig.UserObject = null;
+                    foreach (var smartId in Actions.SmartObjectIds)
+                    {
+                        smartPanel.SmartObjects[smartId].SigChange -= Enqueue;
+                    }
                 }
-                foreach(var sig in so.Value.UShortOutput.Where(sig => sig.UserObject != null))
-                {
-                    sig.UserObject = null;
-                }
-                foreach(var sig in so.Value.StringOutput.Where(sig => sig.UserObject != null))
-                {
-                    sig.UserObject = null;
-                }
-                }
+
                 panels.Remove(panel);
+
                 if (UnregisterAndDispose)
                 {
                     panel.UnRegister(panel.Name);
@@ -157,7 +174,7 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// </summary>
         /// <param name="join">The join # to pulse.</param>
         /// <param name="millisecondDuration">The duration in milliseconds to pulse the join.</param>
-        {MethodAccessor} void Pulse(uint join, int millisecondDuration)
+        public void Pulse(uint join, int millisecondDuration)
         {
             foreach (var panel in panels)
             {
@@ -174,23 +191,23 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// </summary>
         /// <param name="join">The join # to pulse.</param>
         /// <param name="millisecondDuration">The duration in milliseconds to pulse the join.</param>
-        /// <param name="panel">The <see cref="BasicTriListWithSmartObject"/> to pulse the join on.</param>
-        {MethodAccessor} void Pulse(uint join, int millisecondDuration, BasicTriListWithSmartObject panel)
+        /// <param name="panel">The <see cref="BasicTriList"/> to pulse the join on.</param>
+        public void Pulse(uint join, int millisecondDuration, BasicTriList panel)
         {
             if (panel.Registered)
             {
                 CrestronInvoke.BeginInvoke(
                     (o) => panel.BooleanInput[join].Pulse(millisecondDuration));
             }
-}
+        }
 
         /// <summary>
         /// Pulses a boolean input on a smart object on every panel for a period of time.
         /// </summary>
         /// <param name="smartID">The ID of the smart object.</param>
-        /// <param name="value">The Join # on the smart object to pulse.</param>
+        /// <param name="join">The Join # on the smart object to pulse.</param>
         /// <param name="millisecondDuration">The duration in milliseconds to pulse the join.</param>
-        {MethodAccessor} void Pulse(uint smartID, uint join, int millisecondDuration)
+        public void Pulse(uint smartID, uint join, int millisecondDuration)
         {
             foreach (var panel in panels.OfType<BasicTriListWithSmartObject>())
             {
@@ -200,30 +217,30 @@ namespace SharpProTouchpanelDemo.UI.Core
                         (o) => panel.SmartObjects[smartID].BooleanInput[join].Pulse(millisecondDuration));
                 }
             }
-}
+        }
 
         /// <summary>
         /// Pulses a boolean input on a smart object on a specific panel for a period of time.
         /// </summary>
         /// <param name="smartID">The ID of the smart object.</param>
-        /// <param name="value">The Join # on the smart object to pulse.</param>
+        /// <param name="join">The Join # on the smart object to pulse.</param>
         /// <param name="millisecondDuration">The duration in milliseconds to pulse the join.</param>
         /// /// <param name="panel">The <see cref="BasicTriListWithSmartObject"/> to pulse the join on.</param>
-        {MethodAccessor} void Pulse(uint smartID, uint join, int millisecondDuration, BasicTriListWithSmartObject panel)
+        public void Pulse(uint smartID, uint join, int millisecondDuration, BasicTriListWithSmartObject panel)
         {
-            if (panel.Registered)
+            if (panels.Contains(panel) && panel.Registered)
             {
                 CrestronInvoke.BeginInvoke(
                     (o) => panel.SmartObjects[smartID].BooleanInput[join].Pulse(millisecondDuration));
             }
-}
+        }
 
         /// <summary>
         /// Sends the value to every panel.
         /// </summary>
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
-        {MethodAccessor} void SendValue(uint join, bool value)
+        public void SendValue(uint join, bool value)
         {
             panels.ForEach(panel =>
             {
@@ -232,28 +249,28 @@ namespace SharpProTouchpanelDemo.UI.Core
                     panel.BooleanInput[join].BoolValue = value;
                 }
             });
-}
+        }
 
         /// <summary>
         /// Sends the value to the specific panel.
         /// </summary>
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
-        /// <param name="panel">The <see cref="BasicTriListWithSmartObject"/> to send the value to.</param>
-        {MethodAccessor} void SendValue(uint join, bool value, BasicTriListWithSmartObject panel)
+        /// <param name="panel">The <see cref="BasicTriList"/> to send the value to.</param>
+        public void SendValue(uint join, bool value, BasicTriList panel)
         {
             if (panels.Contains(panel) && panel.Registered)
             {
                 panel.BooleanInput[join].BoolValue = value;
             }
-}
+        }
 
         /// <summary>
         /// Sends the value to every panel.
         /// </summary>
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
-        {MethodAccessor} void SendValue(uint join, ushort value)
+        public void SendValue(uint join, ushort value)
         {
             panels.ForEach(panel =>
             {
@@ -262,28 +279,28 @@ namespace SharpProTouchpanelDemo.UI.Core
                     panel.UShortInput[join].UShortValue = value;
                 }
             });
-}
+        }
 
         /// <summary>
         /// Sends the smart value to the specific panel.
         /// </summary>
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
-        /// <param name="panel">The <see cref="BasicTriListWithSmartObject"/> to send the value to.</param>
-        {MethodAccessor} void SendValue(uint join, ushort value, BasicTriListWithSmartObject panel)
+        /// <param name="panel">The <see cref="BasicTriList"/> to send the value to.</param>
+        public void SendValue(uint join, ushort value, BasicTriList panel)
         {
             if (panels.Contains(panel) && panel.Registered)
             {
                 panel.UShortInput[join].UShortValue = value;
             }
-}
+        }
 
         /// <summary>
         /// Sends the value to every panel.
         /// </summary>
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
-        {MethodAccessor} void SendValue(uint join, string value)
+        public void SendValue(uint join, string value)
         {
             panels.ForEach(panel =>
             {
@@ -292,21 +309,21 @@ namespace SharpProTouchpanelDemo.UI.Core
                     panel.StringInput[join].StringValue = value;
                 }
             });
-}
+        }
 
         /// <summary>
         /// Sends the smart value to the specific panel.
         /// </summary>
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
-        /// <param name="panel">The <see cref="BasicTriListWithSmartObject"/> to send the value to.</param>
-        {MethodAccessor} void SendValue(uint join, string value, BasicTriListWithSmartObject panel)
+        /// <param name="panel">The <see cref="BasicTriList"/> to send the value to.</param>
+        public void SendValue(uint join, string value, BasicTriList panel)
         {
             if (panels.Contains(panel) && panel.Registered)
             {
                 panel.StringInput[join].StringValue = value;
             }
-}
+        }
 
         /// <summary>
         /// Sends the smart value to every panel.
@@ -314,16 +331,16 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// <param name="smartJoin">The join # of the smart object.</param>
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
-        {MethodAccessor} void SendSmartValue(uint smartJoin, uint join, bool value)
+        public void SendSmartValue(uint smartJoin, uint join, bool value)
         {
-            panels.ForEach(panel =>
+            foreach (var panel in panels.OfType<BasicTriListWithSmartObject>())
             {
                 if (panel.Registered)
                 {
                     panel.SmartObjects[smartJoin].BooleanInput[join].BoolValue = value;
                 }
-            });
-}
+            }
+        }
 
         /// <summary>
         /// Sends the smart value to the specific panel.
@@ -332,13 +349,13 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
         /// <param name="panel">The <see cref="BasicTriListWithSmartObject"/> to send the value to.</param>
-        {MethodAccessor} void SendSmartValue(uint smartJoin, uint join, bool value, BasicTriListWithSmartObject panel)
+        public void SendSmartValue(uint smartJoin, uint join, bool value, BasicTriListWithSmartObject panel)
         {
             if (panels.Contains(panel) && panel.Registered)
             {
                 panel.SmartObjects[smartJoin].BooleanInput[join].BoolValue = value;
             }
-}
+        }
 
         /// <summary>
         /// Sends the smart value to every panel.
@@ -346,16 +363,16 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// <param name="smartJoin">The join # of the smart object.</param>
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
-        {MethodAccessor} void SendSmartValue(uint smartJoin, uint join, ushort value)
+        public void SendSmartValue(uint smartJoin, uint join, ushort value)
         {
-            panels.ForEach(panel =>
+            foreach (var panel in panels.OfType<BasicTriListWithSmartObject>())
             {
                 if (panel.Registered)
                 {
                     panel.SmartObjects[smartJoin].UShortInput[join].UShortValue = value;
                 }
-            });
-}
+            }
+        }
 
         /// <summary>
         /// Sends the smart value to the specific panel.
@@ -364,13 +381,13 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
         /// <param name="panel">The <see cref="BasicTriListWithSmartObject"/> to send the value to.</param>
-        {MethodAccessor} void SendSmartValue(uint smartJoin, uint join, ushort value, BasicTriListWithSmartObject panel)
+        public void SendSmartValue(uint smartJoin, uint join, ushort value, BasicTriListWithSmartObject panel)
         {
             if (panels.Contains(panel) && panel.Registered)
             {
                 panel.SmartObjects[smartJoin].UShortInput[join].UShortValue = value;
             }
-}
+        }
 
         /// <summary>
         /// Sends the smart value to every panel.
@@ -378,16 +395,16 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// <param name="smartJoin">The join # of the smart object.</param>
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
-        {MethodAccessor} void SendSmartValue(uint smartJoin, uint join, string value)
+        public void SendSmartValue(uint smartJoin, uint join, string value)
         {
-            panels.ForEach(panel =>
+            foreach (var panel in panels.OfType<BasicTriListWithSmartObject>())
             {
                 if (panel.Registered)
                 {
                     panel.SmartObjects[smartJoin].StringInput[join].StringValue = value;
                 }
-            });
-}
+            }
+        }
 
         /// <summary>
         /// Sends the smart value to the specific panel.
@@ -396,157 +413,13 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// <param name="join">The join # to send the value to.</param>
         /// <param name="value">The value to send.</param>
         /// <param name="panel">The <see cref="BasicTriListWithSmartObject"/> to send the value to.</param>
-        {MethodAccessor} void SendSmartValue(uint smartJoin, uint join, string value, BasicTriListWithSmartObject panel)
+        public void SendSmartValue(uint smartJoin, uint join, string value, BasicTriListWithSmartObject panel)
         {
             if (panels.Contains(panel) && panel.Registered)
             {
                 panel.SmartObjects[smartJoin].StringInput[join].StringValue = value;
             }
         }
-
-        /// <summary>
-        /// Adds a basic action object to the processing queue.
-        /// </summary>
-        /// <param name="currentDevice"></param>
-        /// <param name="args"></param>
-        protected void Enqueue(GenericBase currentDevice, SigEventArgs args)
-        {
-            var join = args.Sig.Number;
-            switch (args.Event)
-            {
-                case eSigEvent.BoolChange:
-                    var bv = args.Sig.BoolValue;
-                    if (Actions.BoolActions.ContainsKey(join))
-                    {
-                        panelInteractionQueue.Enqueue(() =>
-                        {
-                            Actions.BoolActions[join].Invoke(bv);
-                        });
-                    }
-                    else
-                    {
-                        if (bv)
-                        {
-                            if (Actions.BoolPressActions.ContainsKey(join))
-                            {
-                                panelInteractionQueue.Enqueue(() =>
-                                {
-                                    Actions.BoolPressActions[join].Invoke(true);
-                                });
-                            }
-                        }
-                        else
-                        {
-                            if (Actions.BoolReleaseActions.ContainsKey(join))
-                            {
-                                panelInteractionQueue.Enqueue(() =>
-                                {
-                                    Actions.BoolReleaseActions[join].Invoke(false);
-                                });
-                            }
-                        }
-                    }
-                    break;
-                case eSigEvent.UShortChange:
-                    var uv = args.Sig.UShortValue;
-                    if (Actions.UShortActions.ContainsKey(join))
-                    {
-                        panelInteractionQueue.Enqueue(() =>
-                        {
-                            Actions.UShortActions[join].Invoke(uv);
-                        });
-                    }
-                    break;
-                case eSigEvent.StringChange:
-                    var sv = args.Sig.StringValue;
-                    if (Actions.StringActions.ContainsKey(join))
-                    {
-                        panelInteractionQueue.Enqueue(() =>
-                        {
-                            Actions.StringActions[join].Invoke(sv);
-                        });
-                    }
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Adds a smart object action to the processing queue.
-        /// </summary>
-        /// <param name="currentDevice"></param>
-        /// <param name="args"></param>
-        protected void Enqueue(GenericBase currentDevice, SmartObjectEventArgs args)
-        {
-            var key = PanelUIData.GetSmartKey(args.Sig.Number, args.SmartObjectArgs.ID);
-
-            switch (args.Event)
-            {
-                case eSigEvent.BoolChange:
-                    var bv = args.Sig.BoolValue;
-                    if (Actions.BoolSmartActions.ContainsKey(key))
-                    {
-                        panelInteractionQueue.Enqueue(() =>
-                        {
-                            Actions.BoolSmartActions[key].Invoke(bv);
-                        });
-                    }
-                    else
-                    {
-                        if (bv)
-                        {
-                            if (Actions.BoolSmartPressActions.ContainsKey(key))
-                            {
-                                panelInteractionQueue.Enqueue(() =>
-                                {
-                                    Actions.BoolSmartPressActions[key].Invoke(true);
-                                });
-                            }
-                        }
-                        else
-                        {
-                            if (Actions.BoolSmartReleaseActions.ContainsKey(key))
-                            {
-                                panelInteractionQueue.Enqueue(() =>
-                                {
-                                    Actions.BoolSmartReleaseActions[key].Invoke(false);
-                                });
-                            }
-                        }
-                    }
-
-                    break;
-                case eSigEvent.UShortChange:
-                    var uv = args.Sig.UShortValue;
-                    if (Actions.UShortSmartActions.ContainsKey(key))
-                    {
-                        panelInteractionQueue.Enqueue(() =>
-                        {
-                            Actions.UShortSmartActions[key].Invoke(uv);
-                        });
-                    }
-                    break;
-                case eSigEvent.StringChange:
-                    var sv = args.Sig.StringValue;
-                    if (Actions.StringSmartActions.ContainsKey(key))
-                    {
-                        panelInteractionQueue.Enqueue(() =>
-                        {
-                            Actions.StringSmartActions[key].Invoke(sv);
-                        });
-                    }
-                    break;
-            }
-        }
-
-/// <summary>
-/// Provides data on how many threads this class will use, so the threading requirements can be calculated at the program's startup.
-/// </summary>
-public const int ThreadQuantity = 2;
-
-        /// <summary>
-        /// Used internally to track if registration has been requested.
-        /// </summary>
-        private bool isRegisterRequested = false;
 
         /// <summary>
         /// Registers all the panels in the internal list. Only call after you're done initializing panels.
@@ -556,7 +429,12 @@ public const int ThreadQuantity = 2;
             isRegisterRequested = true;
             foreach (var p in panels)
             {
-                p.Register(p.Name);
+                if (!p.Registered)
+                {
+                    _Register(p);
+                    p.Register(!string.IsNullOrEmpty(p.Description) ? p.Description : p.Name);
+                }
+
                 if (p.Registered)
                 {
                     p.Description = Description;
@@ -577,11 +455,6 @@ public const int ThreadQuantity = 2;
         }
 
         /// <summary>
-        /// Used to track if calling disposing, which can be used to ignore certain exceptions.
-        /// </summary>
-        private bool isDisposing = false;
-
-        /// <summary>
         /// Kills all the threads, disposes of internal objects, unregisters devices and disposes all the panels.
         /// Can be used to teardown all the touchpanel logic at once, instead of manually calling dispose on all
         /// the touchpanels.
@@ -589,9 +462,8 @@ public const int ThreadQuantity = 2;
         public void Dispose()
         {
             isDisposing = true;
-            KillThreads();
-            smartQueue.Dispose();
-            basicQueue.Dispose();
+            StopThreads();
+            panelProcessingQueue.Dispose();
             DisposeChildren();
             UnRegister();
             foreach (var p in panels)
@@ -606,7 +478,7 @@ public const int ThreadQuantity = 2;
         /// </summary>
         /// <param name="index">The index of the object to retrieve.</param>
         /// <returns>Returns a BasicTriListWithSmartObject if any exists at the specified index.</returns>
-        public BasicTriListWithSmartObject this[int index]
+        public BasicTriList this[int index]
         {
             get
             {
@@ -622,12 +494,221 @@ public const int ThreadQuantity = 2;
         }
 
         /// <summary>
+        /// Starts all the processing threads. Without starting the threads, no touchpanel interactions will surface to the program. Also sends initial values to touchpanels.
+        /// </summary>
+        public void StartThreads()
+        {
+            InitializeValues();
+            if (processingThread == null)
+            {
+                processingThread = new Thread(ProcessInputQueue, null, Thread.eThreadStartOptions.Running);
+                processingThread.Name = "Panel Processing Thread";
+            }
+            else
+            {
+                processingThread.Start();
+            }
+        }
+
+        /// <summary>
+        /// Stops and kills all the processing threads.
+        /// </summary>
+        public void StopThreads()
+        {
+            if (processingThread != null && (processingThread.ThreadState == Thread.eThreadStates.ThreadRunning || processingThread.ThreadState == Thread.eThreadStates.ThreadSuspended))
+            {
+                processingThread.Abort();
+            }
+            panelProcessingQueue.Clear();
+        }
+
+        /// <summary>
+        /// Optional method for running custom code when a panel is registered.
+        /// </summary>
+        /// <param name="panel"></param>
+        protected virtual void _Register(BasicTriList panel)
+        {
+        }
+
+        /// <summary>
+        /// Used by implementing classes to dispose of all child objects as needed.
+        /// </summary>
+        protected abstract void DisposeChildren();
+
+        /// <summary>
+        /// Used by implementing classes to initialize values as needed.
+        /// </summary>
+        protected abstract void InitializeValues();
+
+        /// <summary>
+        /// Adds a basic action object to the processing queue.
+        /// </summary>
+        /// <param name="currentDevice"></param>
+        /// <param name="args"></param>
+        protected void Enqueue(GenericBase currentDevice, SigEventArgs args)
+        {
+            var join = args.Sig.Number;
+            switch (args.Event)
+            {
+                case eSigEvent.BoolChange:
+                    var bv = args.Sig.BoolValue;
+                    if (Actions.BoolActions.ContainsKey(join))
+                    {
+                        panelProcessingQueue.Enqueue(() =>
+                        {
+                            Actions.BoolActions[join].Invoke(bv);
+                        });
+                    }
+                    else
+                    {
+                        if (bv)
+                        {
+                            if (Actions.BoolPressActions.ContainsKey(join))
+                            {
+                                panelProcessingQueue.Enqueue(() =>
+                                {
+                                    Actions.BoolPressActions[join].Invoke(true);
+                                });
+                            }
+                        }
+                        else
+                        {
+                            if (Actions.BoolReleaseActions.ContainsKey(join))
+                            {
+                                panelProcessingQueue.Enqueue(() =>
+                                {
+                                    Actions.BoolReleaseActions[join].Invoke(false);
+                                });
+                            }
+                        }
+                    }
+                    break;
+                case eSigEvent.UShortChange:
+                    var uv = args.Sig.UShortValue;
+                    if (Actions.UShortActions.ContainsKey(join))
+                    {
+                        panelProcessingQueue.Enqueue(() =>
+                        {
+                            Actions.UShortActions[join].Invoke(uv);
+                        });
+                    }
+                    break;
+                case eSigEvent.StringChange:
+                    var sv = args.Sig.StringValue;
+                    if (Actions.StringActions.ContainsKey(join))
+                    {
+                        panelProcessingQueue.Enqueue(() =>
+                        {
+                            Actions.StringActions[join].Invoke(sv);
+                        });
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Adds a smart object action to the processing queue.
+        /// </summary>
+        /// <param name="currentDevice"></param>
+        /// <param name="args"></param>
+        protected void Enqueue(GenericBase currentDevice, SmartObjectEventArgs args)
+        {
+            var key = PanelActions.GetSmartKey(args.Sig.Number, args.SmartObjectArgs.ID);
+
+            switch (args.Event)
+            {
+                case eSigEvent.BoolChange:
+                    var bv = args.Sig.BoolValue;
+                    if (Actions.BoolSmartActions.ContainsKey(key))
+                    {
+                        panelProcessingQueue.Enqueue(() =>
+                        {
+                            Actions.BoolSmartActions[key].Invoke(bv);
+                        });
+                    }
+                    else
+                    {
+                        if (bv)
+                        {
+                            if (Actions.BoolSmartPressActions.ContainsKey(key))
+                            {
+                                panelProcessingQueue.Enqueue(() =>
+                                {
+                                    Actions.BoolSmartPressActions[key].Invoke(true);
+                                });
+                            }
+                        }
+                        else
+                        {
+                            if (Actions.BoolSmartReleaseActions.ContainsKey(key))
+                            {
+                                panelProcessingQueue.Enqueue(() =>
+                                {
+                                    Actions.BoolSmartReleaseActions[key].Invoke(false);
+                                });
+                            }
+                        }
+                    }
+
+                    break;
+                case eSigEvent.UShortChange:
+                    var uv = args.Sig.UShortValue;
+                    if (Actions.UShortSmartActions.ContainsKey(key))
+                    {
+                        panelProcessingQueue.Enqueue(() =>
+                        {
+                            Actions.UShortSmartActions[key].Invoke(uv);
+                        });
+                    }
+                    break;
+                case eSigEvent.StringChange:
+                    var sv = args.Sig.StringValue;
+                    if (Actions.StringSmartActions.ContainsKey(key))
+                    {
+                        panelProcessingQueue.Enqueue(() =>
+                        {
+                            Actions.StringSmartActions[key].Invoke(sv);
+                        });
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Handles subscribing to any sig change events required.
+        /// </summary>
+        /// <param name="panel">The Panel to subscribe events.</param>
+        private void ConfigureSigEvents(BasicTriList panel)
+        {
+            panel.SigChange += Enqueue;
+
+            var smartPanel = panel as BasicTriListWithSmartObject;
+
+            if (smartPanel != null)
+            {
+                foreach (var smartId in Actions.SmartObjectIds)
+                {
+                    smartPanel.SmartObjects[smartId].SigChange += Enqueue;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns an IEnumerator object that can iterate over all the panels in the internal list.
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator<BasicTriList> IEnumerable<BasicTriList>.GetEnumerator()
+        {
+            return panels.GetEnumerator();
+        }
+
+        /// <summary>
         /// Returns an IEnumerator object that can iterate over all the panels in the internal list.
         /// </summary>
         /// <returns></returns>
         IEnumerator<BasicTriListWithSmartObject> IEnumerable<BasicTriListWithSmartObject>.GetEnumerator()
         {
-            return panels.GetEnumerator();
+            return panels.OfType<BasicTriListWithSmartObject>().GetEnumerator();
         }
 
         /// <summary>
@@ -640,35 +721,6 @@ public const int ThreadQuantity = 2;
         }
 
         /// <summary>
-        /// Starts all the processing threads. Without starting the threads, no touchpanel interactions will surface to the program. Also sends initial values to touchpanels.
-        /// </summary>
-        public void StartThreads()
-        {
-            InitializeValues();
-            if (basicThread == null)
-            {
-                basicThread = new Thread(ProcessInputQueue, null, Thread.eThreadStartOptions.Running);
-                basicThread.Name = "Panel Processing Thread";
-            }
-            else
-            {
-                basicThread.Start();
-            }
-        }
-
-        /// <summary>
-        /// Stops and kills all the processing threads.
-        /// </summary>
-        public void KillThreads()
-        {
-            if (basicThread != null)
-            {
-                basicThread.Abort();
-                basicQueue.Clear();
-            }
-        }
-
-        /// <summary>
         /// Used to check if the TouchEventReceived event needs to be invoked and hands the signal data off to be processed.
         /// </summary>
         private object ProcessInputQueue(object obj)
@@ -677,26 +729,26 @@ public const int ThreadQuantity = 2;
             {
                 try
                 {
-                    var action = basicQueue.Dequeue();
+                    var action = panelProcessingQueue.Dequeue();
                     CrestronInvoke.BeginInvoke((s) => { if (TouchEventReceived != null) { TouchEventReceived.Invoke(this, new EventArgs()); } });
-                    if(action != null)
+                    if (action != null)
                     {
                         action.Invoke();
                     }
                 }
                 catch (System.Threading.ThreadAbortException)
                 {
-                    CrestronConsole.PrintLine("Thread exiting: {0}", basicThread.Name);
+                    CrestronConsole.PrintLine("Thread exiting: {0}", processingThread.Name);
                     if (!isDisposing)
                     {
-                        ErrorLog.Notice("Touchpanel Standard Input Thread exited prematurely: {0}", basicThread.Name);
+                        ErrorLog.Notice("Touchpanel Input Thread exited prematurely: {0}", processingThread.Name);
                     }
                 }
                 catch (Exception ex)
                 {
-                    if(UserCodeExceptionEncountered != null)
+                    if (UserCodeExceptionEncountered != null)
                     {
-                         UserCodeExceptionEncountered(this, new UnhandledExceptionEventArgs(ex, false));
+                        UserCodeExceptionEncountered(this, new UnhandledExceptionEventArgs(ex, false));
                     }
                 }
             }

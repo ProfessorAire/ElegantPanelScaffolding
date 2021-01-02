@@ -11,10 +11,18 @@ namespace SharpProTouchpanelDemo.UI.Core
     /// </summary>
     public class StringValueChangedEventArgs : EventArgs
     {
-        public string Value { get; set; }
+        /// <summary>
+        /// Initialize a new instance of the <see cref="StringValueChangedEventArgs"/> class.
+        /// </summary>
+        /// <param name="value">The string value.</param>
         public StringValueChangedEventArgs(string value)
         {
             Value = value;
         }
+
+        /// <summary>
+        /// Gets the value.
+        /// </summary>
+        public string Value { get; private set; }
     }
 }

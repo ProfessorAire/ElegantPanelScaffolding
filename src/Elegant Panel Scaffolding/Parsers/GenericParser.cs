@@ -47,7 +47,7 @@ namespace EPS.Parsers
 
         public static void ParseTheme(XElement? propertiesElement, ClassBuilder builder)
         {
-            if(builder == null)
+            if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
@@ -64,7 +64,7 @@ namespace EPS.Parsers
 
         public static void ParseBackgroundJoins(XElement? propertiesElement, ClassBuilder builder)
         {
-            if(builder == null)
+            if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
@@ -111,12 +111,12 @@ namespace EPS.Parsers
 
         public static void ParseChildElement(XElement child, ClassBuilder rootBuilder)
         {
-            if(rootBuilder == null)
+            if (rootBuilder == null)
             {
                 throw new ArgumentNullException(nameof(rootBuilder));
             }
 
-            if(child == null)
+            if (child == null)
             {
                 throw new ArgumentNullException(nameof(child));
             }
@@ -162,12 +162,13 @@ namespace EPS.Parsers
                         }
                         else if (name.StartsWith("digitalpress", StringComparison.InvariantCulture))
                         {
-                            builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"", JoinType.DigitalButton, JoinDirection.FromPanel));
                             if (child.Element("Properties")?.Element("ShowSelectFeedback")?.Value == "true")
                             {
                                 builder.AddJoin(
                                     new JoinBuilder(join, $"IsActive", JoinType.Digital, JoinDirection.ToPanel));
                             }
+
+                            builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"", JoinType.DigitalButton, JoinDirection.FromPanel));
                         }
                         else if (name.StartsWith("digitalenable", StringComparison.InvariantCulture))
                         {
@@ -370,7 +371,7 @@ namespace EPS.Parsers
                             //builder.AddEvent(new EventElement($"IsFocusedChanged", join, builder.SmartJoin, JoinType.Digital));
 
                             var direction = JoinDirection.Both;
-                            
+
                             if ((child.Element("Properties")?.Element("SetFocusJoinOn")?.Value == "0" || string.IsNullOrEmpty(child.Element("Properties")?.Element("SetFocusJoinOn")?.Value)) && (child.Element("Properties")?.Element("SetFocusJoinOff")?.Value == "0" || string.IsNullOrEmpty(child.Element("Properties")?.Element("SetFocusJoinOff")?.Value)))
                             {
                                 direction = JoinDirection.FromPanel;

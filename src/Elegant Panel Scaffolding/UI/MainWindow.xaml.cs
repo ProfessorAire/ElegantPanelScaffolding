@@ -155,6 +155,7 @@ namespace EPS.UI
                         {
                             _ = Directory.CreateDirectory(Path.GetDirectoryName(classPath));
                         }
+
                         File.WriteAllText(classPath, nameSpace.ToString());
                     }
 
@@ -179,8 +180,7 @@ namespace EPS.UI
                         WriteResourcesText(Path.Combine(dir.FullName, "ObjectEventArgs.g.cs"), file6.Stream, replacement);
 
                         replacement = (s) => s
-                            .Replace("SharpProTouchpanelDemo.UI", $"{Options.RootNamespace}.{builder.NamespaceBase}")
-                            .Replace("{MethodAccessor}", Options.UseInternalValueSetters ? "internal" : "public");
+                            .Replace("SharpProTouchpanelDemo.UI", $"{Options.RootNamespace}.{builder.NamespaceBase}");
 
                         WriteResourcesText(Path.Combine(dir.FullName, "PanelUIBase.g.cs"), file7.Stream, replacement);
 

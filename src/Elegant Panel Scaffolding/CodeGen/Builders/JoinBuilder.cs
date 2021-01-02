@@ -45,6 +45,12 @@ namespace EPS.CodeGen.Builders
         /// </summary>
         public string JoinName { get; set; } = string.Empty;
 
+        public uint DigitalOffset { get; set; }
+
+        public uint AnalogOffset { get; set; }
+
+        public uint SerialOffset { get; set; }
+
         /// <summary>
         /// Gets or sets the name of the join's change event. If an empty string this defaults to $"{JoinName}Changed"
         /// </summary>
@@ -129,33 +135,35 @@ namespace EPS.CodeGen.Builders
                     }
                 }
 
+                var offset = GetOffsetString();
+
                 switch (joinType)
                 {
                     case JoinType.Digital:
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, (value) => {raiseMethod}(this, new BooleanValueChangedEventArgs(value)));");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, (value) => {raiseMethod}(value));");
                         break;
                     case JoinType.DigitalButton:
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, (value) => RaisePressed(this, new BooleanValueChangedEventArgs(value)), true);");
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, (value) => RaiseReleased(this, new BooleanValueChangedEventArgs(value)), false);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}{offset}, (value) => RaisePressed(value), true);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}{offset}, (value) => RaiseReleased(value), false);");
                         break;
                     case JoinType.Analog:
-                        writer.Text.Add($"ParentPanel.Actions.AddUShort({JoinNumber}, (value) => {raiseMethod}(this, new UShortValueChangedEventArgs(value)));");
+                        writer.Text.Add($"ParentPanel.Actions.AddUShort({JoinNumber}{offset}, (value) => {raiseMethod}(value));");
                         break;
                     case JoinType.Serial:
-                        writer.Text.Add($"ParentPanel.Actions.AddString({JoinNumber}, (value) => {raiseMethod}(this, new StringValueChangedEventArgs(value)));");
+                        writer.Text.Add($"ParentPanel.Actions.AddString({JoinNumber}{offset}, (value) => {raiseMethod}(value));");
                         break;
                     case JoinType.SmartDigital:
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(this, new BooleanValueChangedEventArgs(value)));");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(value));");
                         break;
                     case JoinType.SmartDigitalButton:
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => RaisePressed(this, new BooleanValueChangedEventArgs(value)), true);");
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => RaiseReleased(this, new BooleanValueChangedEventArgs(value)), false);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => RaisePressed(value), true);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => RaiseReleased(value), false);");
                         break;
                     case JoinType.SmartAnalog:
-                        writer.Text.Add($"ParentPanel.Actions.AddUShort({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(this, new UShortValueChangedEventArgs(value)));");
+                        writer.Text.Add($"ParentPanel.Actions.AddUShort({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(value));");
                         break;
                     case JoinType.SmartSerial:
-                        writer.Text.Add($"ParentPanel.Actions.AddString({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(this, new StringValueChangedEventArgs(value)));");
+                        writer.Text.Add($"ParentPanel.Actions.AddString({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(value));");
                         break;
                 }
             }
@@ -224,6 +232,11 @@ namespace EPS.CodeGen.Builders
                 var allSetter = new MethodWriter($"{prefix}{propertyName}", $"Sends the value to all touchpanels.");
                 allSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
                 allSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value);");
+                allSetter.MethodLines.Add($"var ce = {changeEventName};");
+                allSetter.MethodLines.Add($"if (ce != null)");
+                allSetter.MethodLines.Add("{");
+                allSetter.MethodLines.Add($"ce.Invoke(this, new {args}(value));");
+                allSetter.MethodLines.Add("}");
 
                 result.Add(allSetter);
 
@@ -255,18 +268,27 @@ namespace EPS.CodeGen.Builders
 
                 pw.Setter.Add($"{fieldName} = value;");
                 pw.Setter.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value);");
+                pw.Setter.Add($"var ce = {changeEventName};");
+                pw.Setter.Add($"if (ce != null)");
+                pw.Setter.Add("{");
+                pw.Setter.Add($"ce.Invoke(this, new {args}(value));");
+                pw.Setter.Add("}");
 
                 result.Add(pw);
+
                 result.Add(fw);
 
                 var methodSetter = new MethodWriter($"Set{propertyName}", $"Sets the value of the <see cref=\"{propertyName}\"/> join on a single touchpanel.");
                 methodSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
                 methodSetter.AddParameter("BasicTriListWithSmartObject", "panel", "The panel to change the associated join value on.");
                 methodSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value, panel);");
-                methodSetter.MethodLines.Add($"if ({changeEventName} != null)");
+                methodSetter.MethodLines.Add($"var ce = {changeEventName};");
+                methodSetter.MethodLines.Add($"if (ce != null)");
                 methodSetter.MethodLines.Add("{");
-                methodSetter.MethodLines.Add($"{changeEventName}(this, new {args}(value));");
+                methodSetter.MethodLines.Add($"ce.Invoke(this, new {args}(value));");
                 methodSetter.MethodLines.Add("}");
+
+                result.Add(methodSetter);
 
                 if ((JoinType == JoinType.Digital || JoinType == JoinType.DigitalPulse || JoinType == JoinType.SmartDigital) &&
                     (JoinDirection == JoinDirection.ToPanel || JoinDirection == JoinDirection.Both))
@@ -485,7 +507,10 @@ namespace EPS.CodeGen.Builders
         /// <returns>A <see cref="FieldWriter"/> object.</returns>
         private FieldWriter GetFieldWriter()
         {
-            var fieldWriter = new FieldWriter(FormatFieldName(JoinName), GetJoinTypeString());
+            var fieldWriter = new FieldWriter(FormatFieldName(JoinName), GetJoinTypeString())
+            {
+                Accessor = Accessor.Private
+            };
             fieldWriter.Help.Summary = $"Backing field for the <see cref=\"{FormatPropertyName(JoinName)}\"/> property.";
 
             return fieldWriter;
@@ -521,31 +546,52 @@ namespace EPS.CodeGen.Builders
         {
             if (!IsListElement)
             {
-                return string.Empty;
+                switch (JoinType)
+                {
+                    case JoinType.Analog:
+                    case JoinType.AnalogSet:
+                        return AnalogOffset > 0 ? $" + {AnalogOffset}" : string.Empty;
+                    case JoinType.Digital:
+                    case JoinType.DigitalButton:
+                    case JoinType.DigitalPulse:
+                        return DigitalOffset > 0 ? $" + {DigitalOffset}" : string.Empty;
+                    case JoinType.Serial:
+                    case JoinType.SerialSet:
+                        return SerialOffset > 0 ? $" + {SerialOffset}" : string.Empty;
+                    case JoinType.SmartDigital:
+                    case JoinType.SmartDigitalButton:
+                    case JoinType.SmartSerial:
+                    case JoinType.SrlVisibility:
+                    case JoinType.SrlEnable:
+                    case JoinType.SmartAnalog:
+                    default:
+                        return string.Empty;
+                }
             }
-
-            switch (JoinType)
             {
-                case JoinType.Analog:
-                case JoinType.SmartAnalog:
-                case JoinType.AnalogSet:
-                    return " + analogOffset";
-                case JoinType.Digital:
-                case JoinType.DigitalButton:
-                case JoinType.DigitalPulse:
-                case JoinType.SmartDigital:
-                case JoinType.SmartDigitalButton:
-                    return " + digitalOffset";
-                case JoinType.Serial:
-                case JoinType.SmartSerial:
-                case JoinType.SerialSet:
-                    return " + serialOffset";
-                case JoinType.SrlVisibility:
-                    return " + itemOffset + 2010";
-                case JoinType.SrlEnable:
-                    return " + itemOffset + 10";
-                default:
-                    return string.Empty;
+                switch (JoinType)
+                {
+                    case JoinType.Analog:
+                    case JoinType.SmartAnalog:
+                    case JoinType.AnalogSet:
+                        return " + analogOffset";
+                    case JoinType.Digital:
+                    case JoinType.DigitalButton:
+                    case JoinType.DigitalPulse:
+                    case JoinType.SmartDigital:
+                    case JoinType.SmartDigitalButton:
+                        return " + digitalOffset";
+                    case JoinType.Serial:
+                    case JoinType.SmartSerial:
+                    case JoinType.SerialSet:
+                        return " + serialOffset";
+                    case JoinType.SrlVisibility:
+                        return " + itemOffset + 2010";
+                    case JoinType.SrlEnable:
+                        return " + itemOffset + 10";
+                    default:
+                        return string.Empty;
+                }
             }
         }
 

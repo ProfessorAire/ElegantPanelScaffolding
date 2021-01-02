@@ -12,10 +12,18 @@ namespace SharpProTouchpanelDemo.UI.Core
     /// </summary>
     public class BooleanValueChangedEventArgs : EventArgs
     {
-        public bool Value { get; set; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BooleanValueChangedEventArgs"/> class.
+        /// </summary>
+        /// <param name="value">The boolean value.</param>
         public BooleanValueChangedEventArgs(bool value)
         {
             Value = value;
         }
+
+        /// <summary>
+        /// Gets the value of the boolean event.
+        /// </summary>
+        public bool Value { get; private set; }
     }
 }

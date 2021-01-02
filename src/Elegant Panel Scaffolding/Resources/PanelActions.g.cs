@@ -1,33 +1,100 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using Crestron.SimplSharp;
 
-namespace ElegantHome.UI.OfficePanel.Core
+namespace SharpProTouchpanelDemo.UI.Core
 {
+    /// <summary>
+    /// Panel actions class.
+    /// </summary>
     public class PanelActions
     {
+        /// <summary>
+        /// List of smart object ids.
+        /// </summary>
+        private List<uint> smartObjectIds = new List<uint>();
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PanelActions"/> class.
+        /// </summary>
+        public PanelActions()
+        {
+            BoolActions = new Dictionary<uint, Action<bool>>();
+            BoolPressActions = new Dictionary<uint, Action<bool>>();
+            BoolReleaseActions = new Dictionary<uint, Action<bool>>();
+            UShortActions = new Dictionary<uint, Action<ushort>>();
+            StringActions = new Dictionary<uint, Action<string>>();
+            BoolSmartActions = new Dictionary<KeyValuePair<uint, uint>, Action<bool>>();
+            BoolSmartPressActions = new Dictionary<KeyValuePair<uint, uint>, Action<bool>>();
+            BoolSmartReleaseActions = new Dictionary<KeyValuePair<uint, uint>, Action<bool>>();
+            UShortSmartActions = new Dictionary<KeyValuePair<uint, uint>, Action<ushort>>();
+            StringSmartActions = new Dictionary<KeyValuePair<uint, uint>, Action<string>>();
+        }
+
+        /// <summary>
+        /// List of boolean actions.
+        /// </summary>
         public Dictionary<uint, Action<bool>> BoolActions { get; private set; }
 
+        /// <summary>
+        /// List of boolean press actions.
+        /// </summary>
         public Dictionary<uint, Action<bool>> BoolPressActions { get; private set; }
 
+        /// <summary>
+        /// List of boolean release actions.
+        /// </summary>
         public Dictionary<uint, Action<bool>> BoolReleaseActions { get; private set; }
 
+        /// <summary>
+        /// List of ushort actions.
+        /// </summary>
         public Dictionary<uint, Action<ushort>> UShortActions { get; private set; }
 
+        /// <summary>
+        /// List of string actions.
+        /// </summary>
         public Dictionary<uint, Action<string>> StringActions { get; private set; }
 
+        /// <summary>
+        /// List of boolean smart actions.
+        /// </summary>
         public Dictionary<KeyValuePair<uint, uint>, Action<bool>> BoolSmartActions { get; private set; }
 
+        /// <summary>
+        /// List of boolean smart press actions.
+        /// </summary>
         public Dictionary<KeyValuePair<uint, uint>, Action<bool>> BoolSmartPressActions { get; private set; }
 
+        /// <summary>
+        /// List of boolean smart release actions.
+        /// </summary>
         public Dictionary<KeyValuePair<uint, uint>, Action<bool>> BoolSmartReleaseActions { get; private set; }
 
+        /// <summary>
+        /// List of ushort smart actions.
+        /// </summary>
         public Dictionary<KeyValuePair<uint, uint>, Action<ushort>> UShortSmartActions { get; private set; }
 
+        /// <summary>
+        /// List of string smart actions.
+        /// </summary>
         public Dictionary<KeyValuePair<uint, uint>, Action<string>> StringSmartActions { get; private set; }
 
+        /// <summary>
+        /// Read only collection of smart object Ids.
+        /// </summary>
+        public ReadOnlyCollection<uint> SmartObjectIds { get { return smartObjectIds.AsReadOnly(); } }
+
+        /// <summary>
+        /// Adds a boolean action.
+        /// </summary>
+        /// <param name="join">The join number.</param>
+        /// <param name="action">The action</param>
+        /// <param name="isPress">Whether it is a press event.</param>
         public void AddBool(uint join, Action<bool> action, bool isPress)
         {
             if (isPress)
@@ -63,7 +130,12 @@ namespace ElegantHome.UI.OfficePanel.Core
                 }
             }
         }
-
+        
+        /// <summary>
+        /// Adds a boolean action.
+        /// </summary>
+        /// <param name="join">The join number.</param>
+        /// <param name="action">The action.</param>
         public void AddBool(uint join, Action<bool> action)
         {
             if (BoolActions == null)
@@ -81,6 +153,11 @@ namespace ElegantHome.UI.OfficePanel.Core
             }
         }
 
+        /// <summary>
+        /// Adds a ushort action.
+        /// </summary>
+        /// <param name="join">The join number.</param>
+        /// <param name="action">The action.</param>
         public void AddUShort(uint join, Action<ushort> action)
         {
             if (UShortActions == null)
@@ -98,6 +175,11 @@ namespace ElegantHome.UI.OfficePanel.Core
             }
         }
 
+        /// <summary>
+        /// Adds a string action.
+        /// </summary>
+        /// <param name="join">The join number.</param>
+        /// <param name="action">The action.</param>
         public void AddString(uint join, Action<string> action)
         {
             if (StringActions == null)
@@ -115,6 +197,12 @@ namespace ElegantHome.UI.OfficePanel.Core
             }
         }
 
+        /// <summary>
+        /// Adds a smart boolean action.
+        /// </summary>
+        /// <param name="join">The join number.</param>
+        /// <param name="smartId">The smart object id.</param>
+        /// <param name="action">The action.</param>
         public void AddBool(uint join, uint smartId, Action<bool> action)
         {
             if (BoolSmartActions == null)
@@ -132,8 +220,20 @@ namespace ElegantHome.UI.OfficePanel.Core
             {
                 BoolSmartActions[key] += action;
             }
+
+            if (!smartObjectIds.Contains(smartId))
+            {
+                smartObjectIds.Add(smartId);
+            }
         }
 
+        /// <summary>
+        /// Adds a smart boolean action.
+        /// </summary>
+        /// <param name="join">The join number.</param>
+        /// <param name="smartId">The smart object id.</param>
+        /// <param name="action">The action.</param>
+        /// <param name="isPress">Whether it is a press or release.</param>
         public void AddBool(uint join, uint smartId, Action<bool> action, bool isPress)
         {
             var key = GetSmartKey(join, smartId);
@@ -170,9 +270,19 @@ namespace ElegantHome.UI.OfficePanel.Core
                     BoolSmartReleaseActions[key] += action;
                 }
             }
+
+            if (!smartObjectIds.Contains(smartId))
+            {
+                smartObjectIds.Add(smartId);
+            }
         }
 
-
+        /// <summary>
+        /// Adds a smart ushort action.
+        /// </summary>
+        /// <param name="join">The join number.</param>
+        /// <param name="smartId">The smart object id.</param>
+        /// <param name="action">The action.</param>
         public void AddUShort(uint join, uint smartId, Action<ushort> action)
         {
             if (UShortSmartActions == null)
@@ -190,9 +300,19 @@ namespace ElegantHome.UI.OfficePanel.Core
             {
                 UShortSmartActions[key] += action;
             }
+
+            if (!smartObjectIds.Contains(smartId))
+            {
+                smartObjectIds.Add(smartId);
+            }
         }
 
-
+        /// <summary>
+        /// Adds a smart string action.
+        /// </summary>
+        /// <param name="join">The join number.</param>
+        /// <param name="smartId">The smart object id.</param>
+        /// <param name="action">The action.</param>
         public void AddString(uint join, uint smartId, Action<string> action)
         {
             if (StringSmartActions == null)
@@ -210,8 +330,19 @@ namespace ElegantHome.UI.OfficePanel.Core
             {
                 StringSmartActions[key] += action;
             }
+
+            if (!smartObjectIds.Contains(smartId))
+            {
+                smartObjectIds.Add(smartId);
+            }
         }
 
+        /// <summary>
+        /// Gets a key value pair for a join and smart object id.
+        /// </summary>
+        /// <param name="join">The Join number.</param>
+        /// <param name="smartId">The smart object id.</param>
+        /// <returns>A key value pair.</returns>
         public static KeyValuePair<uint, uint> GetSmartKey(uint join, uint smartId)
         {
             return new KeyValuePair<uint, uint>(smartId, join);
