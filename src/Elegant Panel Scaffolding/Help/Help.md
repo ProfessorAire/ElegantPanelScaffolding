@@ -82,14 +82,16 @@ public void DemonstratePanelFunctionality()
     // Starts the threads.
     MainPanels.StartThreads();
 
-    // Stops the panel threads. At this point any incoming data from the panel will be lost and not make it to the program. (Button presses, slider changes, text entry, etc.)
-    MainPanels.KillThreads();
+    // Stops the panel threads. At this point any incoming data from the panel will be lost and not make it to the program.
+    // (Button presses, slider changes, text entry, etc.)
+    MainPanels.StopThreads();
 
     // Unregisters all of the panels at once.
     MainPanels.UnRegister();
 }
 
-// Make sure to dispose of the panel when the program is stopping. This ensures that the threads are properly stopped and the underlying panels unregistered and disposed of.
+// Make sure to dispose of the panel when the program is stopping. This ensures that the threads are properly stopped
+// and the underlying panels unregistered and disposed of.
 void ControlSystem_ControllerProgramEventHandler(eProgramStatusEventType programStatusEventType)
 {
     switch (programStatusEventType)
