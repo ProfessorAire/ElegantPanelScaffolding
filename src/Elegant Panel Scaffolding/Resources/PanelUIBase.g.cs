@@ -29,11 +29,6 @@ namespace SharpProTouchpanelDemo.UI.Core
         public const int ThreadQuantity = 2;
 
         /// <summary>
-        /// Used to track if calling disposing, which can be used to ignore certain exceptions.
-        /// </summary>
-        private bool isDisposing = false;
-
-        /// <summary>
         /// Used internally to track if registration has been requested.
         /// </summary>
         private bool isRegisterRequested = false;
@@ -83,6 +78,16 @@ namespace SharpProTouchpanelDemo.UI.Core
                 }
             }
         }
+
+        /// <summary>
+        /// Gets a value indicating whether the object has been disposed.
+        /// </summary>
+        public bool Disposed { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the object has been started.
+        /// </summary>
+        public bool IsStarted { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PanelUIBase"/> class.
@@ -461,7 +466,7 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// </summary>
         public void Dispose()
         {
-            isDisposing = true;
+            Disposed = true;
             StopThreads();
             panelProcessingQueue.Dispose();
             DisposeChildren();
@@ -470,7 +475,6 @@ namespace SharpProTouchpanelDemo.UI.Core
             {
                 p.Dispose();
             }
-            isDisposing = false;
         }
 
         /// <summary>
@@ -498,6 +502,7 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// </summary>
         public void StartThreads()
         {
+            IsStarted = true;
             InitializeValues();
             if (processingThread == null)
             {
@@ -515,6 +520,7 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// </summary>
         public void StopThreads()
         {
+            IsStarted = false;
             if (processingThread != null && (processingThread.ThreadState == Thread.eThreadStates.ThreadRunning || processingThread.ThreadState == Thread.eThreadStates.ThreadSuspended))
             {
                 processingThread.Abort();
@@ -725,7 +731,7 @@ namespace SharpProTouchpanelDemo.UI.Core
         /// </summary>
         private object ProcessInputQueue(object obj)
         {
-            while (true)
+            while (IsStarted)
             {
                 try
                 {
@@ -739,7 +745,7 @@ namespace SharpProTouchpanelDemo.UI.Core
                 catch (System.Threading.ThreadAbortException)
                 {
                     CrestronConsole.PrintLine("Thread exiting: {0}", processingThread.Name);
-                    if (!isDisposing)
+                    if (IsStarted && !Disposed)
                     {
                         ErrorLog.Notice("Touchpanel Input Thread exited prematurely: {0}", processingThread.Name);
                     }
@@ -752,6 +758,8 @@ namespace SharpProTouchpanelDemo.UI.Core
                     }
                 }
             }
+
+            return obj;
         }
 
         #endregion

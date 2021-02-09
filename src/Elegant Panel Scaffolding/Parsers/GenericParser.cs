@@ -314,12 +314,12 @@ namespace EPS.Parsers
                         else if (name.StartsWith("enterkeypress", StringComparison.InvariantCulture))
                         {
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "Enter", JoinType.DigitalButton, JoinDirection.FromPanel));
+                                new JoinBuilder(join, builder.SmartJoin, "Enter", JoinType.DigitalButton, JoinDirection.FromPanel) { ChangeEventName = "Enter" });
                         }
                         else if (name.StartsWith("esckeypress", StringComparison.InvariantCulture))
                         {
                             builder.AddJoin(
-                                new JoinBuilder(join, builder.SmartJoin, "Escape", JoinType.DigitalButton, JoinDirection.FromPanel));
+                                new JoinBuilder(join, builder.SmartJoin, "Escape", JoinType.DigitalButton, JoinDirection.FromPanel) { ChangeEventName = "Escape" });
                         }
                         else if (name == "serialjoin")
                         {

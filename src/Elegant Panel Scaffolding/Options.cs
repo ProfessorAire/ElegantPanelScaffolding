@@ -14,7 +14,7 @@ namespace EPS
         public static Options Current = new Options();
 #pragma warning restore CA2211 // Non-constant fields should not be visible
 
-        private string version = "v0.1.1-beta";
+        private string version = "v0.1.2-beta";
         [JsonIgnore]
         [Browsable(false)]
         public string Version { get => version; set => SetField(ref version, value); }
