@@ -1,12 +1,16 @@
 ﻿using EPS.CodeGen.Builders;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace EPS.Parsers
 {
     internal class CIPTagParser
     {
+        private static readonly Regex standardRegex = new Regex("<CIP(?<type>[ASD])>\\D{0,2}(?<join>\\d+)[?:].*?(?:<\\/CIP\\1>)", RegexOptions.Compiled);
+
         public static void ParseCIP(XElement? element, ClassBuilder builder)
         {
             if (element == null || builder == null) { return; }
@@ -30,118 +34,68 @@ namespace EPS.Parsers
 
             foreach (var label in labels)
             {
-                if (label.Value.Contains("cipd"))
-                {
-                    ParseDigitalCIP(label, builder);
-                }
-                if (label.Value.Contains("cipa"))
-                {
-                    ParseAnalogCIP(label, builder);
-                }
-                if (label.Value.Contains("cips"))
-                {
-                    ParseSerialCIP(label, builder);
-                }
-            }
-
-        }
-
-        public static void ParseTemplateCIP(XElement? element, ClassBuilder? builder, int? quantity)
-        {
-            if (element == null || builder == null || quantity == null) { return; }
-            for (uint i = 0; i < quantity; i++)
-            {
-                if (element.Value.Contains("cipd"))
-                {
-                    ParseDigitalCIP(element, builder);
-                }
-                if (element.Value.Contains("cipa"))
-                {
-                    ParseAnalogCIP(element, builder);
-                }
-                if (element.Value.Contains("cips"))
-                {
-                    ParseSerialCIP(element, builder);
-                }
+                MatchCipTags(label, builder, labels.Count);
             }
         }
 
-        private static void ParseSerialCIP(XElement element, ClassBuilder builder)
+        private static void MatchCipTags(XElement? element, ClassBuilder? builder, int? quantity)
         {
-            var items = element.Value.Split('>');
-
-            var count = 1;
-            foreach (var item in items)
+            if (element == null || builder == null || quantity == null)
             {
-                if (item.EndsWith("/cips", System.StringComparison.InvariantCulture))
+                return;
+            }
+
+            var result = standardRegex.Matches(element.Value.ToUpperInvariant());
+
+            var digitalCount = 0;
+            var analogCount = 0;
+            var serialCount = 0;
+
+            for(var i = 0; i < result.Count; i++)
+            {
+                if (result[i].Success)
                 {
-                    var index = item.IndexOf('?');
-                    if (index < 0)
+                    try
                     {
-                        index = item.IndexOf('<');
-                    }
-                    if (index >= 0)
-                    {
-                        var joinText = item.Substring(0, index);
-                        if (ushort.TryParse(joinText, out var join))
+                        var type = result[i].Groups["type"].Value;
+
+                        var tag = string.Empty;
+                        var count = 0;
+
+                        if (type.ToUpperInvariant() == "A")
                         {
-                            builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"String{count}", JoinType.Serial, JoinDirection.ToPanel));
-                            count++;
+                            analogCount++;
+                            count = analogCount;
+                            tag = "UShort";
                         }
-                    }
-                }
-            }
-        }
-
-        private static void ParseAnalogCIP(XElement element, ClassBuilder builder)
-        {
-            var items = element.Value.Split('>');
-
-            var count = 1;
-            foreach (var item in items)
-            {
-                if (item.EndsWith("/cipa", System.StringComparison.InvariantCulture))
-                {
-                    var index = item.IndexOf('?');
-                    if (index < 0)
-                    {
-                        index = item.IndexOf('<');
-                    }
-                    if (index >= 0)
-                    {
-                        var joinText = item.Substring(0, index);
-                        if (ushort.TryParse(joinText, out var join))
+                        else if (type.ToUpperInvariant() == "D")
                         {
-                            builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"UShort{count}", JoinType.Analog, JoinDirection.ToPanel));
-                            count++;
+                            digitalCount++;
+                            count = digitalCount;
+                            tag = "Boolean";
                         }
-                    }
-                }
-            }
-        }
-
-        private static void ParseDigitalCIP(XElement element, ClassBuilder builder)
-        {
-            var items = element.Value.Split('>');
-
-            var count = 1;
-            foreach (var item in items)
-            {
-                if (item.EndsWith("/cipd", System.StringComparison.InvariantCulture))
-                {
-                    var index = item.IndexOf('?');
-                    if (index < 0)
-                    {
-                        index = item.IndexOf('<');
-                    }
-                    if (index >= 0)
-                    {
-                        var joinText = item.Substring(0, index);
-                        if (ushort.TryParse(joinText, out var join))
+                        else if (type.ToUpperInvariant() == "S")
                         {
-                            builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"Bool{count}", JoinType.Digital, JoinDirection.ToPanel));
-                            count++;
+                            serialCount++;
+                            count = serialCount;
+                            tag = "String";
                         }
+
+                        var join = Convert.ToUInt16(result[i].Groups["join"].Value, System.Globalization.CultureInfo.InvariantCulture);
+
+                        builder.AddJoin(
+                            new JoinBuilder(
+                                join,
+                                builder.SmartJoin,
+                                $"{tag}{count}",
+                                tag == "UShort" ? JoinType.Analog :
+                                tag == "Boolean" ? JoinType.Digital :
+                                tag == "String" ? JoinType.Serial : JoinType.None,
+                                JoinDirection.ToPanel));
+                    }
+                    catch (Exception ex) when (ex is FormatException || ex is OverflowException)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Exception encountered while parsing CIP tag object.");
                     }
                 }
             }
