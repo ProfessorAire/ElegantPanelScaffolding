@@ -74,19 +74,6 @@ namespace EPS.CodeGen.Builders
         /// Initializes a new instance of the <see cref="JoinBuilder"/> class.
         /// </summary>
         /// <param name="joinNumber">The join's number.</param>
-        /// <param name="joinName">The join's name.</param>
-        /// <param name="joinType">The join's type.</param>
-        /// <param name="joinDirection">The join's direction.</param>
-        /// <param name="joinMethod">The join's interaction method.</param>
-        public JoinBuilder(uint joinNumber, string joinName, JoinType joinType, JoinDirection joinDirection)
-            : this(joinNumber, 0, joinName, joinType, joinDirection)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JoinBuilder"/> class.
-        /// </summary>
-        /// <param name="joinNumber">The join's number.</param>
         /// <param name="smartId">The ID of the SmartObject the join belongs to.</param>
         /// <param name="joinName">The join's name.</param>
         /// <param name="joinType">The join's type.</param>

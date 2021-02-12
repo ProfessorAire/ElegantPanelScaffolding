@@ -39,7 +39,7 @@ namespace EPS.Parsers
         {
             if (ushort.TryParse(propertiesElement?.Element("TransitionCompleteJoin").Value, out var join) && join > 0)
             {
-                return new JoinBuilder(join, "TransitionComplete", JoinType.Digital, JoinDirection.FromPanel);
+                return new JoinBuilder(join, 0, "TransitionComplete", JoinType.Digital, JoinDirection.FromPanel);
             }
 
             return null;
@@ -165,7 +165,7 @@ namespace EPS.Parsers
                             if (child.Element("Properties")?.Element("ShowSelectFeedback")?.Value == "true")
                             {
                                 builder.AddJoin(
-                                    new JoinBuilder(join, $"IsActive", JoinType.Digital, JoinDirection.ToPanel));
+                                    new JoinBuilder(join, builder.SmartJoin, $"IsActive", JoinType.Digital, JoinDirection.ToPanel));
                             }
 
                             builder.AddJoin(new JoinBuilder(join, builder.SmartJoin, $"", JoinType.DigitalButton, JoinDirection.FromPanel));

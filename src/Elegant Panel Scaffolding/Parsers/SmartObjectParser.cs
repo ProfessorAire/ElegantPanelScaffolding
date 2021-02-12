@@ -26,20 +26,20 @@ namespace EPS.Parsers
 
             if (ushort.TryParse(props?.Element("DigitalEnableJoin")?.Value, out var enableJoin) && enableJoin > 0)
             {
-                builder.AddJoin(new JoinBuilder(enableJoin, "IsEnabled", JoinType.Digital, JoinDirection.ToPanel));
+                builder.AddJoin(new JoinBuilder(enableJoin, 0, "IsEnabled", JoinType.Digital, JoinDirection.ToPanel));
             }
             else if (ushort.TryParse(props?.Element("EnableDigitalJoin")?.Value, out var enableJoin2) && enableJoin2 > 0)
             {
-                builder.AddJoin(new JoinBuilder(enableJoin2, "IsEnabled", JoinType.Digital, JoinDirection.ToPanel));
+                builder.AddJoin(new JoinBuilder(enableJoin2, 0, "IsEnabled", JoinType.Digital, JoinDirection.ToPanel));
             }
 
             if (ushort.TryParse(props?.Element("DigitalVisibilityJoin")?.Value, out var visibilityJoin) && visibilityJoin > 0)
             {
-                builder.AddJoin(new JoinBuilder(visibilityJoin, "IsVisible", JoinType.Digital, JoinDirection.ToPanel));
+                builder.AddJoin(new JoinBuilder(visibilityJoin, 0, "IsVisible", JoinType.Digital, JoinDirection.ToPanel));
             }
             else if (ushort.TryParse(props?.Element("VisibilityDigitalJoin")?.Value, out var visibilityJoin2) && visibilityJoin2 > 0)
             {
-                builder.AddJoin(new JoinBuilder(visibilityJoin2, "IsVisible", JoinType.Digital, JoinDirection.ToPanel));
+                builder.AddJoin(new JoinBuilder(visibilityJoin2, 0, "IsVisible", JoinType.Digital, JoinDirection.ToPanel));
             }
 
             var joinProps = props?.Elements().Where(e => e.Attribute("Type")?.Value == "JoinCommand");
