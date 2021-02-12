@@ -34,12 +34,16 @@ namespace EPS.CodeGen.Builders
 
         public List<WriterBase> GetWriters()
         {
-            var fw = new FieldWriter($"Items", $"{Control.ClassName}[]")
+            var pw = new PropertyWriter($"Items", $"{Control.ClassName}[]")
             {
-                Modifier = Modifier.ReadOnly
+                PrivateGetter = false,
+                PrivateSetter = true,
+                HasSetter = true,
+                HasGetter = true
             };
 
-            fw.Help.Summary = $"The array of <see cref=\"{Control.ClassName}\"/> items in the list.";
+            pw.Help.Summary = $"Gets the array of <see cref=\"{Control.ClassName}\"/> items in the list.";
+
             var tw = new TextWriter($"Items = new {Control.ClassName}[{Quantity}]");
             tw.Text.Add("{");
 
@@ -52,7 +56,7 @@ namespace EPS.CodeGen.Builders
             }
 
             tw.Text.Add("};");
-            return new List<WriterBase>() { fw, tw };
+            return new List<WriterBase>() { pw, tw };
         }
     }
 }
