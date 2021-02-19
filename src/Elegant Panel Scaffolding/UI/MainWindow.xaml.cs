@@ -169,6 +169,7 @@ namespace EPS.UI
                         var file5 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/DeviceHelper.g.cs"));
                         var file6 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/ObjectEventArgs.g.cs"));
                         var file7 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/PanelUIBase.g.cs"));
+                        var file8 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/IListItemProvider.g.cs"));
 
                         Func<string, string> replacement = (s) => s.Replace("SharpProTouchpanelDemo.UI", $"{Options.RootNamespace}.{builder.NamespaceBase}");
 
@@ -178,12 +179,16 @@ namespace EPS.UI
                         WriteResourcesText(Path.Combine(dir.FullName, "PanelActions.g.cs"), file4.Stream, replacement);
                         WriteResourcesText(Path.Combine(dir.FullName, "DeviceHelper.g.cs"), file5.Stream, replacement);
                         WriteResourcesText(Path.Combine(dir.FullName, "ObjectEventArgs.g.cs"), file6.Stream, replacement);
+                        
 
                         replacement = (s) => s
                             .Replace("SharpProTouchpanelDemo.UI", $"{Options.RootNamespace}.{builder.NamespaceBase}");
 
                         WriteResourcesText(Path.Combine(dir.FullName, "PanelUIBase.g.cs"), file7.Stream, replacement);
 
+                        var dir2 = Directory.CreateDirectory(Path.Combine(Options.CommonPath, @"Elegant\UI\Common"));
+
+                        WriteResourcesText(Path.Combine(dir2.FullName, "IListItemProvider.g.cs"), file8.Stream, s => s);
                     }
 
                     ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File successfully created!");

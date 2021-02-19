@@ -403,26 +403,45 @@ namespace EPS.CodeGen.Builders
             var sigType = GetJoinTypeString();
             var args = $"{GetJoinTypeNameString()}ValueChangedEventArgs";
 
+            var buttonState = new PropertyWriter($"{ChangeEventName}PressedState", sigType);
+            buttonState.Help.Summary = $"Gets a value indicating whether the {ChangeEventName}PressedState is pressed or released.";
+
             var raisePressed = new MethodWriter($"Raise{ChangeEventName}Pressed", $"Raises the {ChangeEventName}Pressed event.")
             {
                 Accessor = Accessor.Private
             };
+
             raisePressed.AddParameter($"{sigType}", "value", "The pressed event boolean.");
+            raisePressed.MethodLines.Add($"{ChangeEventName}PressedState = true;");
             raisePressed.MethodLines.Add($"var ce = {ChangeEventName}Pressed;");
             raisePressed.MethodLines.Add($"if (ce != null)");
             raisePressed.MethodLines.Add("{");
-            raisePressed.MethodLines.Add($"ce.Invoke(this, new {args}(value));");
+            raisePressed.MethodLines.Add($"ce.Invoke(this, new {args}(true));");
+            raisePressed.MethodLines.Add("}");
+            raisePressed.MethodLines.Add(string.Empty);
+            raisePressed.MethodLines.Add($"var sce = {ChangeEventName}StateChanged;");
+            raisePressed.MethodLines.Add($"if (sce != null)");
+            raisePressed.MethodLines.Add("{");
+            raisePressed.MethodLines.Add($"sce.Invoke(this, new {args}(value));");
             raisePressed.MethodLines.Add("}");
 
             var raiseReleased = new MethodWriter($"Raise{ChangeEventName}Released", $"Raises the {ChangeEventName}Released event.")
             {
                 Accessor = Accessor.Private
             };
+
             raiseReleased.AddParameter($"{sigType}", "value", "The released event boolean.");
+            raiseReleased.MethodLines.Add($"{ChangeEventName}PressedState = false;");
             raiseReleased.MethodLines.Add($"var ce = {ChangeEventName}Released;");
             raiseReleased.MethodLines.Add($"if (ce != null)");
             raiseReleased.MethodLines.Add("{");
-            raiseReleased.MethodLines.Add($"ce.Invoke(this, new {args}(value));");
+            raiseReleased.MethodLines.Add($"ce.Invoke(this, new {args}(false));");
+            raiseReleased.MethodLines.Add("}");
+            raiseReleased.MethodLines.Add(string.Empty);
+            raiseReleased.MethodLines.Add($"var sce = {ChangeEventName}StateChanged;");
+            raiseReleased.MethodLines.Add($"if (sce != null)");
+            raiseReleased.MethodLines.Add("{");
+            raiseReleased.MethodLines.Add($"sce.Invoke(this, new {args}(value));");
             raiseReleased.MethodLines.Add("}");
 
             var pressedEvent = new EventWriter($"{ChangeEventName}Pressed")
@@ -439,12 +458,19 @@ namespace EPS.CodeGen.Builders
 
             releasedEvent.Help.Summary = "Raised when the button is released.";
 
+            var changedEvent = new EventWriter($"{ChangeEventName}StateChanged")
+            {
+                Handler = $"EventHandler<{args}>"
+            };
+
             var result = new List<WriterBase>()
             {
+                buttonState,
                 raisePressed,
                 raiseReleased,
                 pressedEvent,
-                releasedEvent
+                releasedEvent,
+                changedEvent
             };
 
             return result;

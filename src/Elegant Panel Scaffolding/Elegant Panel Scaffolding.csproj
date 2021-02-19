@@ -31,6 +31,7 @@
   <ItemGroup>
     <Compile Remove="Resources\BooleanValueChangedEventArgs.g.cs" />
     <Compile Remove="Resources\DeviceHelper.g.cs" />
+    <Compile Remove="Resources\IListItemProvider.g.cs" />
     <Compile Remove="Resources\ObjectEventArgs.g.cs" />
     <Compile Remove="Resources\PanelActions.g.cs" />
     <Compile Remove="Resources\PanelUIBase.g.cs" />
@@ -73,6 +74,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\BooleanValueChangedEventArgs.g.cs" />
+    <Resource Include="Resources\IListItemProvider.g.cs" />
     <Resource Include="Resources\ObjectEventArgs.g.cs" />
     <Resource Include="Resources\PanelUIBase.g.cs" />
     <Resource Include="Resources\PanelActions.g.cs" />

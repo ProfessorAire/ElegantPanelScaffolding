@@ -34,6 +34,17 @@ namespace EPS.CodeGen.Builders
 
         public List<WriterBase> GetWriters()
         {
+            var epw = new PropertyWriter($"Elegant.UI.Common.IListItemProvider<{Control.ClassName}>.Items", $"IEnumerable<{Control.ClassName}>")
+            {
+                HasGetter = true,
+                HasSetter = false,
+                Accessor = Accessor.None
+            };
+
+            epw.Getter.Add("return this.Items;");
+
+            epw.Help.Summary = $"Gets an enumeration of <see cref=\"{ Control.ClassName}\"/> items the list contains.";
+
             var pw = new PropertyWriter($"Items", $"{Control.ClassName}[]")
             {
                 PrivateGetter = false,
@@ -56,7 +67,7 @@ namespace EPS.CodeGen.Builders
             }
 
             tw.Text.Add("};");
-            return new List<WriterBase>() { pw, tw };
+            return new List<WriterBase>() { epw, pw, tw };
         }
     }
 }

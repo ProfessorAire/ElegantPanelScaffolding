@@ -79,6 +79,6 @@ namespace EPS.CodeGen.Writers
             return sb.ToString();
         }
 
-        private static string SanitizeSpaces(string text, string tabs) => text.Replace("\n", $"\n{tabs} ///");
+        private static string SanitizeSpaces(string text, string tabs) => text.Replace("\n", $"\n{tabs}/// ");
     }
 }
