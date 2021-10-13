@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPS.Crestron.Demo", "EPS.Crestron.Demo\EPS.Crestron.Demo.csproj", "{EE573032-054C-48BE-8F92-78DC88BABB9D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPS.Demo", "EPS.Crestron.Demo\EPS.Demo.csproj", "{EE573032-054C-48BE-8F92-78DC88BABB9D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

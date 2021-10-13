@@ -5,7 +5,7 @@ using Crestron.SimplSharpPro.CrestronThread;        	// For Threading
 using Crestron.SimplSharpPro.Diagnostics;		    	// For System Monitor Access
 using Crestron.SimplSharpPro.DeviceSupport;         	// For Generic Device Support
 
-namespace EPS.Crestron.Demo
+namespace EPS.Demo
 {
     public class ControlSystem : CrestronControlSystem
     {
@@ -55,14 +55,18 @@ namespace EPS.Crestron.Demo
         /// </summary>
         public override void InitializeSystem()
         {
-            try
-            {
-
-            }
-            catch (Exception e)
-            {
-                ErrorLog.Error("Error in InitializeSystem: {0}", e.Message);
-            }
+            CrestronInvoke.BeginInvoke(o =>
+                {
+                    try
+                    {
+                        SystemManager.Instance.Initialize(this);
+                        SystemManager.Instance.LoadConfig();
+                    }
+                    catch (Exception e)
+                    {
+                        ErrorLog.Error("Error in InitializeSystem: {0}", e.Message);
+                    }
+                });
         }
 
         /// <summary>
@@ -112,6 +116,7 @@ namespace EPS.Crestron.Demo
                     //The program has been resumed. Resume all the user threads/timers as needed.
                     break;
                 case (eProgramStatusEventType.Stopping):
+                    SystemManager.Instance.Dispose();
                     //The program has been stopped.
                     //Close all threads. 
                     //Shutdown all Client/Servers in the system.

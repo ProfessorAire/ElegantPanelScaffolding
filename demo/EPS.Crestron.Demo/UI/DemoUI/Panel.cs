@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Crestron.SimplSharp;
 
-namespace EPS.Crestron.Demo.UI.DemoUI
+namespace EPS.Demo.UI.DemoUI
 {
     public partial class Panel
     {
@@ -24,6 +24,8 @@ namespace EPS.Crestron.Demo.UI.DemoUI
 
         public void SelectPage(DemoPage page)
         {
+            ClearPageSelections();
+
             switch (page)
             {
                 case DemoPage.SubpageReferenceLists:

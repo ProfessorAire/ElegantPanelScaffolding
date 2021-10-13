@@ -23,7 +23,7 @@
 
 using System.Collections.Generic;
 
-namespace Elegant.UI.Common
+namespace Evands.EPS.Common
 {
     /// <summary>
     /// Interface describing the requirements for lists.
@@ -34,6 +34,6 @@ namespace Elegant.UI.Common
         /// <summary>
         /// Gets the enumeration of objects the list contains.
         /// </summary>
-        IEnumerable<T> Items { get; }
+        System.Collections.ObjectModel.ReadOnlyCollection<T> Items { get; }
     }
 }

@@ -9,11 +9,11 @@
 // </auto-generated>
 
 using Crestron.SimplSharpPro.DeviceSupport;
-using EPS.Crestron.Demo.UI.DemoUI.Core;
+using Elegant.EPS.Common;
 using System;
 using System.Collections.Generic;
 
-namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
+namespace EPS.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 {
 	/// <summary>
 	/// Auto-generated OptionsItem class.
@@ -91,6 +91,11 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 		public event EventHandler<BooleanValueChangedEventArgs> Released;
 
 		/// <summary>
+		/// Raised when the associated touchpanel event is received.
+		/// </summary>
+		public event EventHandler<BooleanValueChangedEventArgs> StateChanged;
+
+		/// <summary>
 		/// Raised when the IsEnabled value changes.
 		/// </summary>
 		public event EventHandler<BooleanValueChangedEventArgs> IsEnabledChanged;
@@ -135,6 +140,12 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 					}
 			}
 		}
+
+		/// <summary>
+		/// Gets a value indicating whether the PressedState is pressed or released.
+		/// </summary>
+		public bool PressedState { get; set; }
+
 
 		/// <summary>
 		/// Gets or sets a value indicating whether the <see cref="IsEnabled"/> join was last set to true or false.
@@ -333,10 +344,17 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 		/// <param name="value">The pressed event boolean.</param>
 		private void RaisePressed(bool value)
 		{
+			PressedState = true;
 			var ce = Pressed;
 			if (ce != null)
 			{
-				ce.Invoke(this, new BooleanValueChangedEventArgs(value));
+				ce.Invoke(this, new BooleanValueChangedEventArgs(true));
+			}
+
+			var sce = StateChanged;
+			if (sce != null)
+			{
+				sce.Invoke(this, new BooleanValueChangedEventArgs(value));
 			}
 		}
 
@@ -346,10 +364,17 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 		/// <param name="value">The released event boolean.</param>
 		private void RaiseReleased(bool value)
 		{
+			PressedState = false;
 			var ce = Released;
 			if (ce != null)
 			{
-				ce.Invoke(this, new BooleanValueChangedEventArgs(value));
+				ce.Invoke(this, new BooleanValueChangedEventArgs(false));
+			}
+
+			var sce = StateChanged;
+			if (sce != null)
+			{
+				sce.Invoke(this, new BooleanValueChangedEventArgs(value));
 			}
 		}
 

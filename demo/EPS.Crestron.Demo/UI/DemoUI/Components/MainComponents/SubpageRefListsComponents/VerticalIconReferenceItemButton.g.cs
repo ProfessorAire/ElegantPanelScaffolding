@@ -9,11 +9,11 @@
 // </auto-generated>
 
 using Crestron.SimplSharpPro.DeviceSupport;
-using EPS.Crestron.Demo.UI.DemoUI.Core;
+using Elegant.EPS.Common;
 using System;
 using System.Collections.Generic;
 
-namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
+namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 {
 	/// <summary>
 	/// Auto-generated VerticalIconReferenceItemButton class.
@@ -46,6 +46,21 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsC
 		private ushort itemOffset = 0;
 
 		/// <summary>
+		/// Backing field for the <see cref="IsActive"/> property.
+		/// </summary>
+		private bool isActive;
+
+		/// <summary>
+		/// Backing field for the <see cref="Text"/> property.
+		/// </summary>
+		private string text;
+
+		/// <summary>
+		/// Raised when the IsActive value changes.
+		/// </summary>
+		public event EventHandler<BooleanValueChangedEventArgs> IsActiveChanged;
+
+		/// <summary>
 		/// Raised when the button is pressed.
 		/// </summary>
 		public event EventHandler<BooleanValueChangedEventArgs> Pressed;
@@ -54,6 +69,64 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsC
 		/// Raised when the button is released.
 		/// </summary>
 		public event EventHandler<BooleanValueChangedEventArgs> Released;
+
+		/// <summary>
+		/// Raised when the associated touchpanel event is received.
+		/// </summary>
+		public event EventHandler<BooleanValueChangedEventArgs> StateChanged;
+
+		/// <summary>
+		/// Raised when the Text value changes.
+		/// </summary>
+		public event EventHandler<StringValueChangedEventArgs> TextChanged;
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the <see cref="IsActive"/> join was last set to true or false.
+		/// </summary>
+		public bool IsActive
+		{
+			get 
+			{
+				return isActive;
+			}
+			set
+			{
+				isActive = value;
+				ParentPanel.SendSmartValue(2, (ushort)(1 + this.digitalOffset), value);
+				var ce = IsActiveChanged;
+				if (ce != null)
+				{
+					ce.Invoke(this, new BooleanValueChangedEventArgs(value));
+					}
+			}
+		}
+
+		/// <summary>
+		/// Gets a value indicating whether the PressedState is pressed or released.
+		/// </summary>
+		public bool PressedState { get; set; }
+
+
+		/// <summary>
+		/// Gets or sets a value indicating what the <see cref="Text"/> join was last set to.
+		/// </summary>
+		public string Text
+		{
+			get 
+			{
+				return text;
+			}
+			set
+			{
+				text = value;
+				ParentPanel.SendSmartValue(2, (ushort)(1 + this.serialOffset), value);
+				var ce = TextChanged;
+				if (ce != null)
+				{
+					ce.Invoke(this, new StringValueChangedEventArgs(value));
+					}
+			}
+		}
 
 		/// <summary>
 		/// Creates a new instance of the class.
@@ -118,15 +191,46 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsC
 		}
 
 		/// <summary>
+		/// Sets the value of the <see cref="IsActive"/> join on a single touchpanel.
+		/// </summary>
+		/// <param name="value">The new value for the join on the touchpanel.</param>
+		/// <param name="panel">The panel to change the associated join value on.</param>
+		public void SetIsActive(bool value, BasicTriListWithSmartObject panel)
+		{
+			ParentPanel.SendSmartValue(2, (ushort)(1 + this.digitalOffset), value, panel);
+			var ce = IsActiveChanged;
+			if (ce != null)
+			{
+				ce.Invoke(this, new BooleanValueChangedEventArgs(value));
+			}
+		}
+
+		/// <summary>
+		/// Pulses the IsActive digital signal. Any local signal changed events won't be fired by this method.
+		/// </summary>
+		/// <param name="duration">The duration in milliseconds to pulse the signal for.</param>
+		public void PulseIsActive(int duration)
+		{
+			ParentPanel.Pulse(2, (uint)(1 + this.digitalOffset), duration);
+		}
+
+		/// <summary>
 		/// Raises the Pressed event.
 		/// </summary>
 		/// <param name="value">The pressed event boolean.</param>
 		private void RaisePressed(bool value)
 		{
+			PressedState = true;
 			var ce = Pressed;
 			if (ce != null)
 			{
-				ce.Invoke(this, new BooleanValueChangedEventArgs(value));
+				ce.Invoke(this, new BooleanValueChangedEventArgs(true));
+			}
+
+			var sce = StateChanged;
+			if (sce != null)
+			{
+				sce.Invoke(this, new BooleanValueChangedEventArgs(value));
 			}
 		}
 
@@ -136,10 +240,32 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsC
 		/// <param name="value">The released event boolean.</param>
 		private void RaiseReleased(bool value)
 		{
+			PressedState = false;
 			var ce = Released;
 			if (ce != null)
 			{
-				ce.Invoke(this, new BooleanValueChangedEventArgs(value));
+				ce.Invoke(this, new BooleanValueChangedEventArgs(false));
+			}
+
+			var sce = StateChanged;
+			if (sce != null)
+			{
+				sce.Invoke(this, new BooleanValueChangedEventArgs(value));
+			}
+		}
+
+		/// <summary>
+		/// Sets the value of the <see cref="Text"/> join on a single touchpanel.
+		/// </summary>
+		/// <param name="value">The new value for the join on the touchpanel.</param>
+		/// <param name="panel">The panel to change the associated join value on.</param>
+		public void SetText(string value, BasicTriListWithSmartObject panel)
+		{
+			ParentPanel.SendSmartValue(2, (ushort)(1 + this.serialOffset), value, panel);
+			var ce = TextChanged;
+			if (ce != null)
+			{
+				ce.Invoke(this, new StringValueChangedEventArgs(value));
 			}
 		}
 	}

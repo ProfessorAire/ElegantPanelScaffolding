@@ -9,11 +9,11 @@
 // </auto-generated>
 
 using Crestron.SimplSharpPro.DeviceSupport;
-using EPS.Crestron.Demo.UI.DemoUI.Core;
+using Elegant.EPS.Common;
 using System;
 using System.Collections.Generic;
 
-namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents
+namespace EPS.Demo.UI.DemoUI.Components.MainComponents
 {
 	/// <summary>
 	/// Auto-generated Menu class.

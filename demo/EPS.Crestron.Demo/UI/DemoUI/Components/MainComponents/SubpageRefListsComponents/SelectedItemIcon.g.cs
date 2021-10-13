@@ -9,11 +9,11 @@
 // </auto-generated>
 
 using Crestron.SimplSharpPro.DeviceSupport;
-using EPS.Crestron.Demo.UI.DemoUI.Core;
+using Elegant.EPS.Common;
 using System;
 using System.Collections.Generic;
 
-namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
+namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 {
 	/// <summary>
 	/// Auto-generated SelectedItemIcon class.
@@ -26,14 +26,45 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsC
 		public Panel ParentPanel;
 
 		/// <summary>
+		/// Backing field for the <see cref="IsVisible"/> property.
+		/// </summary>
+		private bool isVisible;
+
+		/// <summary>
 		/// Backing field for the <see cref="IconNumber"/> property.
 		/// </summary>
 		private ushort iconNumber;
 
 		/// <summary>
+		/// Raised when the IsVisible value changes.
+		/// </summary>
+		public event EventHandler<BooleanValueChangedEventArgs> IsVisibleChanged;
+
+		/// <summary>
 		/// Raised when the IconNumber value changes.
 		/// </summary>
 		public event EventHandler<UShortValueChangedEventArgs> IconNumberChanged;
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the <see cref="IsVisible"/> join was last set to true or false.
+		/// </summary>
+		public bool IsVisible
+		{
+			get 
+			{
+				return isVisible;
+			}
+			set
+			{
+				isVisible = value;
+				ParentPanel.SendValue((ushort)(3), value);
+				var ce = IsVisibleChanged;
+				if (ce != null)
+				{
+					ce.Invoke(this, new BooleanValueChangedEventArgs(value));
+					}
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets a value indicating what the <see cref="IconNumber"/> join was last set to.
@@ -97,6 +128,30 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsC
 		public void Dispose()
 		{
 			DisposeUI();
+		}
+
+		/// <summary>
+		/// Sets the value of the <see cref="IsVisible"/> join on a single touchpanel.
+		/// </summary>
+		/// <param name="value">The new value for the join on the touchpanel.</param>
+		/// <param name="panel">The panel to change the associated join value on.</param>
+		public void SetIsVisible(bool value, BasicTriListWithSmartObject panel)
+		{
+			ParentPanel.SendValue((ushort)(3), value, panel);
+			var ce = IsVisibleChanged;
+			if (ce != null)
+			{
+				ce.Invoke(this, new BooleanValueChangedEventArgs(value));
+			}
+		}
+
+		/// <summary>
+		/// Pulses the IsVisible digital signal. Any local signal changed events won't be fired by this method.
+		/// </summary>
+		/// <param name="duration">The duration in milliseconds to pulse the signal for.</param>
+		public void PulseIsVisible(int duration)
+		{
+			ParentPanel.Pulse((uint)(3), duration);
 		}
 
 		/// <summary>

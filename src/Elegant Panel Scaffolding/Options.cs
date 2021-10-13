@@ -14,7 +14,7 @@ namespace EPS
         public static Options Current = new Options();
 #pragma warning restore CA2211 // Non-constant fields should not be visible
 
-        private string version = "v0.1.4-alpha";
+        private string version = "v0.1.4-beta";
         [JsonIgnore]
         [Browsable(false)]
         public string Version { get => version; set => SetField(ref version, value); }
@@ -94,13 +94,22 @@ namespace EPS
         }
 
         private string commonPath = "";
-        [Description("The path that classes common between touchpanels will be generated in. These files exist in the namespace Elegant.UI.Common.")]
+        [Description("The path that classes common between touchpanels will be generated in. These files exist in the namespace Evands.EPS.Common.")]
         [DisplayName("Common Files Path")]
         [FolderPath()]
         public string CommonPath
         {
             get => commonPath;
             set => SetField(ref commonPath, value);
+        }
+
+        private bool includeHelperFiles = true;
+        [Description("When true will include helper files alongside the common files.")]
+        [DisplayName("Include Helper Files")]
+        public bool IncludeHelperFiles
+        {
+            get => includeHelperFiles;
+            set => SetField(ref includeHelperFiles, value);
         }
     }
 }

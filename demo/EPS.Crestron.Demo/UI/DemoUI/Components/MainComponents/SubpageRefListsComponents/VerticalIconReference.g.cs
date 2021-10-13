@@ -9,16 +9,16 @@
 // </auto-generated>
 
 using Crestron.SimplSharpPro.DeviceSupport;
-using EPS.Crestron.Demo.UI.DemoUI.Core;
+using Elegant.EPS.Common;
 using System;
 using System.Collections.Generic;
 
-namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
+namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 {
 	/// <summary>
 	/// Auto-generated VerticalIconReference class.
 	/// </summary>
-	public partial class VerticalIconReference : IDisposable, Elegant.UI.Common.IListItemProvider<VerticalIconReferenceItem>
+	public partial class VerticalIconReference : IDisposable, Elegant.EPS.Common.IListItemProvider<VerticalIconReferenceItem>
 	{
 		/// <summary>
 		/// The <see cref="Panel"/> that this object belongs to.
@@ -38,7 +38,7 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsC
 		/// <summary>
 		/// Gets an enumeration of <see cref="VerticalIconReferenceItem"/> items the list contains.
 		/// </summary>
-		IEnumerable<VerticalIconReferenceItem> Elegant.UI.Common.IListItemProvider<VerticalIconReferenceItem>.Items
+		IEnumerable<VerticalIconReferenceItem> Elegant.EPS.Common.IListItemProvider<VerticalIconReferenceItem>.Items
 		{
 			get 
 			{

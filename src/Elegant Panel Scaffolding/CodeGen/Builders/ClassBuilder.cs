@@ -173,8 +173,8 @@ namespace EPS.CodeGen.Builders
             {
                 nsb.AddUsing("Crestron.SimplSharpPro.DeviceSupport");
             }
-
-            nsb.AddUsing($"{options.PanelNamespace}.Core");
+            
+            nsb.AddUsing("Evands.EPS.Common");
 
             Writers.ClassWriter mainClass;
 
@@ -333,7 +333,7 @@ namespace EPS.CodeGen.Builders
                         AddWriter(w);
                     }
 
-                    mainClass.Implements.Add($"Elegant.UI.Common.IListItemProvider<{l.Control.ClassName}>");
+                    mainClass.Implements.Add($"Evands.EPS.Common.IListItemProvider<{l.Control.ClassName}>");
                 }
             }
 

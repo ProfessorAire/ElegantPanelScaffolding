@@ -161,7 +161,8 @@ namespace EPS.UI
 
                     if (Options.IncludeCoreFiles)
                     {
-                        var dir = Directory.CreateDirectory(Path.Combine(Path.Combine(Options.CompilePath, builder.NamespaceBase), "Core"));
+                        var dir = Directory.CreateDirectory(Path.Combine(Options.CommonPath, @"Evands\EPS\Common"));
+
                         var file1 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/BooleanValueChangedEventArgs.g.cs"));
                         var file2 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/UShortValueChangedEventArgs.g.cs"));
                         var file3 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/StringValueChangedEventArgs.g.cs"));
@@ -171,24 +172,33 @@ namespace EPS.UI
                         var file7 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/PanelUIBase.g.cs"));
                         var file8 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/IListItemProvider.g.cs"));
 
-                        Func<string, string> replacement = (s) => s.Replace("SharpProTouchpanelDemo.UI", $"{Options.RootNamespace}.{builder.NamespaceBase}");
+                        WriteResourcesText(Path.Combine(dir.FullName, "BooleanValueChangedEventArgs.g.cs"), file1.Stream);
+                        WriteResourcesText(Path.Combine(dir.FullName, "UShortValueChangedEventArgs.g.cs"), file2.Stream);
+                        WriteResourcesText(Path.Combine(dir.FullName, "StringValueChangedEventArgs.g.cs"), file3.Stream);
+                        WriteResourcesText(Path.Combine(dir.FullName, "PanelActions.g.cs"), file4.Stream);
+                        WriteResourcesText(Path.Combine(dir.FullName, "DeviceHelper.g.cs"), file5.Stream);
+                        WriteResourcesText(Path.Combine(dir.FullName, "ObjectEventArgs.g.cs"), file6.Stream);
+                        WriteResourcesText(Path.Combine(dir.FullName, "PanelUIBase.g.cs"), file7.Stream);
+                        WriteResourcesText(Path.Combine(dir.FullName, "IListItemProvider.g.cs"), file8.Stream);
+                    }
 
-                        WriteResourcesText(Path.Combine(dir.FullName, "BooleanValueChangedEventArgs.g.cs"), file1.Stream, replacement);
-                        WriteResourcesText(Path.Combine(dir.FullName, "UShortValueChangedEventArgs.g.cs"), file2.Stream, replacement);
-                        WriteResourcesText(Path.Combine(dir.FullName, "StringValueChangedEventArgs.g.cs"), file3.Stream, replacement);
-                        WriteResourcesText(Path.Combine(dir.FullName, "PanelActions.g.cs"), file4.Stream, replacement);
-                        WriteResourcesText(Path.Combine(dir.FullName, "DeviceHelper.g.cs"), file5.Stream, replacement);
-                        WriteResourcesText(Path.Combine(dir.FullName, "ObjectEventArgs.g.cs"), file6.Stream, replacement);
-                        
+                    if (Options.IncludeHelperFiles)
+                    {
+                        var file9 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/ListBase.g.cs"));
+                        var file10 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/ListItemBase.g.cs"));
+                        var file11 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/SelectedItemChangedEventArgs.g.cs"));
+                        var file12 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/ValueChangedEventArgs.g.cs"));
+                        var file13 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/ValueSourceChangedEventArgs.g.cs"));
+                        var file14 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/ItemSelectionChangedEventArgs.g.cs"));
 
-                        replacement = (s) => s
-                            .Replace("SharpProTouchpanelDemo.UI", $"{Options.RootNamespace}.{builder.NamespaceBase}");
+                        var listsDirectory = Directory.CreateDirectory(Path.Combine(Options.CommonPath, @"Evands\EPS\Lists"));
 
-                        WriteResourcesText(Path.Combine(dir.FullName, "PanelUIBase.g.cs"), file7.Stream, replacement);
-
-                        var dir2 = Directory.CreateDirectory(Path.Combine(Options.CommonPath, @"Elegant\UI\Common"));
-
-                        WriteResourcesText(Path.Combine(dir2.FullName, "IListItemProvider.g.cs"), file8.Stream, s => s);
+                        WriteResourcesText(Path.Combine(listsDirectory.FullName, "ListBase.g.cs"), file9.Stream);
+                        WriteResourcesText(Path.Combine(listsDirectory.FullName, "ListItemBase.g.cs"), file10.Stream);
+                        WriteResourcesText(Path.Combine(listsDirectory.FullName, "SelectedItemChangedEventArgs.g.cs"), file11.Stream);
+                        WriteResourcesText(Path.Combine(listsDirectory.FullName, "ValueChangedEventArgs.g.cs"), file12.Stream);
+                        WriteResourcesText(Path.Combine(listsDirectory.FullName, "ValueSourceChangedEventArgs.g.cs"), file13.Stream);
+                        WriteResourcesText(Path.Combine(listsDirectory.FullName, "ItemSelectionChangedEventArgs.g.cs"), file14.Stream);
                     }
 
                     ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File successfully created!");
@@ -208,13 +218,8 @@ namespace EPS.UI
             }
         }
 
-        private static void WriteResourcesText(string path, Stream stream, Func<string, string> action)
+        private static void WriteResourcesText(string path, Stream stream)
         {
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
-
             if (string.IsNullOrWhiteSpace(path))
             {
                 throw new ArgumentNullException(nameof(path));
@@ -227,7 +232,7 @@ namespace EPS.UI
 
             using (var sr = new StreamReader(stream))
             {
-                var text = action(sr.ReadToEnd());
+                var text = sr.ReadToEnd();
                 File.WriteAllText(path, text);
             }
         }

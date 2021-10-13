@@ -9,11 +9,11 @@
 // </auto-generated>
 
 using Crestron.SimplSharpPro.DeviceSupport;
-using EPS.Crestron.Demo.UI.DemoUI.Core;
+using Elegant.EPS.Common;
 using System;
 using System.Collections.Generic;
 
-namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
+namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 {
 	/// <summary>
 	/// Auto-generated SelectedItemLabel class.
@@ -78,7 +78,7 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsC
 			set
 			{
 				isVisible = value;
-				ParentPanel.SendValue((ushort)(2), value);
+				ParentPanel.SendValue((ushort)(3), value);
 				var ce = IsVisibleChanged;
 				if (ce != null)
 				{
@@ -152,7 +152,7 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsC
 		/// <param name="panel">The panel to change the associated join value on.</param>
 		public void SetIsVisible(bool value, BasicTriListWithSmartObject panel)
 		{
-			ParentPanel.SendValue((ushort)(2), value, panel);
+			ParentPanel.SendValue((ushort)(3), value, panel);
 			var ce = IsVisibleChanged;
 			if (ce != null)
 			{
@@ -166,7 +166,7 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsC
 		/// <param name="duration">The duration in milliseconds to pulse the signal for.</param>
 		public void PulseIsVisible(int duration)
 		{
-			ParentPanel.Pulse((uint)(2), duration);
+			ParentPanel.Pulse((uint)(3), duration);
 		}
 	}
 }

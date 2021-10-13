@@ -8,11 +8,11 @@
 //		You can use the 'SetupUI()`, 'InitializeUI()', and 'DisposeUI()' partial methods to hook into the construction, initialization, and disposal logic.
 // </auto-generated>
 
-using EPS.Crestron.Demo.UI.DemoUI.Core;
+using Elegant.EPS.Common;
 using System;
 using System.Collections.Generic;
 
-namespace EPS.Crestron.Demo.UI.DemoUI
+namespace EPS.Demo.UI.DemoUI
 {
 	/// <summary>
 	/// Auto-generated Panel class.

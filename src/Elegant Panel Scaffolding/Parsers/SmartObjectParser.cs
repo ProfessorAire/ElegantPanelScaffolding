@@ -253,7 +253,7 @@ namespace EPS.Parsers
                                     inName = inName.Replace("Item %i ", "Is");
                                 }
 
-                                if (inName.StartsWith("In") && !inName.Contains("Checked"))
+                                if (inName.StartsWith("In", StringComparison.InvariantCultureIgnoreCase) && !inName.Contains("Checked"))
                                 {
                                     inName = inName.Remove(0, 2);
                                 }
@@ -274,7 +274,7 @@ namespace EPS.Parsers
                                     }
                                 }
 
-                                if (outName.StartsWith("In") && !outName.Contains("Checked"))
+                                if (outName.StartsWith("In", StringComparison.InvariantCultureIgnoreCase) && !outName.Contains("Checked"))
                                 {
                                     outName = outName.Remove(0, 2);
                                 }
@@ -451,12 +451,12 @@ namespace EPS.Parsers
                                         inName = "Selected";
                                     }
 
-                                    if (inName.StartsWith("Is") && !inName.Contains("Checked"))
+                                    if (inName.StartsWith("Is", StringComparison.InvariantCultureIgnoreCase) && !inName.Contains("Checked"))
                                     {
                                         inName = inName.Remove(0, 2);
                                     }
 
-                                    if (outName.StartsWith("Is") && !outName.Contains("Checked"))
+                                    if (outName.StartsWith("Is", StringComparison.InvariantCultureIgnoreCase) && !outName.Contains("Checked"))
                                     {
                                         outName = outName.Remove(0, 2);
                                     }

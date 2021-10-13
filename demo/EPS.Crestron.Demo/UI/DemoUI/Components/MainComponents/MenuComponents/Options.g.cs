@@ -9,16 +9,16 @@
 // </auto-generated>
 
 using Crestron.SimplSharpPro.DeviceSupport;
-using EPS.Crestron.Demo.UI.DemoUI.Core;
+using Elegant.EPS.Common;
 using System;
 using System.Collections.Generic;
 
-namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
+namespace EPS.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 {
 	/// <summary>
 	/// Auto-generated Options class.
 	/// </summary>
-	public partial class Options : IDisposable, Elegant.UI.Common.IListItemProvider<OptionsItem>
+	public partial class Options : IDisposable, Elegant.EPS.Common.IListItemProvider<OptionsItem>
 	{
 		/// <summary>
 		/// The <see cref="Panel"/> that this object belongs to.
@@ -88,7 +88,7 @@ namespace EPS.Crestron.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 		/// <summary>
 		/// Gets an enumeration of <see cref="OptionsItem"/> items the list contains.
 		/// </summary>
-		IEnumerable<OptionsItem> Elegant.UI.Common.IListItemProvider<OptionsItem>.Items
+		IEnumerable<OptionsItem> Elegant.EPS.Common.IListItemProvider<OptionsItem>.Items
 		{
 			get 
 			{
