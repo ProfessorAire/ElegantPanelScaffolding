@@ -6,11 +6,11 @@ using Crestron.SimplSharp;
 
 namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 {
-    public partial class VerticalIconReference : Elegant.EPS.Lists.ListBase<IconDetails, VerticalIconReferenceItem>
+    public partial class VerticalIconReference : Evands.EPS.Lists.ListBase<IconDetails, VerticalIconReferenceItem>
     {
         partial void SetupUI()
         {
-            this.Configure();
+            
         }
     }
 }

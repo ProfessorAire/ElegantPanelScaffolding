@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace EPS.CodeGen.Writers
@@ -24,6 +25,8 @@ namespace EPS.CodeGen.Writers
         public Accessor Accessor { get; set; } = Accessor.Public;
 
         public Modifier Modifier { get; set; } = Modifier.None;
+
+        public bool ImplementINotifyPropertyChanged { get; set; }
 
         public List<MethodWriter> Constructors { get; } = new List<MethodWriter>();
 
@@ -55,7 +58,14 @@ namespace EPS.CodeGen.Writers
             // Class Details.
             _ = sb.Append(indent.GetTabs());
             _ = sb.Append($"{Accessor.GetTextValue()}{Modifier.GetTextValue()}class {Name}");
-            for (var i = 0; i < Implements.Count; i++)
+
+            var implements = Implements;
+            if (ImplementINotifyPropertyChanged && Properties.Count > 0)
+            {
+                implements.Add("System.ComponentModel.INotifyPropertyChanged");
+            }
+
+            for (var i = 0; i < implements.Count; i++)
             {
                 if (i == 0)
                 {
@@ -65,7 +75,7 @@ namespace EPS.CodeGen.Writers
                 {
                     _ = sb.Append(", ");
                 }
-                _ = sb.Append(Implements[i]);
+                _ = sb.Append(implements[i]);
             }
 
             _ = sb.AppendLine();
@@ -78,28 +88,47 @@ namespace EPS.CodeGen.Writers
             var needBreak = false;
 
             // Fields
-            for (var i = 0; i < Fields.Count; i++)
+            var fields = Fields.Union(Properties.Where(p => p.BackingFieldWriter != null).Select(p => p.BackingFieldWriter)).ToList();
+            for (var i = 0; i < fields.Count; i++)
             {
-                needBreak = true;
-                var f = Fields[i];
-                _ = sb.AppendLine(f.ToString(indent));
-                if (i < Fields.Count - 1)
+                var f = fields[i];
+                if (f != null)
                 {
-                    _ = sb.AppendLine();
+                    needBreak = true;
+                    _ = sb.AppendLine(f.ToString(indent));
+                    if (i < fields.Count - 1)
+                    {
+                        _ = sb.AppendLine();
+                    }
                 }
             }
 
-            if (Events.Count > 0 && needBreak)
+            var events = Events;
+
+            if (ImplementINotifyPropertyChanged && Properties.Count > 0)
+            {
+                var pce = new EventWriter("PropertyChanged")
+                {
+                    Handler = "System.ComponentModel.PropertyChangedEventHandler"
+                };
+
+                events.Add(pce);
+            }
+
+            events = events.OrderBy(ew => ew.Name).ToList();
+
+            if (events.Count > 0 && needBreak)
             {
                 _ = sb.AppendLine();
             }
+
             // Events
-            for (var i = 0; i < Events.Count; i++)
+            for (var i = 0; i < events.Count; i++)
             {
                 needBreak = true;
-                var e = Events[i];
+                var e = events[i];
                 _ = sb.AppendLine(e.ToString(indent));
-                if (i < Events.Count - 1)
+                if (i < events.Count - 1)
                 {
                     _ = sb.AppendLine();
                 }

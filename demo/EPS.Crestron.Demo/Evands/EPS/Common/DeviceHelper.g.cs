@@ -30,7 +30,7 @@ using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpProInternal;
 
-namespace Elegant.EPS.Common
+namespace Evands.EPS.Common
 {
     /// <summary>
     /// Device helper methods.

@@ -34,23 +34,25 @@ namespace EPS.CodeGen.Builders
 
         public List<WriterBase> GetWriters()
         {
-            var epw = new PropertyWriter($"Evands.EPS.Common.IListItemProvider<{Control.ClassName}>.Items", $"System.Collections.ObjectModel.ReadOnlyCollection<{Control.ClassName}>")
+            var epw = new PropertyWriter($"Evands.EPS.Common.IListItemProvider<{Control.ClassName}>.Items", $"System.Collections.ObjectModel.ReadOnlyCollection<{Control.ClassName}>", false)
             {
                 HasGetter = true,
                 HasSetter = false,
-                Accessor = Accessor.None
+                Accessor = Accessor.None,
+                ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged,
             };
 
-            epw.Getter.Add("return new System.Collections.ObjectModel.ReadOnlyCollection<OptionsItem>(Items);");
+            epw.Getter.Add($"return new System.Collections.ObjectModel.ReadOnlyCollection<{Control.ClassName}>(this.Items);");
 
-            epw.Help.Summary = $"Gets an enumeration of <see cref=\"{ Control.ClassName}\"/> items the list contains.";
+            epw.Help.Summary = $"Gets an enumeration of <see cref=\"{Control.ClassName}\"/> items the list contains.";
 
-            var pw = new PropertyWriter($"Items", $"{Control.ClassName}[]")
+            var pw = new PropertyWriter($"Items", $"{Control.ClassName}[]", false)
             {
                 PrivateGetter = false,
                 PrivateSetter = true,
                 HasSetter = true,
-                HasGetter = true
+                HasGetter = true,
+                ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged
             };
 
             pw.Help.Summary = $"Gets the array of <see cref=\"{Control.ClassName}\"/> items in the list.";

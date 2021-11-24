@@ -28,7 +28,7 @@ using System.Linq;
 using System.Text;
 using Crestron.SimplSharp;
 
-namespace Elegant.EPS.Common
+namespace Evands.EPS.Common
 {
     /// <summary>
     /// Panel actions class.

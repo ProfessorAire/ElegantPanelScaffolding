@@ -14,12 +14,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 
-namespace EPS.Demo.UI.DemoUI.Components.MainComponents.HeaderComponents
+namespace EPS.Demo.UI.DemoUI.Components.MainComponents.TabsComponents
 {
 	/// <summary>
-	/// Auto-generated ProjectTitle class.
+	/// Auto-generated TabVertical class.
 	/// </summary>
-	public partial class ProjectTitle : IDisposable, System.ComponentModel.INotifyPropertyChanged
+	public partial class TabVertical : IDisposable, Evands.EPS.Common.IListItemProvider<TabVerticalItem>, System.ComponentModel.INotifyPropertyChanged
 	{
 		/// <summary>
 		/// The <see cref="Panel"/> that this object belongs to.
@@ -27,9 +27,9 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.HeaderComponents
 		public Panel ParentPanel;
 
 		/// <summary>
-		/// text field.
+		/// string1 field.
 		/// </summary>
-		public string text;
+		public string string1;
 
 		/// <summary>
 		/// Raised when the associated touchpanel event is received.
@@ -37,26 +37,43 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.HeaderComponents
 		public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
 
 		/// <summary>
-		/// Raised when the Text value changes.
+		/// Raised when the String1 value changes.
 		/// </summary>
-		public event EventHandler<StringValueChangedEventArgs> TextChanged;
+		public event EventHandler<StringValueChangedEventArgs> String1Changed;
 
 		/// <summary>
-		/// Gets or sets a value indicating what the <see cref="Text"/> join was last set to.
+		/// Gets an enumeration of <see cref="TabVerticalItem"/> items the list contains.
 		/// </summary>
-		public string Text
+		System.Collections.ObjectModel.ReadOnlyCollection<TabVerticalItem> Evands.EPS.Common.IListItemProvider<TabVerticalItem>.Items
 		{
 			get 
 			{
-				return text;
+				return new System.Collections.ObjectModel.ReadOnlyCollection<TabVerticalItem>(this.Items);
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the array of <see cref="TabVerticalItem"/> items in the list.
+		/// </summary>
+		public TabVerticalItem[] Items { get; private set; }
+
+
+		/// <summary>
+		/// Gets or sets a value indicating what the <see cref="String1"/> join was last set to.
+		/// </summary>
+		public string String1
+		{
+			get 
+			{
+				return string1;
 			}
 
 			set
 			{
-				var isChanged = text != value;
-				text = value;
-				ParentPanel.SendValue((ushort)(1), value);
-				var changeEvent = TextChanged;
+				var isChanged = string1 != value;
+				string1 = value;
+				ParentPanel.SendSmartValue(4, (ushort)(423), value);
+				var changeEvent = String1Changed;
 				if(changeEvent != null)
 				{
 					changeEvent.Invoke(this, new StringValueChangedEventArgs(value));
@@ -67,7 +84,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.HeaderComponents
 					var propertyChangeEvent = PropertyChanged;
 					if (propertyChangeEvent != null)
 					{
-						propertyChangeEvent.Invoke(this, new PropertyChangedEventArgs("Text"));
+						propertyChangeEvent.Invoke(this, new PropertyChangedEventArgs("String1"));
 					}
 				}
 			}
@@ -77,9 +94,16 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.HeaderComponents
 		/// Creates a new instance of the class.
 		/// </summary>
 		/// <param name="parent">The class that is the base parent of this one.</param>
-		public ProjectTitle(Panel parent)
+		public TabVertical(Panel parent)
 		{
 			ParentPanel = parent;
+
+			Items = new TabVerticalItem[3]
+			{
+				new TabVerticalItem(ParentPanel, 0, 0, 0, 0),
+				new TabVerticalItem(ParentPanel, 0, 0, 0, 1),
+				new TabVerticalItem(ParentPanel, 0, 0, 0, 2)
+			};
 
 			SetupUI();
 		}
@@ -114,17 +138,21 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.HeaderComponents
 		public void Dispose()
 		{
 			DisposeUI();
+			foreach (var i in Items)
+			{
+				i.Dispose();
+			}
 		}
 
 		/// <summary>
-		/// Sets the value of the <see cref="Text"/> join on a single touchpanel.
+		/// Sets the value of the <see cref="String1"/> join on a single touchpanel.
 		/// </summary>
 		/// <param name="value">The new value for the join on the touchpanel.</param>
 		/// <param name="panel">The panel to change the associated join value on.</param>
-		public void SetText(string value, BasicTriListWithSmartObject panel)
+		public void SetString1(string value, BasicTriListWithSmartObject panel)
 		{
-			ParentPanel.SendValue((ushort)(1), value, panel);
-			var changeEvent = TextChanged;
+			ParentPanel.SendSmartValue(4, (ushort)(423), value, panel);
+			var changeEvent = String1Changed;
 			if (changeEvent != null)
 			{
 				changeEvent.Invoke(this, new StringValueChangedEventArgs(value));

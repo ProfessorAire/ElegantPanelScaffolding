@@ -15,6 +15,8 @@ namespace EPS.CodeGen.Writers
 
         public string Name { get; set; } = "";
 
+        public FieldWriter? BackingFieldWriter { get; set; }
+
         public HelpWriter Help { get; set; }
 
         public string Type { get; set; } = "";
@@ -29,7 +31,11 @@ namespace EPS.CodeGen.Writers
 
         public bool PrivateGetter { get; set; }
 
-        public bool UsePropertyChangeEvent { get; set; }
+        public bool UsePropertyChangeEvent { get; set; } = true;
+
+        public bool AlwaysRaisePropertyChangeEvents { get; set; } = true;
+
+        public bool ImplementINotifyPropertyChanged { get; set; }
 
         private readonly int indentLevel;
 
@@ -37,11 +43,21 @@ namespace EPS.CodeGen.Writers
 
         public Accessor Accessor { get; set; } = Accessor.Public;
 
-        public PropertyWriter(string name, string type, int indentLevel = 0)
+        public PropertyWriter(string name, string type, bool createBackingFieldWriter, int indentLevel = 0)
         {
             Name = name;
             Type = type;
             this.indentLevel = indentLevel;
+
+            if (createBackingFieldWriter)
+            {
+#pragma warning disable CA1308 // Normalize strings to uppercase
+                var fieldName = $"{Name.ToLower(CultureInfo.InvariantCulture)[0]}{Name.Substring(1)}";
+#pragma warning restore CA1308 // Normalize strings to uppercase
+
+                BackingFieldWriter = new FieldWriter(fieldName, type);
+            }
+
             Help = new HelpWriter(indentLevel);
         }
 
@@ -52,16 +68,22 @@ namespace EPS.CodeGen.Writers
             _ = sb.Clear();
 
             // Help Stuff.
+            var prefix = HasGetter ?
+                HasSetter ? "Gets or sets" :
+                "Gets" :
+                HasSetter ?
+                "Sets" :
+                string.Empty;
+
+            Help.Summary = prefix + Help.Summary.Replace("Gets or sets", string.Empty).Replace("Gets", string.Empty).Replace("Sets", string.Empty);
             _ = sb.Append(Help.ToString(indent));
 
             // Then the Property Name.
             _ = sb.Append(indent.GetTabs());
             _ = sb.Append($"{Accessor.GetTextValue()}{Modifier.GetTextValue()}{Type} {Name}");
 
-
-
             // Getter/Setter.
-            if (HasGetter && Getter.Count == 0 && HasSetter && Setter.Count == 0)
+            if ((BackingFieldWriter == null && Setter.Count == 0 && Getter.Count == 0) || (!(UsePropertyChangeEvent || ImplementINotifyPropertyChanged) && HasGetter && Getter.Count == 0 && HasSetter && Setter.Count == 0))
             {
                 _ = sb.AppendLine($" {{ {(PrivateGetter ? "private " : "")}get; {(PrivateSetter ? "private " : "")}set; }}");
             }
@@ -75,13 +97,20 @@ namespace EPS.CodeGen.Writers
                 // Getter.
                 if (HasGetter)
                 {
-                    if (Getter.Count > 0)
+                    if (UsePropertyChangeEvent || ImplementINotifyPropertyChanged || Getter.Count > 0)
                     {
                         _ = sb.Append(indent.GetTabs());
                         _ = sb.AppendLine($"{(PrivateGetter ? "private " : "")}get ");
                         _ = sb.Append(indent.GetTabs());
                         _ = sb.AppendLine("{");
                         indent++;
+
+                        if (BackingFieldWriter != null)
+                        {
+                            _ = sb.Append(indent.GetTabs());
+                            _ = sb.AppendLine($"return {BackingFieldWriter.Name};");
+                        }
+
                         foreach (var l in Getter)
                         {
                             _ = sb.AppendLine(SanitizeSpaces(l, indent));
@@ -94,6 +123,7 @@ namespace EPS.CodeGen.Writers
                                 indent--;
                             }
                         }
+
                         indent--;
                         _ = sb.Append(indent.GetTabs());
                         _ = sb.AppendLine("}");
@@ -106,10 +136,15 @@ namespace EPS.CodeGen.Writers
 
                 }
 
+                if (HasGetter && HasSetter)
+                {
+                    _ = sb.AppendLine();
+                }
+
                 // Setter.
                 if (HasSetter)
                 {
-                    if (Setter.Count > 0)
+                    if (UsePropertyChangeEvent || ImplementINotifyPropertyChanged || Setter.Count > 0)
                     {
                         _ = sb.Append(indent.GetTabs());
                         _ = sb.AppendLine($"{(PrivateSetter ? "private " : "")}set");
@@ -118,7 +153,7 @@ namespace EPS.CodeGen.Writers
                         indent++;
 
 #pragma warning disable CA1308 // Normalize strings to uppercase
-                        var fieldName = $"{Name.ToLower(CultureInfo.InvariantCulture)[0]}{Name.Substring(1)}";
+                        var fieldName = BackingFieldWriter?.Name ?? $"{Name.ToLower(CultureInfo.InvariantCulture)[0]}{Name.Substring(1)}";
 #pragma warning restore CA1308 // Normalize strings to uppercase
 
                         if (fieldName == "value")
@@ -126,10 +161,13 @@ namespace EPS.CodeGen.Writers
                             fieldName = $"this.{fieldName}";
                         }
 
-                        if (UsePropertyChangeEvent)
+                        _ = sb.Append(indent.GetTabs());
+                        _ = sb.AppendLine($"var isChanged = {fieldName} != value;");
+
+                        if (BackingFieldWriter != null)
                         {
                             _ = sb.Append(indent.GetTabs());
-                            _ = sb.AppendLine($"var isChanged = {fieldName} != value;");
+                            _ = sb.AppendLine($"{BackingFieldWriter.Name} = value;");
                         }
 
                         foreach (var l in Setter)
@@ -152,7 +190,7 @@ namespace EPS.CodeGen.Writers
                             }
                         }
 
-                        if (UsePropertyChangeEvent)
+                        if (UsePropertyChangeEvent || ImplementINotifyPropertyChanged)
                         {
                             var argType = "Boolean";
                             if (Type == "ushort")
@@ -165,26 +203,71 @@ namespace EPS.CodeGen.Writers
                             }
 
                             // Check for notifications
-                            _ = sb.Append(indent.GetTabs());
-                            _ = sb.AppendLine($"if(isChanged)");
-                            _ = sb.Append(indent.GetTabs());
-                            _ = sb.AppendLine("{");
-                            indent++;
+                            if (!AlwaysRaisePropertyChangeEvents)
+                            {
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine($"if(isChanged)");
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine("{");
+                                indent++;
+                            }
 
-                            _ = sb.Append(indent.GetTabs());
-                            _ = sb.AppendLine($"if({Name}Changed != null)");
-                            _ = sb.Append(indent.GetTabs());
-                            _ = sb.AppendLine("{");
-                            indent++;
-                            _ = sb.Append(indent.GetTabs());
-                            _ = sb.AppendLine($"{Name}Changed(this, new {argType}ValueChangedEventArgs(value));");
-                            indent--;
-                            _ = sb.Append(indent.GetTabs());
-                            _ = sb.AppendLine("}");
+                            if (UsePropertyChangeEvent)
+                            {
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine($"var changeEvent = {Name}Changed;");
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine($"if(changeEvent != null)");
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine("{");
+                                indent++;
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine($"changeEvent.Invoke(this, new {argType}ValueChangedEventArgs(value));");
+                                indent--;
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine("}");
+                            }
 
-                            indent--;
-                            _ = sb.Append(indent.GetTabs());
-                            _ = sb.AppendLine("}");
+                            if (ImplementINotifyPropertyChanged)
+                            {
+                                _ = sb.AppendLine();
+
+                                if (AlwaysRaisePropertyChangeEvents)
+                                {
+                                    _ = sb.Append(indent.GetTabs());
+                                    _ = sb.AppendLine($"if(isChanged)");
+                                    _ = sb.Append(indent.GetTabs());
+                                    _ = sb.AppendLine("{");
+                                    indent++;
+                                }
+
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine("var propertyChangeEvent = PropertyChanged;");
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine("if (propertyChangeEvent != null)");
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine("{");
+                                indent++;
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine($"propertyChangeEvent.Invoke(this, new PropertyChangedEventArgs(\"{Name}\"));");
+                                indent--;
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine("}");
+
+                                if (AlwaysRaisePropertyChangeEvents)
+                                {
+                                    indent--;
+                                    _ = sb.Append(indent.GetTabs());
+                                    _ = sb.AppendLine("}");
+                                }
+                            }
+
+                            if (!AlwaysRaisePropertyChangeEvents)
+                            {
+                                indent--;
+                                _ = sb.Append(indent.GetTabs());
+                                _ = sb.AppendLine("}");
+                            }
                         }
 
                         indent--;

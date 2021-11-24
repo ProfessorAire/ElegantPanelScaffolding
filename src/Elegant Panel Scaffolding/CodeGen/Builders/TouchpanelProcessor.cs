@@ -60,7 +60,6 @@ namespace EPS.CodeGen.Builders
 
                 if (string.IsNullOrEmpty(contents)) { return null; }
 
-
                 var doc = XDocument.Parse(contents);
 
                 TouchpanelCore.ClassName = doc?.Root?.Element("ObjectName")?.Value ?? "";
@@ -98,6 +97,7 @@ namespace EPS.CodeGen.Builders
                 var pages = from p in doc?.Root?.Element("Properties")?.Element("Pages")?.Descendants()
                             where p?.Element("TargetControl")?.Value == "Page"
                             select p;
+
                 var subpages = from sp in doc?.Root?.Element("Properties")?.Element("Pages")?.Descendants()
                                where sp?.Element("TargetControl")?.Value == "Subpage"
                                select sp;

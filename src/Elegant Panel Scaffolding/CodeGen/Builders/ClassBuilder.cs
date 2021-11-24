@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace EPS.CodeGen.Builders
 {
@@ -181,15 +182,15 @@ namespace EPS.CodeGen.Builders
             if (ClassType == ClassType.Touchpanel)
             {
                 ClassName = "Panel";
-                mainClass = new Writers.ClassWriter("Panel");
+                mainClass = new Writers.ClassWriter("Panel") { ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged };
             }
             else if (ClassType == ClassType.SrlElement)
             {
-                mainClass = new Writers.ClassWriter($"{ClassName}");
+                mainClass = new Writers.ClassWriter($"{ClassName}") { ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged };
             }
             else
             {
-                mainClass = new Writers.ClassWriter(ClassName);
+                mainClass = new Writers.ClassWriter(ClassName) { ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged };
             }
 
             mainClass.Modifier = Modifier.Partial;
@@ -483,43 +484,6 @@ namespace EPS.CodeGen.Builders
             // Add initialize values method
             mainClass.Methods.Add(initValuesMethod);
 
-            // Build Clear All Event Subscriptions method.
-            //var fromJoins = Joins; //.Where(j => j.JoinDirection == JoinDirection.FromPanel || j.JoinDirection == JoinDirection.Both);
-            //if (fromJoins.Any())
-            //{
-            //    var subMW = new Writers.MethodWriter("ClearAllEventSubscriptions", "Clears all of the subscriptions on events.", "void");
-
-            //    foreach (var j in fromJoins)
-            //    {
-            //        if (!(j.JoinType == JoinType.DigitalButton))
-            //        {
-            //            if (j.JoinType == JoinType.SmartDigitalButton || j.JoinType == JoinType.DigitalButton)
-            //            {
-            //                subMW.MethodLines.Add($"{j.JoinName}Pressed = null;");
-            //                subMW.MethodLines.Add($"{j.JoinName}Released = null;");
-            //            }
-            //            else if (j.ChangeEventName != "Changed" && !string.IsNullOrEmpty(j.ChangeEventName))
-            //            {
-            //                subMW.MethodLines.Add($"{j.ChangeEventName} = null;");
-            //            }
-            //            else
-            //            {
-            //                System.Diagnostics.Debug.Print($"Just a Changed Event: {j.JoinName}");
-            //            }
-            //        }
-            //        else
-            //        {
-            //            subMW.MethodLines.Add($"{j.JoinName}Pressed = null;");
-            //            subMW.MethodLines.Add($"{j.JoinName}Released = null;");
-            //        }
-            //    }
-
-            //    mainClass.Methods.Add(subMW);
-            //}
-
-            // Build Dispose Method
-
-
             // Dispose Method
             Writers.MethodWriter disp;
             if (ClassType == ClassType.Touchpanel)
@@ -606,6 +570,11 @@ namespace EPS.CodeGen.Builders
 
             nsb.Classes.Add(mainClass);
 
+            if (mainClass.Properties.Count > 0)
+            {
+                nsb.AddUsing("System.ComponentModel");
+            }
+
             var path = "";
             if (ClassType == ClassType.Touchpanel)
             {
@@ -636,13 +605,29 @@ namespace EPS.CodeGen.Builders
 
         private static string SanitizeName(string name)
         {
-            name = name.Replace(" ", "").Replace(".", "").Replace("-", "");
-            while (name.Contains('[') && name.Contains(']'))
+            var saniRegex = new Regex(@"(?:\[.*\](?<g2>[^\]]+))|(?:\[(?<g1>[^[\]]*)])");
+            if (!string.IsNullOrWhiteSpace(name))
             {
-                name = name.Replace(name.Substring(name.IndexOf('['), name.IndexOf(']') - name.IndexOf('[')), "");
+                name = name.Replace(" ", "").Replace(".", "").Replace("-", "");
+
+                var match = saniRegex.Match(name);
+                if (match.Success)
+                {
+                    if (match.Groups["g1"].Success)
+                    {
+                        name = match.Groups["g1"].Value;
+                    }
+                    else if (match.Groups["g2"].Success)
+                    {
+                        name = match.Groups["g2"].Value;
+                    }
+                }
+
+                name = name.Replace("[", "").Replace("]", "");
+                return name;
             }
-            name = name.Replace("[", "").Replace("]", "");
-            return name;
+
+            return string.Empty;
         }
     }
 }

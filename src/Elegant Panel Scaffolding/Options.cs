@@ -111,5 +111,14 @@ namespace EPS
             get => includeHelperFiles;
             set => SetField(ref includeHelperFiles, value);
         }
+
+        private bool implementINotifyPropertyChanged = true;
+        [Description("When true will implement the INotifyPropertyChanged interface on all classes.")]
+        [DisplayName("Implement INotifyPropertyChanged")]
+        public bool ImplementINotifyPropertyChanged
+        {
+            get => implementINotifyPropertyChanged;
+            set => SetField(ref implementINotifyPropertyChanged, value);
+        }
     }
 }

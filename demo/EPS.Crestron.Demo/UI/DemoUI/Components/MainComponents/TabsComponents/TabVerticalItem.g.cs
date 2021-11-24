@@ -14,12 +14,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 
-namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
+namespace EPS.Demo.UI.DemoUI.Components.MainComponents.TabsComponents
 {
 	/// <summary>
-	/// Auto-generated VerticalIconReferenceItemDynamicIcon class.
+	/// Auto-generated TabVerticalItem class.
 	/// </summary>
-	public partial class VerticalIconReferenceItemDynamicIcon : IDisposable, System.ComponentModel.INotifyPropertyChanged
+	public partial class TabVerticalItem : IDisposable, System.ComponentModel.INotifyPropertyChanged
 	{
 		/// <summary>
 		/// The <see cref="Panel"/> that this object belongs to.
@@ -47,14 +47,24 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 		private ushort itemOffset = 0;
 
 		/// <summary>
-		/// iconNumber field.
+		/// pressState field.
 		/// </summary>
-		public ushort iconNumber;
+		public bool pressState;
 
 		/// <summary>
-		/// Raised when the IconNumber value changes.
+		/// selected field.
 		/// </summary>
-		public event EventHandler<UShortValueChangedEventArgs> IconNumberChanged;
+		public bool selected;
+
+		/// <summary>
+		/// Raised when the button is pressed.
+		/// </summary>
+		public event EventHandler<BooleanValueChangedEventArgs> Pressed;
+
+		/// <summary>
+		/// Raised when the associated touchpanel event is received.
+		/// </summary>
+		public event EventHandler<BooleanValueChangedEventArgs> PressStateChanged;
 
 		/// <summary>
 		/// Raised when the associated touchpanel event is received.
@@ -62,24 +72,33 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 		public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
 
 		/// <summary>
-		/// Gets or sets a value indicating what the <see cref="IconNumber"/> join was last set to.
+		/// Raised when the button is released.
 		/// </summary>
-		public ushort IconNumber
+		public event EventHandler<BooleanValueChangedEventArgs> Released;
+
+		/// <summary>
+		/// Raised when the Selected value changes.
+		/// </summary>
+		public event EventHandler<BooleanValueChangedEventArgs> SelectedChanged;
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the PressState is pressed or released.
+		/// </summary>
+		public bool PressState
 		{
 			get 
 			{
-				return iconNumber;
+				return pressState;
 			}
 
 			set
 			{
-				var isChanged = iconNumber != value;
-				iconNumber = value;
-				ParentPanel.SendSmartValue(2, (ushort)(1 + this.analogOffset), value);
-				var changeEvent = IconNumberChanged;
+				var isChanged = pressState != value;
+				pressState = value;
+				var changeEvent = PressStateChanged;
 				if(changeEvent != null)
 				{
-					changeEvent.Invoke(this, new UShortValueChangedEventArgs(value));
+					changeEvent.Invoke(this, new BooleanValueChangedEventArgs(value));
 				}
 
 				if(isChanged)
@@ -87,7 +106,39 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 					var propertyChangeEvent = PropertyChanged;
 					if (propertyChangeEvent != null)
 					{
-						propertyChangeEvent.Invoke(this, new PropertyChangedEventArgs("IconNumber"));
+						propertyChangeEvent.Invoke(this, new PropertyChangedEventArgs("PressState"));
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the <see cref="Selected"/> join was last set to true or false.
+		/// </summary>
+		public bool Selected
+		{
+			get 
+			{
+				return selected;
+			}
+
+			set
+			{
+				var isChanged = selected != value;
+				selected = value;
+				ParentPanel.SendSmartValue(4, (ushort)(2 + this.digitalOffset), value);
+				var changeEvent = SelectedChanged;
+				if(changeEvent != null)
+				{
+					changeEvent.Invoke(this, new BooleanValueChangedEventArgs(value));
+				}
+
+				if(isChanged)
+				{
+					var propertyChangeEvent = PropertyChanged;
+					if (propertyChangeEvent != null)
+					{
+						propertyChangeEvent.Invoke(this, new PropertyChangedEventArgs("Selected"));
 					}
 				}
 			}
@@ -101,7 +152,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 		/// <param name="analogOffset">The offset amount this item uses for its analog joins.</param>
 		/// <param name="serialOffset">The offset amount this item uses for its serial joins.</param>
 		/// <param name="itemOffset">The offset amount this item has.</param>
-		public VerticalIconReferenceItemDynamicIcon(Panel parent, ushort digitalOffset, ushort analogOffset, ushort serialOffset, ushort itemOffset)
+		public TabVerticalItem(Panel parent, ushort digitalOffset, ushort analogOffset, ushort serialOffset, ushort itemOffset)
 		{
 			ParentPanel = parent;
 
@@ -116,6 +167,9 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 				this.analogOffset = itemOffset;
 				this.serialOffset = itemOffset;
 			}
+
+			ParentPanel.Actions.AddBool((uint)(this.digitalOffset + 1), 4, (value) => RaisePressed(value), true);
+			ParentPanel.Actions.AddBool((uint)(this.digitalOffset + 1), 4, (value) => RaiseReleased(value), false);
 
 			SetupUI();
 		}
@@ -153,18 +207,55 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 		}
 
 		/// <summary>
-		/// Sets the value of the <see cref="IconNumber"/> join on a single touchpanel.
+		/// Raises the Pressed event.
+		/// </summary>
+		/// <param name="value">The pressed event boolean.</param>
+		private void RaisePressed(bool value)
+		{
+			this.PressState = true;
+			var changeEvent = this.Pressed;
+			if (changeEvent != null)
+			{
+				changeEvent.Invoke(this, new BooleanValueChangedEventArgs(true));
+			}
+		}
+
+		/// <summary>
+		/// Raises the Released event.
+		/// </summary>
+		/// <param name="value">The released event boolean.</param>
+		private void RaiseReleased(bool value)
+		{
+			this.PressState = false;
+			var changeEvent = this.Released;
+			if (changeEvent != null)
+			{
+				changeEvent.Invoke(this, new BooleanValueChangedEventArgs(false));
+			}
+		}
+
+		/// <summary>
+		/// Sets the value of the <see cref="Selected"/> join on a single touchpanel.
 		/// </summary>
 		/// <param name="value">The new value for the join on the touchpanel.</param>
 		/// <param name="panel">The panel to change the associated join value on.</param>
-		public void SetIconNumber(ushort value, BasicTriListWithSmartObject panel)
+		public void SetSelected(bool value, BasicTriListWithSmartObject panel)
 		{
-			ParentPanel.SendSmartValue(2, (ushort)(1 + this.analogOffset), value, panel);
-			var changeEvent = IconNumberChanged;
+			ParentPanel.SendSmartValue(4, (ushort)(2 + this.digitalOffset), value, panel);
+			var changeEvent = SelectedChanged;
 			if (changeEvent != null)
 			{
-				changeEvent.Invoke(this, new UShortValueChangedEventArgs(value));
+				changeEvent.Invoke(this, new BooleanValueChangedEventArgs(value));
 			}
+		}
+
+		/// <summary>
+		/// Pulses the Selected digital signal. Any local signal changed events won't be fired by this method.
+		/// </summary>
+		/// <param name="duration">The duration in milliseconds to pulse the signal for.</param>
+		public void PulseSelected(int duration)
+		{
+			ParentPanel.Pulse(4, (uint)(2 + this.digitalOffset), duration);
 		}
 	}
 }

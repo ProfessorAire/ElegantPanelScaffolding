@@ -24,7 +24,7 @@
 
 using System;
 
-namespace Elegant.EPS.Lists
+namespace Evands.EPS.Lists
 {
     /// <summary>
     /// Provides standardized interactions with items in lists.

@@ -139,6 +139,9 @@ namespace EPS.UI
 #pragma warning restore CA1031 // Do not catch general exception types
                 {
                     ShowToast(Color.FromRgb(180, 20, 20), Colors.White, $"Unable to compile project! Exception encountered: {ex.Message}", 7);
+#if DEBUG
+                    MessageBox.Show(ex.StackTrace);
+#endif
                     ProgressMeter.Visibility = Visibility.Collapsed;
                     Compile.IsEnabled = true;
                     Preview.IsEnabled = true;
@@ -256,6 +259,9 @@ namespace EPS.UI
 #pragma warning restore CA1031 // Do not catch general exception types
                 {
                     ShowToast(Color.FromRgb(180, 20, 20), Colors.White, $"Unable to preview project! Exception encountered: {ex.Message}", 7);
+#if DEBUG
+                    MessageBox.Show(ex.StackTrace);
+#endif
                     ProgressMeter.Visibility = Visibility.Collapsed;
                     Compile.IsEnabled = true;
                     Preview.IsEnabled = true;

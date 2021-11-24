@@ -4,7 +4,7 @@ Sgntr=SGD
 RelVrs=3
 VTProeVer=6.2.02
 Schema=1
-CRCGUID=0830CC47-13B3-48FE-862F-87E570C5B86C
+CRCGUID=D74670B2-6FE7-407D-B1F2-7F62D03DE1E5
 ]
 ;================================================================================
 [
@@ -3218,6 +3218,168 @@ Sgn=0
 ObjTp=CED
 H=2
 Name=EPS.Crestron.Demo.UI_[Lists] [DynamicButtonVert] Menu-DynamicButtonVert_Options.ced
+;Cedver is the version of the Smart Graphics control, not the CED file format.
+;If the control definition changes, increment this.
+CedVer=1
+]
+;================================================================================
+[
+ObjTp=Symbol
+Name=EPS.Crestron.Demo.UI_[Buttons] [Tabs] Tabs_TabHorizontal.ced
+Hint=TabHorizontal (Smart Object ID=5)
+Code=3
+SGControlType=Horizontal Tab Button
+SGControlName=TabHorizontal
+GUID=8A3C672B-BF7D-457B-93F1-958540A5C0CF
+SmplCName=EPS.Crestron.Demo.UI_[Buttons] [Tabs] Tabs_TabHorizontal.ced
+SMWRev=4.02.19
+Expand=expand_random
+HelpID=10031
+;Define the number of inputs, outputs and parameters
+MinVariableInputs=6
+MaxVariableInputs=6
+MinVariableOutputs=6
+MaxVariableOutputs=6
+NumFixedParams=1
+MinVariableInputsList2=0
+MaxVariableInputsList2=0
+MinVariableOutputsList2=0
+MaxVariableOutputsList2=0
+MinVariableInputsList3=0
+MaxVariableInputsList3=0
+MinVariableOutputsList3=0
+MaxVariableOutputsList3=0
+;Define the cues, and signal types  each input, output and parameter.
+InputCue1=[~UNUSED3~]
+InputSigType1=Digital
+OutputCue1=Tab Button 1 Press
+OutputSigType1=Digital
+InputCue2=Tab Button 1 Select
+InputSigType2=Digital
+OutputCue2=[~UNUSED3~]
+OutputSigType2=Digital
+InputCue3=[~UNUSED3~]
+InputSigType3=Digital
+OutputCue3=Tab Button 2 Press
+OutputSigType3=Digital
+InputCue4=Tab Button 2 Select
+InputSigType4=Digital
+OutputCue4=[~UNUSED3~]
+OutputSigType4=Digital
+InputCue5=[~UNUSED3~]
+InputSigType5=Digital
+OutputCue5=Tab Button 3 Press
+OutputSigType5=Digital
+InputCue6=Tab Button 3 Select
+InputSigType6=Digital
+OutputCue6=[~UNUSED3~]
+OutputSigType6=Digital
+ParamCue1=SmartObjectId
+ParamSigType1=Constant
+MPp=1
+Pp1=3
+CedH=3
+SmartObjId=5d
+]
+; Parameter Properties for Smart Object ID
+[
+ObjTp=Dp
+H=3
+Tp=1
+HD=TRUE
+DV=5d
+NF=1
+DNF=1
+EncFmt=0
+DVLF=1
+Sgn=0
+]
+; Smart Objects Definition section
+[
+ObjTp=CED
+H=3
+Name=EPS.Crestron.Demo.UI_[Buttons] [Tabs] Tabs_TabHorizontal.ced
+;Cedver is the version of the Smart Graphics control, not the CED file format.
+;If the control definition changes, increment this.
+CedVer=1
+]
+;================================================================================
+[
+ObjTp=Symbol
+Name=EPS.Crestron.Demo.UI_[Buttons] [Tabs] Tabs_TabVertical.ced
+Hint=TabVertical (Smart Object ID=4)
+Code=4
+SGControlType=Vertical Tab Button
+SGControlName=TabVertical
+GUID=2AE1FCDA-8FE3-4FE0-A01F-6CAD1F086579
+SmplCName=EPS.Crestron.Demo.UI_[Buttons] [Tabs] Tabs_TabVertical.ced
+SMWRev=4.02.19
+Expand=expand_random
+HelpID=10074
+;Define the number of inputs, outputs and parameters
+MinVariableInputs=6
+MaxVariableInputs=6
+MinVariableOutputs=6
+MaxVariableOutputs=6
+NumFixedParams=1
+MinVariableInputsList2=0
+MaxVariableInputsList2=0
+MinVariableOutputsList2=0
+MaxVariableOutputsList2=0
+MinVariableInputsList3=0
+MaxVariableInputsList3=0
+MinVariableOutputsList3=0
+MaxVariableOutputsList3=0
+;Define the cues, and signal types  each input, output and parameter.
+InputCue1=[~UNUSED3~]
+InputSigType1=Digital
+OutputCue1=Tab Button 1 Press
+OutputSigType1=Digital
+InputCue2=Tab Button 1 Select
+InputSigType2=Digital
+OutputCue2=[~UNUSED3~]
+OutputSigType2=Digital
+InputCue3=[~UNUSED3~]
+InputSigType3=Digital
+OutputCue3=Tab Button 2 Press
+OutputSigType3=Digital
+InputCue4=Tab Button 2 Select
+InputSigType4=Digital
+OutputCue4=[~UNUSED3~]
+OutputSigType4=Digital
+InputCue5=[~UNUSED3~]
+InputSigType5=Digital
+OutputCue5=Tab Button 3 Press
+OutputSigType5=Digital
+InputCue6=Tab Button 3 Select
+InputSigType6=Digital
+OutputCue6=[~UNUSED3~]
+OutputSigType6=Digital
+ParamCue1=SmartObjectId
+ParamSigType1=Constant
+MPp=1
+Pp1=4
+CedH=4
+SmartObjId=4d
+]
+; Parameter Properties for Smart Object ID
+[
+ObjTp=Dp
+H=4
+Tp=1
+HD=TRUE
+DV=4d
+NF=1
+DNF=1
+EncFmt=0
+DVLF=1
+Sgn=0
+]
+; Smart Objects Definition section
+[
+ObjTp=CED
+H=4
+Name=EPS.Crestron.Demo.UI_[Buttons] [Tabs] Tabs_TabVertical.ced
 ;Cedver is the version of the Smart Graphics control, not the CED file format.
 ;If the control definition changes, increment this.
 CedVer=1

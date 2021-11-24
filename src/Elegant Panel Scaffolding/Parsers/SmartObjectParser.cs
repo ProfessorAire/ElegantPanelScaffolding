@@ -437,7 +437,7 @@ namespace EPS.Parsers
 
                                     var outName = inName;
 
-                                    if (outName == "IsPressed" || outName == "IsChecked")
+                                    if (outName == "IsPressed" || outName == "IsChecked" || outName.EndsWith("Press", StringComparison.InvariantCultureIgnoreCase))
                                     {
                                         if (outJoinType == JoinType.SmartDigital)
                                         {
@@ -554,7 +554,9 @@ namespace EPS.Parsers
             {
                 return signalName;
             }
+
             signalName = signalName.Replace(" ", "")
+                .Replace("%i", string.Empty)
                 .Replace("-", "")
                 .Replace("#", "Pound")
                 .Replace("*", "Star")

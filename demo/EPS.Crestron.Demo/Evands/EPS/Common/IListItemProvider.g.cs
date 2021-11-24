@@ -2,7 +2,7 @@
 //		This code was generated with Elegant Panel Scaffolding.
 // </auto-generated>
 #region copyright
-// <copyright file="StringValueChangedEventArgs.g.cs" company="Christopher McNeely">
+// <copyright file="IListItemProvider.g.cs" company="Christopher McNeely">
 // The MIT License (MIT)
 // Copyright (c) Christopher McNeely
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -21,31 +21,19 @@
 // </copyright>
 #endregion
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Crestron.SimplSharp;
 
-namespace Elegant.EPS.Common
+namespace Evands.EPS.Common
 {
     /// <summary>
-    /// Used for all events where a string value is changed by the touchpanel. (Text entry events, etc.)
+    /// Interface describing the requirements for lists.
     /// </summary>
-    public class StringValueChangedEventArgs : EventArgs
+    /// <typeparam name="T">The type of object the list contains.</typeparam>
+    public interface IListItemProvider<T>
     {
         /// <summary>
-        /// Initialize a new instance of the <see cref="StringValueChangedEventArgs"/> class.
+        /// Gets the enumeration of objects the list contains.
         /// </summary>
-        /// <param name="value">The string value.</param>
-        public StringValueChangedEventArgs(string value)
-        {
-            Value = value;
-        }
-
-        /// <summary>
-        /// Gets the value.
-        /// </summary>
-        public string Value { get; private set; }
+        System.Collections.ObjectModel.ReadOnlyCollection<T> Items { get; }
     }
 }

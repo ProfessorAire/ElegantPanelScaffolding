@@ -27,7 +27,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Crestron.SimplSharp.Reflection;
 
-namespace Elegant.EPS.Lists
+namespace Evands.EPS.Lists
 {
     /// <summary>
     /// Provides basic list functionality, simplifying the implementation of lists in code.
@@ -47,9 +47,14 @@ namespace Elegant.EPS.Lists
         private IEnumerable<T1> valueSource;
 
         /// <summary>
+        /// Tracks whether the list has been configured properly.
+        /// </summary>
+        private bool isConfigured;
+
+        /// <summary>
         /// The list of items.
         /// </summary>
-        private Elegant.EPS.Common.IListItemProvider<T2> itemsSource;
+        private Evands.EPS.Common.IListItemProvider<T2> itemsSource;
 
         /// <summary>
         /// Backing field for the <see cref="SelectedItem"/> property.
@@ -83,6 +88,11 @@ namespace Elegant.EPS.Lists
 
             set
             {
+                if (!this.isConfigured)
+                {
+                    this.Configure();
+                }
+
                 if (this.getItems == null)
                 {
                     throw new ApplicationException(string.Format("Unable to set ValueSource on a list if it hasn't been initialized. Call the Configure method prior to using the ListBase<{0}, {1}>.", typeof(T1).GetCType().Name, typeof(T2).GetCType().Name));
@@ -178,11 +188,10 @@ namespace Elegant.EPS.Lists
 
         /// <summary>
         /// Configures the list's internal functionality.
-        /// <para>This MUST be called prior to using the list.</para>
         /// </summary>
-        protected void Configure()
+        private void Configure()
         {
-            itemsSource = this as Elegant.EPS.Common.IListItemProvider<T2>;
+            itemsSource = this as Evands.EPS.Common.IListItemProvider<T2>;
 
             if (itemsSource == null)
             {
@@ -206,6 +215,8 @@ namespace Elegant.EPS.Lists
                 i.SelectionIsChanging -= HandleItemSelectionChanges;
                 i.SelectionIsChanging += HandleItemSelectionChanges;
             }
+
+            this.isConfigured = true;
         }
 
         /// <summary>

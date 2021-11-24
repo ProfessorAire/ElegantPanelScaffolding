@@ -28,7 +28,7 @@ using System.Text;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
 
-namespace Elegant.EPS.Common
+namespace Evands.EPS.Common
 {
     /// <summary>
     /// Generic object event args.

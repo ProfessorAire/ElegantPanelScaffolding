@@ -2,7 +2,7 @@
 //		This code was generated with Elegant Panel Scaffolding.
 // </auto-generated>
 #region copyright
-// <copyright file="IListItemProvider.g.cs" company="Christopher McNeely">
+// <copyright file="BooleanValueChangedEventArgs.g.cs" company="Christopher McNeely">
 // The MIT License (MIT)
 // Copyright (c) Christopher McNeely
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
@@ -21,19 +21,32 @@
 // </copyright>
 #endregion
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Crestron.SimplSharp;
 
-namespace Elegant.EPS.Common
+namespace Evands.EPS.Common
 {
     /// <summary>
-    /// Interface describing the requirements for lists.
+    /// Used for events where a boolean value needs to get passed and the
+    /// value of the boolean matters.
     /// </summary>
-    /// <typeparam name="T">The type of object the list contains.</typeparam>
-    public interface IListItemProvider<T>
+    public class BooleanValueChangedEventArgs : EventArgs
     {
         /// <summary>
-        /// Gets the enumeration of objects the list contains.
+        /// Initializes a new instance of the <see cref="BooleanValueChangedEventArgs"/> class.
         /// </summary>
-        IEnumerable<T> Items { get; }
+        /// <param name="value">The boolean value.</param>
+        public BooleanValueChangedEventArgs(bool value)
+        {
+            Value = value;
+        }
+
+        /// <summary>
+        /// Gets the value of the boolean event.
+        /// </summary>
+        public bool Value { get; private set; }
     }
 }

@@ -6,7 +6,7 @@ using Crestron.SimplSharp;
 
 namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 {
-    public partial class VerticalIconReferenceItem : Elegant.EPS.Lists.ListItemBase<IconDetails>
+    public partial class VerticalIconReferenceItem : Evands.EPS.Lists.ListItemBase<IconDetails>
     {
         partial void SetupUI()
         {

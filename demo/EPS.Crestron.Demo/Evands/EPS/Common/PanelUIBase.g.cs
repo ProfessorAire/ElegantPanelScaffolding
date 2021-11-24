@@ -31,7 +31,7 @@ using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharp.Reflection;
 using Crestron.SimplSharpPro.CrestronThread;
 
-namespace Elegant.EPS.Common
+namespace Evands.EPS.Common
 {
     /// <summary>
     /// Base class for a touchpanel project. Multiple touchpanels can inherit the same project.

@@ -14,12 +14,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 
-namespace EPS.Demo.UI.DemoUI.Components
+namespace EPS.Demo.UI.DemoUI.Components.MainComponents
 {
 	/// <summary>
-	/// Auto-generated Main class.
+	/// Auto-generated Tabs class.
 	/// </summary>
-	public partial class Main : IDisposable, System.ComponentModel.INotifyPropertyChanged
+	public partial class Tabs : IDisposable, System.ComponentModel.INotifyPropertyChanged
 	{
 		/// <summary>
 		/// The <see cref="Panel"/> that this object belongs to.
@@ -27,29 +27,14 @@ namespace EPS.Demo.UI.DemoUI.Components
 		public Panel ParentPanel;
 
 		/// <summary>
-		/// Provides access to the Header Page.
+		/// Provides access to the TabHorizontal Control.
 		/// </summary>
-		public MainComponents.Header Header;
+		public TabsComponents.TabHorizontal TabHorizontal;
 
 		/// <summary>
-		/// Provides access to the Menu Page.
+		/// Provides access to the TabVertical Control.
 		/// </summary>
-		public MainComponents.Menu Menu;
-
-		/// <summary>
-		/// Provides access to the SubpageRefLists Page.
-		/// </summary>
-		public MainComponents.SubpageRefLists SubpageRefLists;
-
-		/// <summary>
-		/// Provides access to the Tabs Page.
-		/// </summary>
-		public MainComponents.Tabs Tabs;
-
-		/// <summary>
-		/// Provides access to the TextControls Page.
-		/// </summary>
-		public MainComponents.TextControls TextControls;
+		public TabsComponents.TabVertical TabVertical;
 
 		/// <summary>
 		/// isVisible field.
@@ -80,7 +65,7 @@ namespace EPS.Demo.UI.DemoUI.Components
 			{
 				var isChanged = isVisible != value;
 				isVisible = value;
-				ParentPanel.SendValue((ushort)(5), value);
+				ParentPanel.SendValue((ushort)(6), value);
 				var changeEvent = IsVisibleChanged;
 				if(changeEvent != null)
 				{
@@ -102,14 +87,11 @@ namespace EPS.Demo.UI.DemoUI.Components
 		/// Creates a new instance of the class.
 		/// </summary>
 		/// <param name="parent">The class that is the base parent of this one.</param>
-		public Main(Panel parent)
+		public Tabs(Panel parent)
 		{
 			ParentPanel = parent;
-			Header = new MainComponents.Header(ParentPanel);
-			Menu = new MainComponents.Menu(ParentPanel);
-			SubpageRefLists = new MainComponents.SubpageRefLists(ParentPanel);
-			Tabs = new MainComponents.Tabs(ParentPanel);
-			TextControls = new MainComponents.TextControls(ParentPanel);
+			TabHorizontal = new TabsComponents.TabHorizontal(ParentPanel);
+			TabVertical = new TabsComponents.TabVertical(ParentPanel);
 
 			SetupUI();
 		}
@@ -136,11 +118,8 @@ namespace EPS.Demo.UI.DemoUI.Components
 		internal void InitializeValues()
 		{
 			InitializeUI();
-			Header.InitializeValues();
-			Menu.InitializeValues();
-			SubpageRefLists.InitializeValues();
-			Tabs.InitializeValues();
-			TextControls.InitializeValues();
+			TabHorizontal.InitializeValues();
+			TabVertical.InitializeValues();
 		}
 
 		/// <summary>
@@ -149,11 +128,8 @@ namespace EPS.Demo.UI.DemoUI.Components
 		public void Dispose()
 		{
 			DisposeUI();
-			Header.Dispose();
-			Menu.Dispose();
-			SubpageRefLists.Dispose();
-			Tabs.Dispose();
-			TextControls.Dispose();
+			TabHorizontal.Dispose();
+			TabVertical.Dispose();
 		}
 
 		/// <summary>
@@ -163,7 +139,7 @@ namespace EPS.Demo.UI.DemoUI.Components
 		/// <param name="panel">The panel to change the associated join value on.</param>
 		public void SetIsVisible(bool value, BasicTriListWithSmartObject panel)
 		{
-			ParentPanel.SendValue((ushort)(5), value, panel);
+			ParentPanel.SendValue((ushort)(6), value, panel);
 			var changeEvent = IsVisibleChanged;
 			if (changeEvent != null)
 			{
@@ -177,7 +153,7 @@ namespace EPS.Demo.UI.DemoUI.Components
 		/// <param name="duration">The duration in milliseconds to pulse the signal for.</param>
 		public void PulseIsVisible(int duration)
 		{
-			ParentPanel.Pulse((uint)(5), duration);
+			ParentPanel.Pulse((uint)(6), duration);
 		}
 	}
 }
