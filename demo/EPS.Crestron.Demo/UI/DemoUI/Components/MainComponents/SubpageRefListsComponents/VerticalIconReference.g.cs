@@ -53,13 +53,13 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.SubpageRefListsComponents
 		}
 
 		/// <summary>
-		/// Gets or sets the array of <see cref="VerticalIconReferenceItem"/> items in the list.
+		/// Gets the array of <see cref="VerticalIconReferenceItem"/> items in the list.
 		/// </summary>
 		public VerticalIconReferenceItem[] Items { get; private set; }
 
 
 		/// <summary>
-		/// Gets or sets a value indicating what the <see cref="ItemSelection"/> join was last set to.
+		/// Gets a value indicating what the <see cref="ItemSelection"/> join was last set to.
 		/// </summary>
 		public ushort ItemSelection
 		{

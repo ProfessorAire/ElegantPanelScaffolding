@@ -9,7 +9,7 @@ namespace EPS.Parsers
 {
     internal class CIPTagParser
     {
-        private static readonly Regex standardRegex = new Regex("<CIP(?<type>[ASD])>\\D{0,2}(?<join>\\d+)[?:].*?(?:<\\/CIP\\1>)", RegexOptions.Compiled);
+        private static readonly Regex standardRegex = new("<CIP(?<type>[ASD])>\\D{0,2}(?<join>\\d+)[?:].*?(?:<\\/CIP\\1>)", RegexOptions.Compiled);
 
         public static void ParseCIP(XElement? element, ClassBuilder builder)
         {
@@ -93,7 +93,7 @@ namespace EPS.Parsers
                                 tag == "String" ? JoinType.Serial : JoinType.None,
                                 JoinDirection.ToPanel));
                     }
-                    catch (Exception ex) when (ex is FormatException || ex is OverflowException)
+                    catch (Exception ex) when (ex is FormatException or OverflowException)
                     {
                         System.Diagnostics.Debug.WriteLine("Exception encountered while parsing CIP tag object.");
                     }

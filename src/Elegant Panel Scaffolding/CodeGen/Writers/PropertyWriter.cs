@@ -7,7 +7,7 @@ namespace EPS.CodeGen.Writers
 {
     public class PropertyWriter : WriterBase
     {
-        private readonly StringBuilder sb = new StringBuilder();
+        private readonly StringBuilder sb = new();
 
         public List<string> Getter { get; } = new List<string>();
 
@@ -45,75 +45,73 @@ namespace EPS.CodeGen.Writers
 
         public PropertyWriter(string name, string type, bool createBackingFieldWriter, int indentLevel = 0)
         {
-            Name = name;
-            Type = type;
+            this.Name = name;
+            this.Type = type;
             this.indentLevel = indentLevel;
 
             if (createBackingFieldWriter)
             {
-#pragma warning disable CA1308 // Normalize strings to uppercase
-                var fieldName = $"{Name.ToLower(CultureInfo.InvariantCulture)[0]}{Name.Substring(1)}";
-#pragma warning restore CA1308 // Normalize strings to uppercase
-
-                BackingFieldWriter = new FieldWriter(fieldName, type);
+                var fieldName = $"{this.Name.ToLower(CultureInfo.InvariantCulture)[0]}{this.Name.Substring(1)}";
+                this.BackingFieldWriter = new FieldWriter(fieldName, type) { Accessor = Accessor.Private };
             }
 
-            Help = new HelpWriter(indentLevel);
+            this.Help = new HelpWriter(indentLevel);
         }
 
-        public override string ToString() => ToString(indentLevel);
+        public override string ToString() => this.ToString(this.indentLevel);
 
         public override string ToString(int indent)
         {
-            _ = sb.Clear();
+            _ = this.sb.Clear();
 
             // Help Stuff.
-            var prefix = HasGetter ?
-                HasSetter ? "Gets or sets" :
-                "Gets" :
-                HasSetter ?
-                "Sets" :
-                string.Empty;
+            var prefix = this.HasGetter && !this.PrivateGetter ? "Gets" : string.Empty;
+            prefix += !string.IsNullOrWhiteSpace(prefix) && this.HasSetter && !this.PrivateSetter ? " or sets" : string.Empty;
+            prefix += string.IsNullOrWhiteSpace(prefix) && this.HasSetter && !this.PrivateSetter ? "Sets" : string.Empty;
 
-            Help.Summary = prefix + Help.Summary.Replace("Gets or sets", string.Empty).Replace("Gets", string.Empty).Replace("Sets", string.Empty);
-            _ = sb.Append(Help.ToString(indent));
+            if (prefix != null)
+            {
+                this.Help.Summary = prefix + this.Help.Summary.Replace("Gets or sets", string.Empty).Replace("Gets", string.Empty).Replace("Sets", string.Empty);
+            }
+
+            _ = this.sb.Append(this.Help.ToString(indent));
 
             // Then the Property Name.
-            _ = sb.Append(indent.GetTabs());
-            _ = sb.Append($"{Accessor.GetTextValue()}{Modifier.GetTextValue()}{Type} {Name}");
+            _ = this.sb.Append(indent.GetTabs());
+            _ = this.sb.Append($"{this.Accessor.GetTextValue()}{this.Modifier.GetTextValue()}{this.Type} {this.Name}");
 
             // Getter/Setter.
-            if ((BackingFieldWriter == null && Setter.Count == 0 && Getter.Count == 0) || (!(UsePropertyChangeEvent || ImplementINotifyPropertyChanged) && HasGetter && Getter.Count == 0 && HasSetter && Setter.Count == 0))
+            if ((this.BackingFieldWriter == null && this.Setter.Count == 0 && this.Getter.Count == 0) || (!(this.UsePropertyChangeEvent || this.ImplementINotifyPropertyChanged) && this.HasGetter && this.Getter.Count == 0 && this.HasSetter && this.Setter.Count == 0))
             {
-                _ = sb.AppendLine($" {{ {(PrivateGetter ? "private " : "")}get; {(PrivateSetter ? "private " : "")}set; }}");
+                _ = this.sb.AppendLine($" {{ {(this.PrivateGetter ? "private " : "")}get; {(this.PrivateSetter ? "private " : "")}set; }}");
             }
             else
             {
                 // Open Bracket.
-                _ = sb.AppendLine();
-                _ = sb.Append(indent.GetTabs());
-                _ = sb.AppendLine("{");
+                _ = this.sb.AppendLine();
+                _ = this.sb.Append(indent.GetTabs());
+                _ = this.sb.AppendLine("{");
                 indent++;
                 // Getter.
-                if (HasGetter)
+                if (this.HasGetter)
                 {
-                    if (UsePropertyChangeEvent || ImplementINotifyPropertyChanged || Getter.Count > 0)
+                    if (this.UsePropertyChangeEvent || this.ImplementINotifyPropertyChanged || this.Getter.Count > 0)
                     {
-                        _ = sb.Append(indent.GetTabs());
-                        _ = sb.AppendLine($"{(PrivateGetter ? "private " : "")}get ");
-                        _ = sb.Append(indent.GetTabs());
-                        _ = sb.AppendLine("{");
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine($"{(this.PrivateGetter ? "private " : "")}get ");
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine("{");
                         indent++;
 
-                        if (BackingFieldWriter != null)
+                        if (this.BackingFieldWriter != null)
                         {
-                            _ = sb.Append(indent.GetTabs());
-                            _ = sb.AppendLine($"return {BackingFieldWriter.Name};");
+                            _ = this.sb.Append(indent.GetTabs());
+                            _ = this.sb.AppendLine($"return {this.BackingFieldWriter.Name};");
                         }
 
-                        foreach (var l in Getter)
+                        foreach (var l in this.Getter)
                         {
-                            _ = sb.AppendLine(SanitizeSpaces(l, indent));
+                            _ = this.sb.AppendLine(SanitizeSpaces(l, indent));
                             if (l.Contains("{"))
                             {
                                 indent++;
@@ -125,56 +123,52 @@ namespace EPS.CodeGen.Writers
                         }
 
                         indent--;
-                        _ = sb.Append(indent.GetTabs());
-                        _ = sb.AppendLine("}");
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine("}");
                     }
                     else
                     {
-                        _ = sb.Append(indent.GetTabs());
-                        _ = sb.AppendLine($"{(PrivateGetter ? "private " : "")}get;");
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine($"{(this.PrivateGetter ? "private " : "")}get;");
                     }
 
                 }
 
-                if (HasGetter && HasSetter)
+                if (this.HasGetter && this.HasSetter)
                 {
-                    _ = sb.AppendLine();
+                    _ = this.sb.AppendLine();
                 }
 
                 // Setter.
-                if (HasSetter)
+                if (this.HasSetter)
                 {
-                    if (UsePropertyChangeEvent || ImplementINotifyPropertyChanged || Setter.Count > 0)
+                    if (this.UsePropertyChangeEvent || this.ImplementINotifyPropertyChanged || this.Setter.Count > 0)
                     {
-                        _ = sb.Append(indent.GetTabs());
-                        _ = sb.AppendLine($"{(PrivateSetter ? "private " : "")}set");
-                        _ = sb.Append(indent.GetTabs());
-                        _ = sb.AppendLine("{");
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine($"{(this.PrivateSetter ? "private " : "")}set");
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine("{");
                         indent++;
-
-#pragma warning disable CA1308 // Normalize strings to uppercase
-                        var fieldName = BackingFieldWriter?.Name ?? $"{Name.ToLower(CultureInfo.InvariantCulture)[0]}{Name.Substring(1)}";
-#pragma warning restore CA1308 // Normalize strings to uppercase
-
+                        var fieldName = this.BackingFieldWriter?.Name ?? $"{this.Name.ToLower(CultureInfo.InvariantCulture)[0]}{this.Name.Substring(1)}";
                         if (fieldName == "value")
                         {
                             fieldName = $"this.{fieldName}";
                         }
 
-                        _ = sb.Append(indent.GetTabs());
-                        _ = sb.AppendLine($"var isChanged = {fieldName} != value;");
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine($"var isChanged = {fieldName} != value;");
 
-                        if (BackingFieldWriter != null)
+                        if (this.BackingFieldWriter != null)
                         {
-                            _ = sb.Append(indent.GetTabs());
-                            _ = sb.AppendLine($"{BackingFieldWriter.Name} = value;");
+                            _ = this.sb.Append(indent.GetTabs());
+                            _ = this.sb.AppendLine($"{this.BackingFieldWriter.Name} = value;");
                         }
 
-                        foreach (var l in Setter)
+                        foreach (var l in this.Setter)
                         {
                             if (!string.IsNullOrEmpty(l))
                             {
-                                _ = sb.AppendLine(SanitizeSpaces(l, indent));
+                                _ = this.sb.AppendLine(SanitizeSpaces(l, indent));
                                 if (l.Contains("{"))
                                 {
                                     indent++;
@@ -186,108 +180,108 @@ namespace EPS.CodeGen.Writers
                             }
                             else
                             {
-                                _ = sb.AppendLine();
+                                _ = this.sb.AppendLine();
                             }
                         }
 
-                        if (UsePropertyChangeEvent || ImplementINotifyPropertyChanged)
+                        if (this.UsePropertyChangeEvent || this.ImplementINotifyPropertyChanged)
                         {
                             var argType = "Boolean";
-                            if (Type == "ushort")
+                            if (this.Type == "ushort")
                             {
                                 argType = "UShort";
                             }
-                            else if (Type == "string")
+                            else if (this.Type == "string")
                             {
                                 argType = "String";
                             }
 
                             // Check for notifications
-                            if (!AlwaysRaisePropertyChangeEvents)
+                            if (!this.AlwaysRaisePropertyChangeEvents)
                             {
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine($"if(isChanged)");
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine("{");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine($"if(isChanged)");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine("{");
                                 indent++;
                             }
 
-                            if (UsePropertyChangeEvent)
+                            if (this.UsePropertyChangeEvent)
                             {
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine($"var changeEvent = {Name}Changed;");
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine($"if(changeEvent != null)");
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine("{");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine($"var changeEvent = {this.Name}Changed;");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine($"if(changeEvent != null)");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine("{");
                                 indent++;
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine($"changeEvent.Invoke(this, new {argType}ValueChangedEventArgs(value));");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine($"changeEvent.Invoke(this, new {argType}ValueChangedEventArgs(value));");
                                 indent--;
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine("}");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine("}");
                             }
 
-                            if (ImplementINotifyPropertyChanged)
+                            if (this.ImplementINotifyPropertyChanged)
                             {
-                                _ = sb.AppendLine();
+                                _ = this.sb.AppendLine();
 
-                                if (AlwaysRaisePropertyChangeEvents)
+                                if (this.AlwaysRaisePropertyChangeEvents)
                                 {
-                                    _ = sb.Append(indent.GetTabs());
-                                    _ = sb.AppendLine($"if(isChanged)");
-                                    _ = sb.Append(indent.GetTabs());
-                                    _ = sb.AppendLine("{");
+                                    _ = this.sb.Append(indent.GetTabs());
+                                    _ = this.sb.AppendLine($"if(isChanged)");
+                                    _ = this.sb.Append(indent.GetTabs());
+                                    _ = this.sb.AppendLine("{");
                                     indent++;
                                 }
 
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine("var propertyChangeEvent = PropertyChanged;");
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine("if (propertyChangeEvent != null)");
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine("{");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine("var propertyChangeEvent = PropertyChanged;");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine("if (propertyChangeEvent != null)");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine("{");
                                 indent++;
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine($"propertyChangeEvent.Invoke(this, new PropertyChangedEventArgs(\"{Name}\"));");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine($"propertyChangeEvent.Invoke(this, new PropertyChangedEventArgs(\"{this.Name}\"));");
                                 indent--;
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine("}");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine("}");
 
-                                if (AlwaysRaisePropertyChangeEvents)
+                                if (this.AlwaysRaisePropertyChangeEvents)
                                 {
                                     indent--;
-                                    _ = sb.Append(indent.GetTabs());
-                                    _ = sb.AppendLine("}");
+                                    _ = this.sb.Append(indent.GetTabs());
+                                    _ = this.sb.AppendLine("}");
                                 }
                             }
 
-                            if (!AlwaysRaisePropertyChangeEvents)
+                            if (!this.AlwaysRaisePropertyChangeEvents)
                             {
                                 indent--;
-                                _ = sb.Append(indent.GetTabs());
-                                _ = sb.AppendLine("}");
+                                _ = this.sb.Append(indent.GetTabs());
+                                _ = this.sb.AppendLine("}");
                             }
                         }
 
                         indent--;
-                        _ = sb.Append(indent.GetTabs());
-                        _ = sb.AppendLine("}");
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine("}");
                     }
                     else
                     {
-                        _ = sb.Append(indent.GetTabs());
-                        _ = sb.AppendLine($"{(PrivateSetter ? "private " : "")}set;");
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine($"{(this.PrivateSetter ? "private " : "")}set;");
                     }
                 }
 
                 // Close Bracket.
                 indent--;
-                _ = sb.Append(indent.GetTabs());
-                _ = sb.Append('}');
+                _ = this.sb.Append(indent.GetTabs());
+                _ = this.sb.Append('}');
             }
 
-            return sb.ToString();
+            return this.sb.ToString();
         }
 
         private static string SanitizeSpaces(string text, int indent) => $"{indent.GetTabs()}{text.Replace("\n", $"\n{indent.GetTabs()}")}";

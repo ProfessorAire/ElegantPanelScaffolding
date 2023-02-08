@@ -13,12 +13,12 @@ namespace EPS.UI
     {
         public Preview()
         {
-            InitializeComponent();
-            TextViewer.SyntaxHighlighting = ICSharpCode.AvalonEdit.Highlighting.HighlightingManager.Instance.GetDefinition("C#");
-            TextViewer.IsReadOnly = true;
-            DataContext = ItemList;
-            foldingManager = FoldingManager.Install(TextViewer.TextArea);
-            foldingStrategy = new XmlFoldingStrategy();
+            this.InitializeComponent();
+            this.TextViewer.SyntaxHighlighting = ICSharpCode.AvalonEdit.Highlighting.HighlightingManager.Instance.GetDefinition("C#");
+            this.TextViewer.IsReadOnly = true;
+            this.DataContext = this.ItemList;
+            this.foldingManager = FoldingManager.Install(this.TextViewer.TextArea);
+            this.foldingStrategy = new XmlFoldingStrategy();
         }
 
         private FoldingManager foldingManager;
@@ -30,23 +30,21 @@ namespace EPS.UI
         {
             try
             {
-                var item = (DetailItem)Items.SelectedItem;
+                var item = (DetailItem)this.Items.SelectedItem;
                 if (item != null)
                 {
                     var text = item.Name;
-                    if (foldingManager != null)
+                    if (this.foldingManager != null)
                     {
-                        FoldingManager.Uninstall(foldingManager);
+                        FoldingManager.Uninstall(this.foldingManager);
                     }
-                    TextViewer.Document = new ICSharpCode.AvalonEdit.Document.TextDocument(item.Content);
-                    foldingManager = FoldingManager.Install(TextViewer.TextArea);
-                    foldingStrategy.UpdateFoldings(foldingManager, TextViewer.Document);
+                    this.TextViewer.Document = new ICSharpCode.AvalonEdit.Document.TextDocument(item.Content);
+                    this.foldingManager = FoldingManager.Install(this.TextViewer.TextArea);
+                    this.foldingStrategy.UpdateFoldings(this.foldingManager, this.TextViewer.Document);
                 }
 
             }
-#pragma warning disable CA1031 // Do not catch general exception types
             catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
             {
                 Console.WriteLine(ex.Message);
             }

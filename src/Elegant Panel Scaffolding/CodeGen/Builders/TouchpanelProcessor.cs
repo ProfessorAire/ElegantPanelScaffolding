@@ -43,18 +43,14 @@ namespace EPS.CodeGen.Builders
                     if (zip.FindEntry("swf/Environment.xml", true) > -1)
                     {
                         var entry = zip.GetEntry("swf/Environment.xml");
-                        using (var reader = new System.IO.StreamReader(zip.GetInputStream(entry)))
-                        {
-                            contents = await reader.ReadToEndAsync();
-                        }
+                        using var reader = new System.IO.StreamReader(zip.GetInputStream(entry));
+                        contents = await reader.ReadToEndAsync();
                     }
                     else if (zip.FindEntry("Environment.xml", true) > -1)
                     {
                         var entry = zip.GetEntry("Environment.xml");
-                        using (var reader = new System.IO.StreamReader(zip.GetInputStream(entry)))
-                        {
-                            contents = await reader.ReadToEndAsync();
-                        }
+                        using var reader = new System.IO.StreamReader(zip.GetInputStream(entry));
+                        contents = await reader.ReadToEndAsync();
                     }
                 }
 
@@ -110,7 +106,7 @@ namespace EPS.CodeGen.Builders
                         NamespaceBase = $"{options.PanelNamespace}.Components"
                     };
 
-                    if (pageBuilder.ClassName == "Subpage Reference" || pageBuilder.ClassName == "Page")
+                    if (pageBuilder.ClassName is "Subpage Reference" or "Page")
                     {
                         pageBuilder.ClassName = page?.Attribute("Name")?.Value ?? "";
                     }
@@ -164,7 +160,7 @@ namespace EPS.CodeGen.Builders
                                 Namespace = pageBuilder.Namespace
                             };
 
-                            if (subBuilder.ClassName == "Subpage Reference" || subBuilder.ClassName == "SubpageReference" || subBuilder.ClassName == "Page")
+                            if (subBuilder.ClassName is "Subpage Reference" or "SubpageReference" or "Page")
                             {
                                 var rootSubpage = subpages.Where(s => (s.Attribute("uid")?.Value ?? "null1") == (sp?.Attribute("uid").Value ?? "null2")).FirstOrDefault();
                                 subBuilder.ClassName = rootSubpage?.Attribute("Name")?.Value ?? "";

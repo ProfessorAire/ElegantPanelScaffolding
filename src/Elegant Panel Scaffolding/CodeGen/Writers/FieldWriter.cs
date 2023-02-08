@@ -5,7 +5,7 @@ namespace EPS.CodeGen.Writers
 {
     public class FieldWriter : WriterBase
     {
-        private readonly StringBuilder sb = new StringBuilder();
+        private readonly StringBuilder sb = new();
 
         public string Name { get; set; } = "";
 
@@ -23,57 +23,55 @@ namespace EPS.CodeGen.Writers
 
         public FieldWriter(string name, string type, int indentLevel = 0)
         {
-            Name = name;
-            Type = type;
+            this.Name = name;
+            this.Type = type;
             this.indentLevel = indentLevel;
-            Help = new HelpWriter(indentLevel);
+            this.Help = new HelpWriter(indentLevel);
         }
 
-        public override string ToString() => ToString(indentLevel);
+        public override string ToString() => this.ToString(this.indentLevel);
 
-        public override string ToString(int indent)
+        public override string ToString(int indentLevel)
         {
-            if (string.IsNullOrEmpty(Help.Summary))
+            if (string.IsNullOrEmpty(this.Help.Summary))
             {
-#pragma warning disable CA1308 // Normalize strings to uppercase
-                if (Name.ToLower(CultureInfo.InvariantCulture)[0] == Name[0])
-#pragma warning restore CA1308 // Normalize strings to uppercase
+                if (this.Name.ToLower(CultureInfo.InvariantCulture)[0] == this.Name[0])
                 {
-                    if (Accessor == Accessor.Private)
+                    if (this.Accessor == Accessor.Private)
                     {
-                        Help.Summary = $"Backing field for the {Name.ToUpperInvariant()[0]}{Name.Substring(1)} property.";
+                        this.Help.Summary = $"Backing field for the {this.Name.ToUpperInvariant()[0]}{this.Name.Substring(1)} property.";
                     }
                     else
                     {
-                        Help.Summary = $"{Name} field.";
+                        this.Help.Summary = $"{this.Name} field.";
                     }
                 }
                 else
                 {
-                    Help.Summary = $"Provides access to the {Name} object";
+                    this.Help.Summary = $"Provides access to the {this.Name} object";
                 }
 
             }
-            _ = sb.Clear();
+            _ = this.sb.Clear();
 
             // Help Stuff.
-            _ = sb.Append(Help.ToString(indent));
+            _ = this.sb.Append(this.Help.ToString(indentLevel));
 
             // Then the Field Name.
-            _ = sb.Append(indent.GetTabs());
-            _ = sb.Append($"{Accessor.GetTextValue()}{Modifier.GetTextValue()}{(!string.IsNullOrEmpty(Type) ? $"{Type} " : "")}{Name}");
+            _ = this.sb.Append(indentLevel.GetTabs());
+            _ = this.sb.Append($"{this.Accessor.GetTextValue()}{this.Modifier.GetTextValue()}{(!string.IsNullOrEmpty(this.Type) ? $"{this.Type} " : "")}{this.Name}");
 
             // Default Value
-            if (!string.IsNullOrEmpty(DefaultValue))
+            if (!string.IsNullOrEmpty(this.DefaultValue))
             {
-                _ = sb.Append($" = {DefaultValue};");
+                _ = this.sb.Append($" = {this.DefaultValue};");
             }
             else
             {
-                _ = sb.Append(';');
+                _ = this.sb.Append(';');
             }
 
-            return sb.ToString();
+            return this.sb.ToString();
         }
 
     }

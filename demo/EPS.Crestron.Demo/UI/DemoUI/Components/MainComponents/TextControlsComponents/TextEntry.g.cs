@@ -132,7 +132,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.TextControlsComponents
 		public event EventHandler<StringValueChangedEventArgs> TextOverrideChanged;
 
 		/// <summary>
-		/// Gets or sets a value indicating whether the EnterPressState is pressed or released.
+		/// Gets a value indicating whether the EnterPressState is pressed or released.
 		/// </summary>
 		public bool EnterPressState
 		{
@@ -141,7 +141,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.TextControlsComponents
 				return enterPressState;
 			}
 
-			set
+			private set
 			{
 				var isChanged = enterPressState != value;
 				enterPressState = value;
@@ -163,7 +163,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.TextControlsComponents
 		}
 
 		/// <summary>
-		/// Gets or sets a value indicating whether the EscapePressState is pressed or released.
+		/// Gets a value indicating whether the EscapePressState is pressed or released.
 		/// </summary>
 		public bool EscapePressState
 		{
@@ -172,7 +172,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.TextControlsComponents
 				return escapePressState;
 			}
 
-			set
+			private set
 			{
 				var isChanged = escapePressState != value;
 				escapePressState = value;
@@ -226,7 +226,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.TextControlsComponents
 		}
 
 		/// <summary>
-		/// Gets or sets a value indicating what the <see cref="Text"/> join was last set to.
+		/// Gets a value indicating what the <see cref="Text"/> join was last set to.
 		/// </summary>
 		public string Text
 		{

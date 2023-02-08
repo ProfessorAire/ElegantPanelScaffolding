@@ -296,13 +296,13 @@ namespace EPS.Parsers
                                     joinDirection = JoinDirection.Both;
                                 }
 
-                                if (joinDirection == JoinDirection.Both || joinDirection == JoinDirection.ToPanel)
+                                if (joinDirection is JoinDirection.Both or JoinDirection.ToPanel)
                                 {
                                     itemBuilder.AddJoin(
                                         new JoinBuilder(startJoin, itemBuilder.SmartJoin, inName, inJoinType, JoinDirection.ToPanel));
                                 }
                                 
-                                if(joinDirection == JoinDirection.Both || joinDirection == JoinDirection.FromPanel)
+                                if(joinDirection is JoinDirection.Both or JoinDirection.FromPanel)
                                 {
                                     itemBuilder.AddJoin(
                                         new JoinBuilder(startJoin, itemBuilder.SmartJoin, outName, outJoinType, JoinDirection.FromPanel));
@@ -471,13 +471,13 @@ namespace EPS.Parsers
                                     }
                                     else
                                     {
-                                        if (joinDirection == JoinDirection.Both || joinDirection == JoinDirection.ToPanel)
+                                        if (joinDirection is JoinDirection.Both or JoinDirection.ToPanel)
                                         {
                                             itemBuilder.AddJoin(
                                                 new JoinBuilder(joinNumber, itemBuilder.SmartJoin, inName, inJoinType, JoinDirection.ToPanel));
                                         }
 
-                                        if (joinDirection == JoinDirection.Both || joinDirection == JoinDirection.FromPanel)
+                                        if (joinDirection is JoinDirection.Both or JoinDirection.FromPanel)
                                         {
                                             itemBuilder.AddJoin(
                                                 new JoinBuilder(joinNumber, itemBuilder.SmartJoin, outName, outJoinType, JoinDirection.FromPanel));

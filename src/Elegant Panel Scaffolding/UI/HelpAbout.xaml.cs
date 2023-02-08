@@ -1,5 +1,7 @@
 ﻿using EPS.Help;
 using Markdig;
+using Markdig.Extensions;
+using Markdig.Helpers;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
@@ -17,36 +19,35 @@ namespace EPS.UI
 
         public HelpAbout()
         {
-            InitializeComponent();
+            this.InitializeComponent();
             var assembly = Assembly.GetCallingAssembly();
 
-            Version.Text = $"Release - {Options.Current.Version}";
+            this.Version.Text = $"Release - {Options.Current.Version}";
 
             var items = assembly.GetManifestResourceNames().Where((o) => o.EndsWith(".License.txt", System.StringComparison.InvariantCulture));
             var index = 1;
-            licenses = new string[items.Count()];
+            this.licenses = new string[items.Count()];
             foreach (var license in items.Where((o) => o.EndsWith("License.txt", System.StringComparison.InvariantCulture)))
             {
                 if (license.Contains("Elegant Panel Scaffolding.License.txt"))
                 {
-                    licenses[0] = GetText(assembly.GetManifestResourceStream(license));
-                    LicenseSelection.Items.Insert(0, license.Replace(".License.txt", " License").Replace("EPS.Licenses.", ""));
+                    this.licenses[0] = GetText(assembly.GetManifestResourceStream(license));
+                    this.LicenseSelection.Items.Insert(0, license.Replace(".License.txt", " License").Replace("EPS.Licenses.", ""));
                 }
                 else
                 {
-                    licenses[index] = GetText(assembly.GetManifestResourceStream(license));
-                    _ = LicenseSelection.Items.Add(license.Replace(".License.txt", " License").Replace("EPS.Licenses.", ""));
+                    this.licenses[index] = GetText(assembly.GetManifestResourceStream(license));
+                    _ = this.LicenseSelection.Items.Add(license.Replace(".License.txt", " License").Replace("EPS.Licenses.", ""));
                     index++;
                 }
             }
 
-            LicenseSelection.SelectedIndex = 0;
+            this.LicenseSelection.SelectedIndex = 0;
 
 
-            var pipeline = new MarkdownPipelineBuilder().
-                UseAdvancedExtensions().
-                UseColorizer().
-                Build();
+            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions()
+                                                        .UseCustomColorizer()
+                                                        .Build();
 
             var html = Markdown.ToHtml(
                 GetText(assembly.GetManifestResourceStream("EPS.Help.Help.md")), pipeline);
@@ -64,7 +65,7 @@ namespace EPS.UI
                 //"<script>hljs.initHighlightingOnLoad();</script>\n" +
                 $"</body>\n</html>";
 
-            Tips.NavigateToString(html);
+            this.Tips.NavigateToString(html);
 
 
         }
@@ -78,14 +79,12 @@ namespace EPS.UI
                     return reader.ReadToEnd();
                 }
             }
-#pragma warning disable CA1031 // Do not catch general exception types
             catch
-#pragma warning restore CA1031 // Do not catch general exception types
             {
                 return "";
             }
         }
 
-        private void LicenseSelection_SelectionChanged(object sender, SelectionChangedEventArgs e) => LicenseView.Text = licenses[LicenseSelection.SelectedIndex];
+        private void LicenseSelection_SelectionChanged(object sender, SelectionChangedEventArgs e) => this.LicenseView.Text = this.licenses[this.LicenseSelection.SelectedIndex];
     }
 }

@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
@@ -15,12 +18,12 @@ namespace EPS.UI.Controls
     /// </summary>
     public partial class PropertyBrowser : UserControl
     {
-        public PropertyBrowser() => InitializeComponent();
+        public PropertyBrowser() => this.InitializeComponent();
 
         public object PropertyObject
         {
-            get => GetValue(PropertyObjectProperty);
-            set => SetValue(PropertyObjectProperty, value);
+            get => this.GetValue(PropertyObjectProperty);
+            set => this.SetValue(PropertyObjectProperty, value);
         }
 
         // Using a DependencyProperty as the backing store for PropertyObject.  This enables animation, styling, binding, etc...
@@ -37,8 +40,8 @@ namespace EPS.UI.Controls
 
         public bool IsRootEnabled
         {
-            get => (bool)GetValue(IsRootEnabledProperty);
-            set => SetValue(IsRootEnabledProperty, value);
+            get => (bool)this.GetValue(IsRootEnabledProperty);
+            set => this.SetValue(IsRootEnabledProperty, value);
         }
 
         // Using a DependencyProperty as the backing store for IsRootEnabled.  This enables animation, styling, binding, etc...
@@ -47,16 +50,22 @@ namespace EPS.UI.Controls
 
         public void UpdateProperties()
         {
-            Pane.Children.Clear();
-            if (PropertyObject == null) { return; }
+            this.Pane.Children.Clear();
+            if (this.PropertyObject == null) { return; }
 
-            var properties = PropertyObject.GetType().GetProperties().OrderBy(i => i.Name);
+            var properties = this.PropertyObject.GetType().GetProperties().OrderBy(i => i.Name).OrderBy(i =>
+            {
+                var order = i.GetCustomAttribute<OrderAttribute>();
+                return order?.Order ?? 0;
+            });
+
             var editors = new List<(string name, DetailPart part, PropertyInfo propertyInfo)>();
 
             var fourThick = new Thickness(4);
 
             foreach (var property in properties)
             {
+                var propertyValue = property.GetValue(this.PropertyObject, null);
                 var isTooltippable = true;
                 // Continue the loop if the property isn't browsable.
                 if (property.CustomAttributes.Where((a) =>
@@ -76,7 +85,7 @@ namespace EPS.UI.Controls
                     var g = new Grid();
                     g.ColumnDefinitions.Add(new ColumnDefinition());
                     g.ColumnDefinitions.Add(new ColumnDefinition());
-                    g.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
+                    g.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Auto);
                     g.ColumnDefinitions[0].MaxWidth = 200;
                     g.ColumnDefinitions[1].Width = new GridLength(1, GridUnitType.Star);
                     var propertyTitle = new TextBlock()
@@ -160,13 +169,13 @@ namespace EPS.UI.Controls
                             {
                                 Description = "Select a folder...",
                                 ShowNewFolderButton = true,
-                                SelectedPath = (string)property.GetValue(PropertyObject)
+                                SelectedPath = (string)property.GetValue(this.PropertyObject)
                             };
                             if (browser.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                             {
                                 if (!string.IsNullOrWhiteSpace(browser.SelectedPath))
                                 {
-                                    property.SetValue(PropertyObject, browser.SelectedPath);
+                                    property.SetValue(this.PropertyObject, browser.SelectedPath);
                                 }
                             }
                         };
@@ -258,7 +267,7 @@ namespace EPS.UI.Controls
                             _ = browser.ShowDialog();
                             if (!string.IsNullOrWhiteSpace(browser.FileName))
                             {
-                                property.SetValue(PropertyObject, browser.FileName);
+                                property.SetValue(this.PropertyObject, browser.FileName);
                             }
                         };
 
@@ -282,8 +291,8 @@ namespace EPS.UI.Controls
                                 passBox.IsEnabled = false;
                             }
                             passBox.PasswordChar = maskChar.Value;
-                            passBox.Password = (string)property.GetValue(PropertyObject);
-                            passBox.PasswordChanged += (o, a) => property.SetValue(PropertyObject, passBox.Password);
+                            passBox.Password = (string)property.GetValue(this.PropertyObject);
+                            passBox.PasswordChanged += (o, a) => property.SetValue(this.PropertyObject, passBox.Password);
                             Grid.SetColumn(passBox, 1);
                             _ = g.Children.Add(passBox);
                         }
@@ -299,7 +308,7 @@ namespace EPS.UI.Controls
                             {
                                 textBox.IsReadOnly = true;
                             }
-                            _ = textBox.SetBinding(TextBox.TextProperty, new Binding(property.Name) { UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+                            _ = textBox.SetBinding(TextBox.TextProperty, new Binding(property.Name) { UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged, Mode = !property.CanWrite ? BindingMode.OneTime : BindingMode.TwoWay });
                             Grid.SetColumn(textBox, 1);
                             _ = g.Children.Add(textBox);
                         }
@@ -320,7 +329,7 @@ namespace EPS.UI.Controls
                         Grid.SetColumn(textBox, 1);
                         textBox.KeyDown += (o, a) =>
                         {
-                            if (!(a.Key >= Key.D0 && a.Key <= Key.D9 || a.Key >= Key.NumPad0 && a.Key <= Key.NumPad9) && a.Key != Key.Tab && a.Key != Key.LeftCtrl && a.Key != Key.RightCtrl)
+                            if (a.Key is not (>= Key.D0 and <= Key.D9 or >= Key.NumPad0 and <= Key.NumPad9) and not Key.Tab and not Key.LeftCtrl and not Key.RightCtrl)
                             {
                                 a.Handled = true;
                                 return;
@@ -337,6 +346,23 @@ namespace EPS.UI.Controls
                             _ = pb.SetBinding(PropertyObjectProperty, new Binding(p.ToString()));
                             _ = g.Children.Add(pb);
                         }
+                    }
+                    else if (property.PropertyType.Name == typeof(ObservableCollection<object>).Name)
+                    {
+                        var viewer = new ItemsControl()
+                        {
+                            ItemTemplate = this.TryFindResource("nestedBrowserTemplate") as DataTemplate,
+                            HorizontalAlignment = HorizontalAlignment.Stretch,
+                            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                            Padding = new Thickness(8),
+                            BorderBrush = System.Windows.Media.Brushes.Transparent,
+                            Margin = new Thickness(8, 16, 4, 4)
+                        };
+                        _ = viewer.SetBinding(ItemsControl.ItemsSourceProperty, new Binding(property.Name) { UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+
+                        Grid.SetColumnSpan(viewer, 2);
+                        propertyTitle.VerticalAlignment = VerticalAlignment.Top;
+                        _ = g.Children.Add(viewer);                        
                     }
                     // ALL OTHER ELSE IFS GO ABOVE HERE!
                     else if (property.PropertyType.IsClass)
@@ -379,19 +405,19 @@ namespace EPS.UI.Controls
                         g.ToolTip = tipStack;
                     }
 
-                    Pane.RowDefinitions.Add(new RowDefinition());
-                    Pane.RowDefinitions[Pane.RowDefinitions.Count - 1].Height = new GridLength(0, GridUnitType.Auto);
-                    Grid.SetRow(g, Pane.RowDefinitions.Count - 1);
-                    _ = Pane.Children.Add(g);
+                    this.Pane.RowDefinitions.Add(new RowDefinition());
+                    this.Pane.RowDefinitions[this.Pane.RowDefinitions.Count - 1].Height = new GridLength(0, GridUnitType.Auto);
+                    Grid.SetRow(g, this.Pane.RowDefinitions.Count - 1);
+                    _ = this.Pane.Children.Add(g);
                 }
 
             }
 
-            var bind = new Binding(nameof(IsRootEnabled))
+            var bind = new Binding(nameof(this.IsRootEnabled))
             {
                 Source = this
             };
-            foreach (var exp in ((Grid)Pane.Children[0]).Children)
+            foreach (var exp in ((Grid)this.Pane.Children[0]).Children)
             {
                 if (exp.GetType() == typeof(Expander))
                 {

@@ -11,26 +11,26 @@ namespace EPS
     public class Options : NotifyOfPropertyChangeBase
     {
 #pragma warning disable CA2211 // Non-constant fields should not be visible
-        public static Options Current = new Options();
+        public static Options Current = new();
 #pragma warning restore CA2211 // Non-constant fields should not be visible
 
         private string version = "v0.1.4-beta";
         [JsonIgnore]
         [Browsable(false)]
-        public string Version { get => version; set => SetField(ref version, value); }
+        public string Version { get => this.version; set => this.SetField(ref this.version, value); }
 
         private bool includeCoreFiles = true;
         [Description("If true then the core (template) files are included in the code generation. If you need to modify these files, setting this to false will prevent your changes from being overwritten.")]
         [DisplayName("Include Core Files")]
-        public bool IncludeCoreFiles { get => includeCoreFiles; set => SetField(ref includeCoreFiles, value); }
+        public bool IncludeCoreFiles { get => this.includeCoreFiles; set => this.SetField(ref this.includeCoreFiles, value); }
 
         private string rootNamespace = "ProjectName.UI.Panels"; //"UI";
         [Description("The root namespace for the classes to reside in. Ie: ProjectName.UI.Panels")]
         [DisplayName("Root Namespace")]
         public string RootNamespace
         {
-            get => rootNamespace;
-            set => SetField(ref rootNamespace, value);
+            get => this.rootNamespace;
+            set => this.SetField(ref this.rootNamespace, value);
         }
 
         private bool previewFilePaths;
@@ -38,8 +38,8 @@ namespace EPS
         [DisplayName("Preview File Paths")]
         public bool PreviewFilePaths
         {
-            get => previewFilePaths;
-            set => SetField(ref previewFilePaths, value);
+            get => this.previewFilePaths;
+            set => this.SetField(ref this.previewFilePaths, value);
         }
 
         [Browsable(false)]
@@ -50,8 +50,8 @@ namespace EPS
         [DisplayName("Hardkey Prefix")]
         public string HardkeyPrefix
         {
-            get => hardkeyPrefix;
-            set => SetField(ref hardkeyPrefix, value);
+            get => this.hardkeyPrefix;
+            set => this.SetField(ref this.hardkeyPrefix, value);
         }
 
         private bool parseHardkeys;
@@ -59,8 +59,8 @@ namespace EPS
         [DisplayName("Include Hardkeys")]
         public bool ParseHardkeys
         {
-            get => parseHardkeys;
-            set => SetField(ref parseHardkeys, value);
+            get => this.parseHardkeys;
+            set => this.SetField(ref this.parseHardkeys, value);
         }
 
         private string hardkeyNames = "";
@@ -68,20 +68,20 @@ namespace EPS
         [DisplayName("Hardkey Names")]
         public string HardkeyNames
         {
-            get => hardkeyNames;
-            set => SetField(ref hardkeyNames, value);
+            get => this.hardkeyNames;
+            set => this.SetField(ref this.hardkeyNames, value);
         }
 
         private string fieldPrefixes = "";
         [Description("Prefix to prepend to private field names.")]
         [DisplayName("Field Prefixes")]
-        public string FieldPrefixes { get => fieldPrefixes; set => SetField(ref fieldPrefixes, value); }
+        public string FieldPrefixes { get => this.fieldPrefixes; set => this.SetField(ref this.fieldPrefixes, value); }
 
         private string applicationTouchpanelPath = "";
         [Description("The path to the touchpanel to generate classes from.")]
         [DisplayName("Touchpanel Path")]
         [FileType(new string[] { "Touchpanel & Environment Files" }, new string[] { "*.vtz;*.xml;*.c3p;*.zip" })]
-        public string ApplicationTouchpanelPath { get => applicationTouchpanelPath; set => SetField(ref applicationTouchpanelPath, value); }
+        public string ApplicationTouchpanelPath { get => this.applicationTouchpanelPath; set => this.SetField(ref this.applicationTouchpanelPath, value); }
 
         private string compilePath = "";
         [Description("The path that the generated classes will be saved to.")]
@@ -89,18 +89,18 @@ namespace EPS
         [FolderPath()]
         public string CompilePath
         {
-            get => compilePath;
-            set => SetField(ref compilePath, value);
+            get => this.compilePath;
+            set => this.SetField(ref this.compilePath, value);
         }
 
         private string commonPath = "";
         [Description("The path that classes common between touchpanels will be generated in. These files exist in the namespace Evands.EPS.Common.")]
-        [DisplayName("Common Files Path")]
+        [DisplayName("Core Files Path")]
         [FolderPath()]
         public string CommonPath
         {
-            get => commonPath;
-            set => SetField(ref commonPath, value);
+            get => this.commonPath;
+            set => this.SetField(ref this.commonPath, value);
         }
 
         private bool includeHelperFiles = true;
@@ -108,8 +108,8 @@ namespace EPS
         [DisplayName("Include Helper Files")]
         public bool IncludeHelperFiles
         {
-            get => includeHelperFiles;
-            set => SetField(ref includeHelperFiles, value);
+            get => this.includeHelperFiles;
+            set => this.SetField(ref this.includeHelperFiles, value);
         }
 
         private bool implementINotifyPropertyChanged = true;
@@ -117,8 +117,8 @@ namespace EPS
         [DisplayName("Implement INotifyPropertyChanged")]
         public bool ImplementINotifyPropertyChanged
         {
-            get => implementINotifyPropertyChanged;
-            set => SetField(ref implementINotifyPropertyChanged, value);
+            get => this.implementINotifyPropertyChanged;
+            set => this.SetField(ref this.implementINotifyPropertyChanged, value);
         }
     }
 }

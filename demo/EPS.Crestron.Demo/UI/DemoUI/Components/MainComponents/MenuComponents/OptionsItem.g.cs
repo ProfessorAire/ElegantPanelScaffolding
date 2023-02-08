@@ -164,7 +164,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 		}
 
 		/// <summary>
-		/// Gets or sets a value indicating whether the PressState is pressed or released.
+		/// Gets a value indicating whether the PressState is pressed or released.
 		/// </summary>
 		public bool PressState
 		{
@@ -173,7 +173,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 				return pressState;
 			}
 
-			set
+			private set
 			{
 				var isChanged = pressState != value;
 				pressState = value;

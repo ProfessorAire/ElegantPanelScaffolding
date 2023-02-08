@@ -6,8 +6,20 @@
              xmlns:local="clr-namespace:EPS.UI.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300" x:Name="PropertyBrowserControl">
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid x:Name="Pane" DataContext="{Binding PropertyObject, ElementName=PropertyBrowserControl}" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+    <UserControl.Resources>
+        <DataTemplate x:Key="expanderHeaderTemplate">
+            <TextBlock FontWeight="Bold" Text="{Binding}" />
+        </DataTemplate>
+        <DataTemplate x:Key="nestedBrowserTemplate">
+            <StackPanel HorizontalAlignment="Stretch" Margin="0,0,0,8">
+                <TextBlock Text="{Binding }" FontWeight="Bold" />
+                <local:PropertyBrowser PropertyObject="{Binding}" />
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalAlignment="Stretch">
+        <Grid x:Name="Pane" DataContext="{Binding PropertyObject, ElementName=PropertyBrowserControl}"
+              ScrollViewer.VerticalScrollBarVisibility="Auto"
+              HorizontalAlignment="Stretch"/>
     </ScrollViewer>
 </UserControl>

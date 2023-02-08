@@ -13,8 +13,8 @@ namespace EPS.UI
     {
         public Options Options
         {
-            get => (Options)GetValue(OptionsProperty);
-            set => SetValue(OptionsProperty, value);
+            get => (Options)this.GetValue(OptionsProperty);
+            set => this.SetValue(OptionsProperty, value);
         }
 
         // Using a DependencyProperty as the backing store for Options.  This enables animation, styling, binding, etc...
@@ -24,33 +24,31 @@ namespace EPS.UI
         private readonly string filePath = "";
         public MainWindow()
         {
-            InitializeComponent();
+            this.InitializeComponent();
             var directory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            filePath = $"{directory}\\Elegant Panel Scaffolding\\CurrentSession\\EPS.Report";
+            this.filePath = $"{directory}\\Elegant Panel Scaffolding\\CurrentSession\\EPS.Report";
 
-            if (File.Exists(filePath))
+            if (File.Exists(this.filePath))
             {
-                var opt = Newtonsoft.Json.JsonConvert.DeserializeObject<Options>(File.ReadAllText(filePath));
+                var opt = Newtonsoft.Json.JsonConvert.DeserializeObject<Options>(File.ReadAllText(this.filePath));
                 if (opt != null)
                 {
                     Options.Current = opt;
-                    Options = Options.Current;
+                    this.Options = Options.Current;
                 }
             }
 
-            Closing += MainWindow_Closing;
+            Closing += this.MainWindow_Closing;
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             try
             {
-                _ = Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-                File.WriteAllText(filePath, Newtonsoft.Json.JsonConvert.SerializeObject(Options));
+                _ = Directory.CreateDirectory(Path.GetDirectoryName(this.filePath));
+                File.WriteAllText(this.filePath, Newtonsoft.Json.JsonConvert.SerializeObject(this.Options));
             }
-#pragma warning disable CA1031 // Do not catch general exception types
             catch { }
-#pragma warning restore CA1031 // Do not catch general exception types
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
@@ -66,19 +64,17 @@ namespace EPS.UI
             {
                 try
                 {
-                    File.WriteAllText(browser.FileName, Newtonsoft.Json.JsonConvert.SerializeObject(Options));
-                    ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File Saved");
+                    File.WriteAllText(browser.FileName, Newtonsoft.Json.JsonConvert.SerializeObject(this.Options));
+                    this.ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File Saved");
                 }
-#pragma warning disable CA1031 // Do not catch general exception types
                 catch
-#pragma warning restore CA1031 // Do not catch general exception types
                 {
-                    ShowToast(Color.FromRgb(180, 20, 20), Colors.Black, $"Unable to save file: {Path.GetFileName(browser.FileName)}");
+                    this.ShowToast(Color.FromRgb(180, 20, 20), Colors.Black, $"Unable to save file: {Path.GetFileName(browser.FileName)}");
                 }
             }
             else
             {
-                ShowToast(Color.FromRgb(180, 20, 20), Colors.Black, "File Not Saved");
+                this.ShowToast(Color.FromRgb(180, 20, 20), Colors.Black, "File Not Saved");
             }
         }
 
@@ -101,51 +97,47 @@ namespace EPS.UI
                         var opt = Newtonsoft.Json.JsonConvert.DeserializeObject<Options>(File.ReadAllText(browser.FileName));
                         if (opt != null)
                         {
-                            Options = opt;
-                            Options.Current = Options;
-                            ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File Loaded");
+                            this.Options = opt;
+                            Options.Current = this.Options;
+                            this.ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File Loaded");
                         }
                     }
                 }
-#pragma warning disable CA1031 // Do not catch general exception types
                 catch
-#pragma warning restore CA1031 // Do not catch general exception types
                 {
-                    ShowToast(Color.FromRgb(180, 20, 20), Colors.Black, $"Unable to load file: {Path.GetFileName(browser.FileName)}");
+                    this.ShowToast(Color.FromRgb(180, 20, 20), Colors.Black, $"Unable to load file: {Path.GetFileName(browser.FileName)}");
                 }
             }
             else
             {
-                ShowToast(Color.FromRgb(180, 20, 20), Colors.Black, "File Not Loaded");
+                this.ShowToast(Color.FromRgb(180, 20, 20), Colors.Black, "File Not Loaded");
             }
         }
 
         private async void Compile_Click(object sender, RoutedEventArgs e)
         {
-            if (File.Exists(Options.ApplicationTouchpanelPath) && Directory.Exists(Options.CompilePath))
+            if (File.Exists(this.Options.ApplicationTouchpanelPath) && Directory.Exists(this.Options.CompilePath))
             {
-                Compile.IsEnabled = false;
-                Preview.IsEnabled = false;
-                Properties.IsRootEnabled = false;
-                ProgressMeter.Visibility = Visibility.Visible;
+                this.Compile.IsEnabled = false;
+                this.Preview.IsEnabled = false;
+                this.Properties.IsRootEnabled = false;
+                this.ProgressMeter.Visibility = Visibility.Visible;
                 CodeGen.Builders.ClassBuilder? builder;
 
                 try
                 {
-                    builder = await CodeGen.Builders.TouchpanelProcessor.ProcessFileAsync(Options);
+                    builder = await CodeGen.Builders.TouchpanelProcessor.ProcessFileAsync(this.Options);
                 }
-#pragma warning disable CA1031 // Do not catch general exception types
                 catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
                 {
-                    ShowToast(Color.FromRgb(180, 20, 20), Colors.White, $"Unable to compile project! Exception encountered: {ex.Message}", 7);
+                    this.ShowToast(Color.FromRgb(180, 20, 20), Colors.White, $"Unable to compile project! Exception encountered: {ex.Message}", 7);
 #if DEBUG
                     MessageBox.Show(ex.StackTrace);
 #endif
-                    ProgressMeter.Visibility = Visibility.Collapsed;
-                    Compile.IsEnabled = true;
-                    Preview.IsEnabled = true;
-                    Properties.IsRootEnabled = true;
+                    this.ProgressMeter.Visibility = Visibility.Collapsed;
+                    this.Compile.IsEnabled = true;
+                    this.Preview.IsEnabled = true;
+                    this.Properties.IsRootEnabled = true;
                     return;
                 }
 
@@ -162,9 +154,9 @@ namespace EPS.UI
                         File.WriteAllText(classPath, nameSpace.ToString());
                     }
 
-                    if (Options.IncludeCoreFiles)
+                    if (this.Options.IncludeCoreFiles)
                     {
-                        var dir = Directory.CreateDirectory(Path.Combine(Options.CommonPath, @"Evands\EPS\Common"));
+                        var dir = Directory.CreateDirectory(Path.Combine(this.Options.CommonPath, @"Evands\EPS\Common"));
 
                         var file1 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/BooleanValueChangedEventArgs.g.cs"));
                         var file2 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/UShortValueChangedEventArgs.g.cs"));
@@ -185,7 +177,7 @@ namespace EPS.UI
                         WriteResourcesText(Path.Combine(dir.FullName, "IListItemProvider.g.cs"), file8.Stream);
                     }
 
-                    if (Options.IncludeHelperFiles)
+                    if (this.Options.IncludeHelperFiles)
                     {
                         var file9 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/ListBase.g.cs"));
                         var file10 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/ListItemBase.g.cs"));
@@ -194,7 +186,7 @@ namespace EPS.UI
                         var file13 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/ValueSourceChangedEventArgs.g.cs"));
                         var file14 = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/ItemSelectionChangedEventArgs.g.cs"));
 
-                        var listsDirectory = Directory.CreateDirectory(Path.Combine(Options.CommonPath, @"Evands\EPS\Lists"));
+                        var listsDirectory = Directory.CreateDirectory(Path.Combine(this.Options.CommonPath, @"Evands\EPS\Lists"));
 
                         WriteResourcesText(Path.Combine(listsDirectory.FullName, "ListBase.g.cs"), file9.Stream);
                         WriteResourcesText(Path.Combine(listsDirectory.FullName, "ListItemBase.g.cs"), file10.Stream);
@@ -204,20 +196,20 @@ namespace EPS.UI
                         WriteResourcesText(Path.Combine(listsDirectory.FullName, "ItemSelectionChangedEventArgs.g.cs"), file14.Stream);
                     }
 
-                    ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File successfully created!");
+                    this.ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File successfully created!");
                 }
                 else
                 {
-                    ShowToast(Color.FromRgb(180, 20, 20), Colors.White, "Unable to Compile project!");
+                    this.ShowToast(Color.FromRgb(180, 20, 20), Colors.White, "Unable to Compile project!");
                 }
-                Preview.IsEnabled = true;
-                Compile.IsEnabled = true;
-                Properties.IsRootEnabled = true;
-                ProgressMeter.Visibility = Visibility.Collapsed;
+                this.Preview.IsEnabled = true;
+                this.Compile.IsEnabled = true;
+                this.Properties.IsRootEnabled = true;
+                this.ProgressMeter.Visibility = Visibility.Collapsed;
             }
             else
             {
-                ShowToast(Color.FromRgb(180, 20, 20), Colors.White, "Unable to Compile project. Touchpanel or Compile Path does not exist!");
+                this.ShowToast(Color.FromRgb(180, 20, 20), Colors.White, "Unable to Compile project. Touchpanel or Compile Path does not exist!");
             }
         }
 
@@ -242,30 +234,28 @@ namespace EPS.UI
 
         private async void Preview_Click(object sender, RoutedEventArgs e)
         {
-            if (File.Exists(Options.ApplicationTouchpanelPath))
+            if (File.Exists(this.Options.ApplicationTouchpanelPath))
             {
-                Compile.IsEnabled = false;
-                Preview.IsEnabled = false;
-                Properties.IsRootEnabled = false;
-                ProgressMeter.Visibility = Visibility.Visible;
+                this.Compile.IsEnabled = false;
+                this.Preview.IsEnabled = false;
+                this.Properties.IsRootEnabled = false;
+                this.ProgressMeter.Visibility = Visibility.Visible;
                 CodeGen.Builders.ClassBuilder? builder;
 
                 try
                 {
-                    builder = await CodeGen.Builders.TouchpanelProcessor.ProcessFileAsync(Options);
+                    builder = await CodeGen.Builders.TouchpanelProcessor.ProcessFileAsync(this.Options);
                 }
-#pragma warning disable CA1031 // Do not catch general exception types
                 catch (Exception ex)
-#pragma warning restore CA1031 // Do not catch general exception types
                 {
-                    ShowToast(Color.FromRgb(180, 20, 20), Colors.White, $"Unable to preview project! Exception encountered: {ex.Message}", 7);
+                    this.ShowToast(Color.FromRgb(180, 20, 20), Colors.White, $"Unable to preview project! Exception encountered: {ex.Message}", 7);
 #if DEBUG
                     MessageBox.Show(ex.StackTrace);
 #endif
-                    ProgressMeter.Visibility = Visibility.Collapsed;
-                    Compile.IsEnabled = true;
-                    Preview.IsEnabled = true;
-                    Properties.IsRootEnabled = true;
+                    this.ProgressMeter.Visibility = Visibility.Collapsed;
+                    this.Compile.IsEnabled = true;
+                    this.Preview.IsEnabled = true;
+                    this.Properties.IsRootEnabled = true;
                     return;
                 }
 
@@ -289,36 +279,36 @@ namespace EPS.UI
                     }
                     previewWindow.Show();
                     previewWindow.WindowState = WindowState.Maximized;
-                    ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "Preview successfully created!");
+                    this.ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "Preview successfully created!");
                 }
                 else
                 {
-                    ShowToast(Color.FromRgb(180, 20, 20), Colors.White, "Unable to Preview project!");
+                    this.ShowToast(Color.FromRgb(180, 20, 20), Colors.White, "Unable to Preview project!");
                 }
-                ProgressMeter.Visibility = Visibility.Collapsed;
-                Compile.IsEnabled = true;
-                Preview.IsEnabled = true;
-                Properties.IsRootEnabled = true;
-                ProgressMeter.Visibility = Visibility.Collapsed;
+                this.ProgressMeter.Visibility = Visibility.Collapsed;
+                this.Compile.IsEnabled = true;
+                this.Preview.IsEnabled = true;
+                this.Properties.IsRootEnabled = true;
+                this.ProgressMeter.Visibility = Visibility.Collapsed;
             }
             else
             {
-                ShowToast(Color.FromRgb(180, 20, 20), Colors.White, "Unable to Preview project. Touchpanel path does not exist!");
+                this.ShowToast(Color.FromRgb(180, 20, 20), Colors.White, "Unable to Preview project. Touchpanel path does not exist!");
             }
         }
 
         private async void ShowToast(Color background, Color foreground, string text, int durationInSeconds = 4)
         {
-            ToastText.Text = text;
-            ToastText.Foreground = new SolidColorBrush(foreground);
-            ToastContainer.Background = new SolidColorBrush(background)
+            this.ToastText.Text = text;
+            this.ToastText.Foreground = new SolidColorBrush(foreground);
+            this.ToastContainer.Background = new SolidColorBrush(background)
             {
                 Opacity = 1
             };
-            ToastContainer.Visibility = Visibility.Visible;
+            this.ToastContainer.Visibility = Visibility.Visible;
             await Task.Delay(TimeSpan.FromSeconds(durationInSeconds));
-            ToastContainer.Visibility = Visibility.Collapsed;
-            ToastText.Text = "";
+            this.ToastContainer.Visibility = Visibility.Collapsed;
+            this.ToastText.Text = "";
         }
 
         private void Help_Click(object sender, RoutedEventArgs e)

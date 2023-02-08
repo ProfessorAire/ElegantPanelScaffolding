@@ -25,16 +25,16 @@ namespace EPS.CodeGen.Builders
 
         public ListBuilder(ClassBuilder control, ushort quantity, ushort digitalStep, ushort analogStep, ushort serialStep)
         {
-            DigitalStep = digitalStep;
-            AnalogStep = analogStep;
-            SerialStep = serialStep;
-            Quantity = quantity;
-            Control = control;
+            this.DigitalStep = digitalStep;
+            this.AnalogStep = analogStep;
+            this.SerialStep = serialStep;
+            this.Quantity = quantity;
+            this.Control = control;
         }
 
         public List<WriterBase> GetWriters()
         {
-            var epw = new PropertyWriter($"Evands.EPS.Common.IListItemProvider<{Control.ClassName}>.Items", $"System.Collections.ObjectModel.ReadOnlyCollection<{Control.ClassName}>", false)
+            var epw = new PropertyWriter($"Evands.EPS.Common.IListItemProvider<{this.Control.ClassName}>.Items", $"System.Collections.ObjectModel.ReadOnlyCollection<{this.Control.ClassName}>", false)
             {
                 HasGetter = true,
                 HasSetter = false,
@@ -42,11 +42,11 @@ namespace EPS.CodeGen.Builders
                 ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged,
             };
 
-            epw.Getter.Add($"return new System.Collections.ObjectModel.ReadOnlyCollection<{Control.ClassName}>(this.Items);");
+            epw.Getter.Add($"return new System.Collections.ObjectModel.ReadOnlyCollection<{this.Control.ClassName}>(this.Items);");
 
-            epw.Help.Summary = $"Gets an enumeration of <see cref=\"{Control.ClassName}\"/> items the list contains.";
+            epw.Help.Summary = $"Gets an enumeration of <see cref=\"{this.Control.ClassName}\"/> items the list contains.";
 
-            var pw = new PropertyWriter($"Items", $"{Control.ClassName}[]", false)
+            var pw = new PropertyWriter($"Items", $"{this.Control.ClassName}[]", false)
             {
                 PrivateGetter = false,
                 PrivateSetter = true,
@@ -55,17 +55,17 @@ namespace EPS.CodeGen.Builders
                 ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged
             };
 
-            pw.Help.Summary = $"Gets the array of <see cref=\"{Control.ClassName}\"/> items in the list.";
+            pw.Help.Summary = $"Gets the array of <see cref=\"{this.Control.ClassName}\"/> items in the list.";
 
-            var tw = new TextWriter($"Items = new {Control.ClassName}[{Quantity}]");
+            var tw = new TextWriter($"Items = new {this.Control.ClassName}[{this.Quantity}]");
             tw.Text.Add("{");
 
-            for (var i = 0; i < Quantity; i++)
+            for (var i = 0; i < this.Quantity; i++)
             {
-                var digital = (i * DigitalStep) + Control.DigitalOffset;
-                var analog = (i * AnalogStep) + Control.AnalogOffset;
-                var serial = (i * SerialStep) + Control.SerialOffset;
-                tw.Text.Add($"\tnew {Control.ClassName}(ParentPanel, {digital}, {analog}, {serial}, {i}){(i < Quantity - 1 ? "," : "")}");
+                var digital = (i * this.DigitalStep) + this.Control.DigitalOffset;
+                var analog = (i * this.AnalogStep) + this.Control.AnalogOffset;
+                var serial = (i * this.SerialStep) + this.Control.SerialOffset;
+                tw.Text.Add($"\tnew {this.Control.ClassName}(ParentPanel, {digital}, {analog}, {serial}, {i}){(i < this.Quantity - 1 ? "," : "")}");
             }
 
             tw.Text.Add("};");

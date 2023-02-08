@@ -117,6 +117,18 @@ namespace Evands.EPS.Lists
                             items[i].Value = default(T1);
                         }
                     }
+
+                    if (oldValueSelection != null)
+                    {
+                        if (values.Contains(oldValueSelection))
+                        {
+                            this.SelectedValue = oldValueSelection;
+                        }
+                        else
+                        {
+                            this.SelectedValue = default(T1);
+                        }
+                    }
                 }
 
                 var vsc = ValueSourceChanged;

@@ -29,7 +29,7 @@ namespace EPS.Help
 
                 _ = renderer.Write(html);
             }
-            else if (obj is CodeBlock)
+            else if (obj is not null)
             {
                 var text = GetText(obj);
                 var formatter = new HtmlClassFormatter();
@@ -73,7 +73,7 @@ namespace EPS.Help
     {
         protected override void Write(HtmlRenderer renderer, CodeInline obj)
         {
-            if (obj is CodeInline)
+            if (obj is not null)
             {
                 var text = obj.Content;
                 var formatter = new HtmlClassFormatter();

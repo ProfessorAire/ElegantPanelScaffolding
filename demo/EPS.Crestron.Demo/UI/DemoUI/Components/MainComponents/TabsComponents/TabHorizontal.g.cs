@@ -53,7 +53,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.TabsComponents
 		}
 
 		/// <summary>
-		/// Gets or sets the array of <see cref="TabHorizontalItem"/> items in the list.
+		/// Gets the array of <see cref="TabHorizontalItem"/> items in the list.
 		/// </summary>
 		public TabHorizontalItem[] Items { get; private set; }
 

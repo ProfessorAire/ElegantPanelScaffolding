@@ -103,7 +103,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 		}
 
 		/// <summary>
-		/// Gets or sets the array of <see cref="OptionsItem"/> items in the list.
+		/// Gets the array of <see cref="OptionsItem"/> items in the list.
 		/// </summary>
 		public OptionsItem[] Items { get; private set; }
 
@@ -141,7 +141,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 		}
 
 		/// <summary>
-		/// Gets or sets a value indicating what the <see cref="ItemClicked"/> join was last set to.
+		/// Gets a value indicating what the <see cref="ItemClicked"/> join was last set to.
 		/// </summary>
 		public ushort ItemClicked
 		{
@@ -172,7 +172,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 		}
 
 		/// <summary>
-		/// Gets or sets a value indicating whether the <see cref="IsMoving"/> join was last set to true or false.
+		/// Gets a value indicating whether the <see cref="IsMoving"/> join was last set to true or false.
 		/// </summary>
 		public bool IsMoving
 		{
@@ -203,7 +203,7 @@ namespace EPS.Demo.UI.DemoUI.Components.MainComponents.MenuComponents
 		}
 
 		/// <summary>
-		/// Gets or sets a value indicating what the <see cref="ItemHeld"/> join was last set to.
+		/// Gets a value indicating what the <see cref="ItemHeld"/> join was last set to.
 		/// </summary>
 		public ushort ItemHeld
 		{

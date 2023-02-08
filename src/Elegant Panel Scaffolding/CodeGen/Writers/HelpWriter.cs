@@ -5,7 +5,7 @@ namespace EPS.CodeGen.Writers
 {
     public class HelpWriter : WriterBase
     {
-        private readonly StringBuilder sb = new StringBuilder();
+        private readonly StringBuilder sb = new();
 
         public string Summary { get; set; } = "";
 
@@ -19,64 +19,64 @@ namespace EPS.CodeGen.Writers
 
         public HelpWriter(int indentLevel = 0) => this.indentLevel = indentLevel;
 
-        public override string ToString() => ToString(indentLevel);
+        public override string ToString() => this.ToString(this.indentLevel);
 
         public override string ToString(int indent)
         {
             var tabs = indent.GetTabs();
-            _ = sb.Clear();
+            _ = this.sb.Clear();
 
-            if (!string.IsNullOrEmpty(Summary))
+            if (!string.IsNullOrEmpty(this.Summary))
             {
-                _ = sb.AppendLine($"{tabs}/// <summary>");
-                _ = sb.AppendLine($"{tabs}/// {SanitizeSpaces(Summary, tabs)}");
-                _ = sb.AppendLine($"{tabs}/// </summary>");
+                _ = this.sb.AppendLine($"{tabs}/// <summary>");
+                _ = this.sb.AppendLine($"{tabs}/// {SanitizeSpaces(this.Summary, tabs)}");
+                _ = this.sb.AppendLine($"{tabs}/// </summary>");
             }
 
-            foreach (var p in Parameters)
+            foreach (var p in this.Parameters)
             {
                 if (p.Help.Contains("\n"))
                 {
-                    _ = sb.AppendLine($"{tabs}/// <param name=\"{p.Name}\">");
-                    _ = sb.AppendLine($"{tabs}/// {SanitizeSpaces(p.Help, tabs)}");
-                    _ = sb.AppendLine($"{tabs}/// </param>");
+                    _ = this.sb.AppendLine($"{tabs}/// <param name=\"{p.Name}\">");
+                    _ = this.sb.AppendLine($"{tabs}/// {SanitizeSpaces(p.Help, tabs)}");
+                    _ = this.sb.AppendLine($"{tabs}/// </param>");
                 }
                 else
                 {
-                    _ = sb.AppendLine($"{tabs}/// <param name=\"{p.Name}\">{SanitizeSpaces(p.Help, tabs)}</param>");
+                    _ = this.sb.AppendLine($"{tabs}/// <param name=\"{p.Name}\">{SanitizeSpaces(p.Help, tabs)}</param>");
                 }
             }
 
-            if (!string.IsNullOrEmpty(Returns))
+            if (!string.IsNullOrEmpty(this.Returns))
             {
-                if (Returns.Contains("\n"))
+                if (this.Returns.Contains("\n"))
                 {
-                    _ = sb.AppendLine($"{tabs}/// <returns>");
-                    _ = sb.AppendLine($"{tabs}/// {SanitizeSpaces(Returns, tabs)}");
-                    _ = sb.AppendLine($"{tabs}/// </returns>");
+                    _ = this.sb.AppendLine($"{tabs}/// <returns>");
+                    _ = this.sb.AppendLine($"{tabs}/// {SanitizeSpaces(this.Returns, tabs)}");
+                    _ = this.sb.AppendLine($"{tabs}/// </returns>");
                 }
                 else
                 {
-                    _ = sb.AppendLine($"{tabs}/// <returns>{SanitizeSpaces(Returns, tabs)}</returns>");
+                    _ = this.sb.AppendLine($"{tabs}/// <returns>{SanitizeSpaces(this.Returns, tabs)}</returns>");
                 }
             }
 
-            if (!string.IsNullOrEmpty(Remarks))
+            if (!string.IsNullOrEmpty(this.Remarks))
             {
-                if (Remarks.Contains("\n"))
+                if (this.Remarks.Contains("\n"))
                 {
-                    _ = sb.AppendLine($"{tabs}/// <remarks>");
-                    _ = sb.AppendLine($"{tabs}/// {SanitizeSpaces(Remarks, tabs)}");
-                    _ = sb.AppendLine($"{tabs}/// </remarks>");
+                    _ = this.sb.AppendLine($"{tabs}/// <remarks>");
+                    _ = this.sb.AppendLine($"{tabs}/// {SanitizeSpaces(this.Remarks, tabs)}");
+                    _ = this.sb.AppendLine($"{tabs}/// </remarks>");
                 }
                 else
                 {
-                    _ = sb.AppendLine($"{tabs}/// <remarks>{SanitizeSpaces(Remarks, tabs)}</remarks>");
+                    _ = this.sb.AppendLine($"{tabs}/// <remarks>{SanitizeSpaces(this.Remarks, tabs)}</remarks>");
 
                 }
             }
 
-            return sb.ToString();
+            return this.sb.ToString();
         }
 
         private static string SanitizeSpaces(string text, string tabs) => text.Replace("\n", $"\n{tabs}/// ");

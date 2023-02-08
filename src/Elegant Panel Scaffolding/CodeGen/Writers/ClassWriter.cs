@@ -6,7 +6,7 @@ namespace EPS.CodeGen.Writers
 {
     public class ClassWriter : WriterBase
     {
-        private readonly StringBuilder sb = new StringBuilder();
+        private readonly StringBuilder sb = new();
 
         public List<FieldWriter> Fields { get; } = new List<FieldWriter>();
 
@@ -34,33 +34,33 @@ namespace EPS.CodeGen.Writers
 
         public ClassWriter(string name, int indentLevel = 0)
         {
-            Name = name;
+            this.Name = name;
             this.indentLevel = indentLevel;
         }
 
-        public override string ToString() => ToString(indentLevel);
+        public override string ToString() => this.ToString(this.indentLevel);
 
         public override string ToString(int indentLevel)
         {
             var indent = indentLevel;
 
-            _ = sb.Clear();
+            _ = this.sb.Clear();
 
             // Help.
-            var help = Help.ToString(indent);
+            var help = this.Help.ToString(indent);
             if (string.IsNullOrWhiteSpace(help))
             {
-                Help.Summary = $"Auto-generated {Name} class.";
+                this.Help.Summary = $"Auto-generated {this.Name} class.";
             }
 
-            _ = sb.Append(Help.ToString(indent));
+            _ = this.sb.Append(this.Help.ToString(indent));
 
             // Class Details.
-            _ = sb.Append(indent.GetTabs());
-            _ = sb.Append($"{Accessor.GetTextValue()}{Modifier.GetTextValue()}class {Name}");
+            _ = this.sb.Append(indent.GetTabs());
+            _ = this.sb.Append($"{this.Accessor.GetTextValue()}{this.Modifier.GetTextValue()}class {this.Name}");
 
-            var implements = Implements;
-            if (ImplementINotifyPropertyChanged && Properties.Count > 0)
+            var implements = this.Implements;
+            if (this.ImplementINotifyPropertyChanged && this.Properties.Count > 0)
             {
                 implements.Add("System.ComponentModel.INotifyPropertyChanged");
             }
@@ -69,43 +69,43 @@ namespace EPS.CodeGen.Writers
             {
                 if (i == 0)
                 {
-                    _ = sb.Append(" : ");
+                    _ = this.sb.Append(" : ");
                 }
                 else
                 {
-                    _ = sb.Append(", ");
+                    _ = this.sb.Append(", ");
                 }
-                _ = sb.Append(implements[i]);
+                _ = this.sb.Append(implements[i]);
             }
 
-            _ = sb.AppendLine();
+            _ = this.sb.AppendLine();
 
             // Open Bracket.
-            _ = sb.Append(indent.GetTabs());
-            _ = sb.AppendLine("{");
+            _ = this.sb.Append(indent.GetTabs());
+            _ = this.sb.AppendLine("{");
             indent++;
 
             var needBreak = false;
 
             // Fields
-            var fields = Fields.Union(Properties.Where(p => p.BackingFieldWriter != null).Select(p => p.BackingFieldWriter)).ToList();
+            var fields = this.Fields.Union(this.Properties.Where(p => p.BackingFieldWriter != null).Select(p => p.BackingFieldWriter)).ToList();
             for (var i = 0; i < fields.Count; i++)
             {
                 var f = fields[i];
                 if (f != null)
                 {
                     needBreak = true;
-                    _ = sb.AppendLine(f.ToString(indent));
+                    _ = this.sb.AppendLine(f.ToString(indent));
                     if (i < fields.Count - 1)
                     {
-                        _ = sb.AppendLine();
+                        _ = this.sb.AppendLine();
                     }
                 }
             }
 
-            var events = Events;
+            var events = this.Events;
 
-            if (ImplementINotifyPropertyChanged && Properties.Count > 0)
+            if (this.ImplementINotifyPropertyChanged && this.Properties.Count > 0)
             {
                 var pce = new EventWriter("PropertyChanged")
                 {
@@ -119,7 +119,7 @@ namespace EPS.CodeGen.Writers
 
             if (events.Count > 0 && needBreak)
             {
-                _ = sb.AppendLine();
+                _ = this.sb.AppendLine();
             }
 
             // Events
@@ -127,66 +127,66 @@ namespace EPS.CodeGen.Writers
             {
                 needBreak = true;
                 var e = events[i];
-                _ = sb.AppendLine(e.ToString(indent));
+                _ = this.sb.AppendLine(e.ToString(indent));
                 if (i < events.Count - 1)
                 {
-                    _ = sb.AppendLine();
+                    _ = this.sb.AppendLine();
                 }
             }
 
-            if (Properties.Count > 0 && needBreak)
+            if (this.Properties.Count > 0 && needBreak)
             {
-                _ = sb.AppendLine();
+                _ = this.sb.AppendLine();
             }
             // Properties
-            for (var i = 0; i < Properties.Count; i++)
+            for (var i = 0; i < this.Properties.Count; i++)
             {
                 needBreak = true;
-                var p = Properties[i];
-                _ = sb.AppendLine(p.ToString(indent));
-                if (i < Properties.Count - 1)
+                var p = this.Properties[i];
+                _ = this.sb.AppendLine(p.ToString(indent));
+                if (i < this.Properties.Count - 1)
                 {
-                    _ = sb.AppendLine();
+                    _ = this.sb.AppendLine();
                 }
             }
 
-            if (Constructors.Count > 0 && needBreak)
+            if (this.Constructors.Count > 0 && needBreak)
             {
-                _ = sb.AppendLine();
+                _ = this.sb.AppendLine();
             }
             // Constructors
-            for (var i = 0; i < Constructors.Count; i++)
+            for (var i = 0; i < this.Constructors.Count; i++)
             {
                 needBreak = true;
-                var c = Constructors[i];
-                _ = sb.AppendLine(c.ToString(indent));
-                if (i < Constructors.Count - 1)
+                var c = this.Constructors[i];
+                _ = this.sb.AppendLine(c.ToString(indent));
+                if (i < this.Constructors.Count - 1)
                 {
-                    _ = sb.AppendLine();
+                    _ = this.sb.AppendLine();
                 }
             }
 
-            if (Methods.Count > 0 && needBreak)
+            if (this.Methods.Count > 0 && needBreak)
             {
-                _ = sb.AppendLine();
+                _ = this.sb.AppendLine();
             }
             // Methods
-            for (var i = 0; i < Methods.Count; i++)
+            for (var i = 0; i < this.Methods.Count; i++)
             {
-                var m = Methods[i];
-                _ = sb.AppendLine(m.ToString(indent));
-                if (i < Methods.Count - 1)
+                var m = this.Methods[i];
+                _ = this.sb.AppendLine(m.ToString(indent));
+                if (i < this.Methods.Count - 1)
                 {
-                    _ = sb.AppendLine();
+                    _ = this.sb.AppendLine();
                 }
             }
 
             // Close Bracket
             indent--;
-            _ = sb.Append(indent.GetTabs());
-            _ = sb.Append('}');
+            _ = this.sb.Append(indent.GetTabs());
+            _ = this.sb.Append('}');
 
-            return sb.ToString();
+            return this.sb.ToString();
         }
 
     }
