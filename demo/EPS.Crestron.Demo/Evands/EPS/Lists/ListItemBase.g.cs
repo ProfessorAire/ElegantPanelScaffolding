@@ -96,13 +96,16 @@ namespace Evands.EPS.Lists
 
             set
             {
-                var old = this.value;
-                this.value = value;
-                ValueIsChanging(value, old);
-                var vc = ValueChanged;
-                if (vc != null)
+                if (!object.Equals(this.value, value))
                 {
-                    vc.Invoke(this, new ValueChangedEventArgs<T>(value, old));
+                    var old = this.value;
+                    this.value = value;
+                    ValueIsChanging(value, old);
+                    var vc = ValueChanged;
+                    if (vc != null)
+                    {
+                        vc.Invoke(this, new ValueChangedEventArgs<T>(value, old));
+                    }
                 }
             }
         }

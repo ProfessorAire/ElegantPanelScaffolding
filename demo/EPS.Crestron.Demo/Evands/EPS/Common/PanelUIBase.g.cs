@@ -41,7 +41,7 @@ namespace Evands.EPS.Common
     /// simplify navigation and other feedback by using a unique instance of helpers (like this project's
     /// Navigation class) to control things like page selections.
     /// </summary>
-    public abstract class PanelUIBase : IDisposable, IEnumerable<BasicTriList>, IEnumerable<BasicTriListWithSmartObject>
+    public abstract partial class PanelUIBase : IDisposable, IEnumerable<BasicTriList>, IEnumerable<BasicTriListWithSmartObject>
     {
         #region CoreFunctionality
 
@@ -68,7 +68,7 @@ namespace Evands.EPS.Common
         /// <summary>
         /// Thread synchronization context.
         /// </summary>
-        private CCriticalSection syncRoot = new CCriticalSection();
+        private object syncRoot = new object();
 
         /// <summary>
         /// If this is subscribed to, it is raised whenever the touchpanel sends data, like a touch or slider movement.
@@ -502,6 +502,8 @@ namespace Evands.EPS.Common
             {
                 p.Dispose();
             }
+
+            panels.Clear();
         }
 
         /// <summary>
@@ -772,53 +774,70 @@ namespace Evands.EPS.Common
         /// </summary>
         private void ProcessInputQueue()
         {
-            if (syncRoot.TryEnter())
+            CrestronInvoke.BeginInvoke((o) =>
             {
-                CrestronInvoke.BeginInvoke((o) =>
+                if (CMonitor.TryEnter(this.syncRoot))
                 {
-                    Action action = panelProcessingQueue.TryToDequeue();
-
-                    while (action != null)
+                    try
                     {
-                        try
-                        {
-                            var newAct = action;
-                            action = null;
+                        Action action = panelProcessingQueue.TryToDequeue();
 
-                            CrestronInvoke.BeginInvoke((s) => { if (TouchEventReceived != null) { TouchEventReceived.Invoke(this, new EventArgs()); } });
-                            
-                            if (newAct != null)
-                            {
-                                newAct.Invoke();
-                            }
-
-                            action = panelProcessingQueue.TryToDequeue();
-                        }
-                        catch (System.Threading.ThreadAbortException)
+                        while (action != null)
                         {
-                            CrestronConsole.PrintLine("Thread exiting: {0}", processingThread.Name);
-                            if (IsStarted && !Disposed)
+                            try
                             {
-                                ErrorLog.Notice("Touchpanel Input Thread exited prematurely: {0}", processingThread.Name);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            if (UserCodeExceptionEncountered != null)
-                            {
-                                UserCodeExceptionEncountered(this, new ApplicationException("User Code Exception.", ex));
-                            }
+                                var newAct = action;
+                                action = null;
 
-                            if (action == null)
-                            {
+                                CrestronInvoke.BeginInvoke((s) => { if (TouchEventReceived != null) { TouchEventReceived.Invoke(this, new EventArgs()); } });
+
+                                if (newAct != null)
+                                {
+                                    newAct.Invoke();
+                                }
+
                                 action = panelProcessingQueue.TryToDequeue();
+                            }
+                            catch (System.Threading.ThreadAbortException)
+                            {
+                                CrestronConsole.PrintLine("Thread exiting: {0}", processingThread.Name);
+                                if (IsStarted && !Disposed)
+                                {
+                                    ErrorLog.Notice("Touchpanel Input Thread exited prematurely: {0}", processingThread.Name);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                if (UserCodeExceptionEncountered != null)
+                                {
+                                    UserCodeExceptionEncountered(this, new ApplicationException("User Code Exception.", ex));
+                                }
+
+                                if (action == null)
+                                {
+                                    action = panelProcessingQueue.TryToDequeue();
+                                }
                             }
                         }
                     }
+                    finally
+                    {
+                        try
+                        {
+                            CMonitor.Exit(this.syncRoot);
+                        }
+                        catch
+                        {
+                                // do nothing intentionally.
+                        }
+                    }
 
-                    syncRoot.Leave();
-                });
-            }
+                    if (panelProcessingQueue.Count > 0)
+                    {
+                        this.ProcessInputQueue();
+                    }
+                }
+            });
         }
 
         #endregion
