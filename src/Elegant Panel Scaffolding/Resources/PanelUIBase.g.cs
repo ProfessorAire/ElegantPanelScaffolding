@@ -533,15 +533,15 @@ namespace Evands.EPS.Common
         {
             IsStarted = true;
             InitializeValues();
-            //if (processingThread == null)
-            //{
-            //    processingThread = new Thread(ProcessInputQueue, null, Thread.eThreadStartOptions.Running);
-            //    processingThread.Name = "Panel Processing Thread";
-            //}
-            //else
-            //{
-            //    processingThread.Start();
-            //}
+            if (processingThread == null)
+            {
+                processingThread = new Thread(ProcessInputQueue, null, Thread.eThreadStartOptions.Running);
+                processingThread.Name = "Panel Processing Thread";
+            }
+            else
+            {
+                processingThread.Start();
+            }
         }
 
         /// <summary>
@@ -550,10 +550,11 @@ namespace Evands.EPS.Common
         public void StopThreads()
         {
             IsStarted = false;
-            //if (processingThread != null && (processingThread.ThreadState == Thread.eThreadStates.ThreadRunning || processingThread.ThreadState == Thread.eThreadStates.ThreadSuspended))
-            //{
-            //    processingThread.Abort();
-            //}
+            if (processingThread != null && (processingThread.ThreadState == Thread.eThreadStates.ThreadRunning || processingThread.ThreadState == Thread.eThreadStates.ThreadSuspended))
+            {
+                processingThread.Abort();
+            }
+
             panelProcessingQueue.Clear();
         }
 
@@ -720,7 +721,7 @@ namespace Evands.EPS.Common
                     break;
             }
 
-            ProcessInputQueue();
+            //ProcessInputQueue();
         }
 
         /// <summary>
@@ -772,72 +773,36 @@ namespace Evands.EPS.Common
         /// <summary>
         /// Used to check if the TouchEventReceived event needs to be invoked and hands the signal data off to be processed.
         /// </summary>
-        private void ProcessInputQueue()
+        private object ProcessInputQueue(object obj)
         {
-            CrestronInvoke.BeginInvoke((o) =>
+            while (IsStarted)
             {
-                if (CMonitor.TryEnter(this.syncRoot))
+                try
                 {
-                    try
+                    var action = panelProcessingQueue.Dequeue();
+                    CrestronInvoke.BeginInvoke((s) => { if (TouchEventReceived != null) { TouchEventReceived.Invoke(this, new EventArgs()); } });
+                    if (action != null)
                     {
-                        Action action = panelProcessingQueue.TryToDequeue();
-
-                        while (action != null)
-                        {
-                            try
-                            {
-                                var newAct = action;
-                                action = null;
-
-                                CrestronInvoke.BeginInvoke((s) => { if (TouchEventReceived != null) { TouchEventReceived.Invoke(this, new EventArgs()); } });
-
-                                if (newAct != null)
-                                {
-                                    newAct.Invoke();
-                                }
-
-                                action = panelProcessingQueue.TryToDequeue();
-                            }
-                            catch (System.Threading.ThreadAbortException)
-                            {
-                                CrestronConsole.PrintLine("Thread exiting: {0}", processingThread.Name);
-                                if (IsStarted && !Disposed)
-                                {
-                                    ErrorLog.Notice("Touchpanel Input Thread exited prematurely: {0}", processingThread.Name);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                if (UserCodeExceptionEncountered != null)
-                                {
-                                    UserCodeExceptionEncountered(this, new ApplicationException("User Code Exception.", ex));
-                                }
-
-                                if (action == null)
-                                {
-                                    action = panelProcessingQueue.TryToDequeue();
-                                }
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        try
-                        {
-                            CMonitor.Exit(this.syncRoot);
-                        }
-                        catch
-                        {
-                                // do nothing intentionally.
-                        }
-                    }
-
-                    if (panelProcessingQueue.Count > 0)
-                    {
-                        this.ProcessInputQueue();
+                        action.Invoke();
                     }
                 }
-            });
+                catch (System.Threading.ThreadAbortException)
+                {
+                    if (IsStarted && !Disposed)
+                    {
+                        ErrorLog.Notice("Touchpanel Input Thread exited prematurely: {0}", processingThread.Name);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (UserCodeExceptionEncountered != null)
+                    {
+                        UserCodeExceptionEncountered(this, new UnhandledExceptionEventArgs(ex, false));
+                    }
+                }
+            }
+
+            return obj;
         }
 
         #endregion

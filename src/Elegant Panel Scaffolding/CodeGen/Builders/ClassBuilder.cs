@@ -164,7 +164,7 @@ namespace EPS.CodeGen.Builders
             nsb.AddHeader("//");
             nsb.AddHeader($"//\t\tChanges to this file may break expected behavior and will be lost if the code is regenerated.");
             nsb.AddHeader($"//\t\tCreate a new file with a new partial declaration of the contents of this file and edit that instead.");
-            nsb.AddHeader($"//\t\tYou can use the 'SetupUI()`, 'InitializeUI()', and 'DisposeUI()' partial methods to hook into the construction, initialization, and disposal logic.");
+            nsb.AddHeader($"//\t\tYou can use the 'SetupUi()`, 'InitializeUi()', and 'DisposeUi()' partial methods to hook into the construction, initialization, and disposal logic.");
             nsb.AddHeader($"// </auto-generated>");
 
             nsb.AddUsing("System");
@@ -174,7 +174,7 @@ namespace EPS.CodeGen.Builders
             {
                 nsb.AddUsing("Crestron.SimplSharpPro.DeviceSupport");
             }
-            
+
             nsb.AddUsing("Evands.EPS.Common");
 
             Writers.ClassWriter mainClass;
@@ -206,16 +206,16 @@ namespace EPS.CodeGen.Builders
             // Main Class Constructor
             var ctor = new Writers.MethodWriter(this.ClassName, "Creates a new instance of the class.", "", 2);
 
-            // Partial SetupUI method.
-            var partialSetup = new Writers.MethodWriter("SetupUI", "Implement this in accompanying classes in order to setup functionality on the construction of the root class.\nNo values should be sent to this touchpanel in this method!", "void", 2)
+            // Partial SetupUi method.
+            var partialSetup = new Writers.MethodWriter("SetupUi", "Implement this in accompanying classes in order to setup functionality on the construction of the root class.\nNo values should be sent to this touchpanel in this method!", "void", 2)
             {
                 Modifier = Modifier.Partial,
                 Accessor = Accessor.None
             };
             mainClass.Methods.Add(partialSetup);
 
-            // Partial DisposeUI method.
-            var partialDispose = new Writers.MethodWriter("DisposeUI", "Implement this in accompanying classes in order to dispose of objects as needed.", "void", 2)
+            // Partial DisposeUi method.
+            var partialDispose = new Writers.MethodWriter("DisposeUi", "Implement this in accompanying classes in order to dispose of objects as needed.", "void", 2)
             {
                 Modifier = Modifier.Partial,
                 Accessor = Accessor.None
@@ -223,7 +223,7 @@ namespace EPS.CodeGen.Builders
             mainClass.Methods.Add(partialDispose);
 
             // Partial Initialize Values Method.
-            var partialInit = new Writers.MethodWriter("InitializeUI", "Implement in accompanying classes in order to send initial values to the touchpanels when the root class Threads are started.", "void", 2)
+            var partialInit = new Writers.MethodWriter("InitializeUi", "Implement in accompanying classes in order to send initial values to the touchpanels when the root class Threads are started.", "void", 2)
             {
                 Modifier = Modifier.Partial,
                 Accessor = Accessor.None
@@ -288,14 +288,14 @@ namespace EPS.CodeGen.Builders
             }
             else if (this.ClassType == ClassType.Control && (this.AnalogOffset > 0 || this.DigitalOffset > 0 || this.SerialOffset > 0))
             {
-                foreach(var c in this.Controls)
+                foreach (var c in this.Controls)
                 {
                     c.AnalogOffset = this.AnalogOffset;
                     c.DigitalOffset = this.DigitalOffset;
                     c.SerialOffset = this.SerialOffset;
                 }
 
-                foreach(var j in this.Joins)
+                foreach (var j in this.Joins)
                 {
                     j.AnalogOffset = this.AnalogOffset;
                     j.DigitalOffset = this.DigitalOffset;
@@ -324,7 +324,7 @@ namespace EPS.CodeGen.Builders
                     ctor.MethodLines.Add($"{c.ClassName} = new {this.ClassName}Components.{c.ClassName}(ParentPanel);");
                 }
             }
-            
+
             if (this.ClassType is ClassType.Control or ClassType.SmartObject)
             {
                 foreach (var l in this.Lists)
@@ -402,13 +402,13 @@ namespace EPS.CodeGen.Builders
                 }
             }
 
-            // Call SetupUI Last
+            // Call SetupUi Last
             if (ctor.MethodLines.Last().Length > 0)
             {
                 ctor.MethodLines.Add("");
             }
 
-            ctor.MethodLines.Add("SetupUI();");
+            ctor.MethodLines.Add("SetupUi();");
 
             mainClass.Constructors.Add(ctor);
 
@@ -426,7 +426,8 @@ namespace EPS.CodeGen.Builders
             {
                 initValuesMethod.Accessor = Accessor.Internal;
             }
-            initValuesMethod.MethodLines.Add("InitializeUI();");
+
+            initValuesMethod.MethodLines.Add("InitializeUi();");
 
             foreach (var join in this.Joins)
             {
@@ -482,6 +483,8 @@ namespace EPS.CodeGen.Builders
                 initValuesMethod.MethodLines.Add($"{fw.Name}.InitializeValues();");
             }
 
+            initValuesMethod.MethodLines.Add("this.IsUiInitialized = true;");
+
             // Add initialize values method
             mainClass.Methods.Add(initValuesMethod);
 
@@ -489,7 +492,7 @@ namespace EPS.CodeGen.Builders
             Writers.MethodWriter disp;
             if (this.ClassType == ClassType.Touchpanel)
             {
-                disp = new Writers.MethodWriter("DisposeChildren", "Calls the partial void DisposeUI in order to allow disposing of custom objects.", "void", 2)
+                disp = new Writers.MethodWriter("DisposeChildren", "Calls the partial void DisposeUi in order to allow disposing of custom objects.", "void", 2)
                 {
                     Accessor = Accessor.Protected,
                     Modifier = Modifier.Override
@@ -497,14 +500,14 @@ namespace EPS.CodeGen.Builders
             }
             else
             {
-                disp = new Writers.MethodWriter("Dispose", "Calls the partial void DisposeUI in order to allow disposing of custom objects.", "void", 2)
+                disp = new Writers.MethodWriter("Dispose", "Calls the partial void DisposeUi in order to allow disposing of custom objects.", "void", 2)
                 {
                     Accessor = Accessor.Public,
                     Modifier = Modifier.None
                 };
             }
 
-            disp.MethodLines.Add("DisposeUI();");
+            disp.MethodLines.Add("DisposeUi();");
 
             foreach (var p in this.Pages)
             {
@@ -565,6 +568,7 @@ namespace EPS.CodeGen.Builders
 
             // Add the writers to the class.
             mainClass.Properties.AddRange(this.PropertyWriters);
+            mainClass.Properties.Add(new Writers.PropertyWriter("IsUiInitialized", "bool", false) { Accessor = Accessor.Protected, PrivateSetter = true, Help = new Writers.HelpWriter { Summary = "Gets a value indicating whether the InitializeUi method has been called." } });
             mainClass.Fields.AddRange(this.FieldWriters);
             mainClass.Events.AddRange(this.EventWriters);
             mainClass.Methods.AddRange(this.MethodWriters);

@@ -4,7 +4,7 @@ Sgntr=SGD
 RelVrs=3
 VTProeVer=6.2.02
 Schema=1
-CRCGUID=D74670B2-6FE7-407D-B1F2-7F62D03DE1E5
+CRCGUID=AAF6B948-D686-4035-BA08-4556AC6EE784
 ]
 ;================================================================================
 [
@@ -3380,6 +3380,188 @@ Sgn=0
 ObjTp=CED
 H=4
 Name=EPS.Crestron.Demo.UI_[Buttons] [Tabs] Tabs_TabVertical.ced
+;Cedver is the version of the Smart Graphics control, not the CED file format.
+;If the control definition changes, increment this.
+CedVer=1
+]
+;================================================================================
+[
+ObjTp=Symbol
+Name=EPS.Crestron.Demo.UI_[Keypads] Keypads_BasicKeypad.ced
+Hint=BasicKeypad (Smart Object ID=3)
+Code=5
+SGControlType=Simple Keypad
+SGControlName=BasicKeypad
+GUID=5B4C1462-2489-4CD8-8085-EE135ECF0B05
+SmplCName=EPS.Crestron.Demo.UI_[Keypads] Keypads_BasicKeypad.ced
+SMWRev=4.02.19
+Expand=expand_random
+HelpID=10061
+;Define the number of inputs, outputs and parameters
+MinVariableInputs=12
+MaxVariableInputs=12
+MinVariableOutputs=12
+MaxVariableOutputs=12
+NumFixedParams=1
+MinVariableInputsList2=0
+MaxVariableInputsList2=0
+MinVariableOutputsList2=0
+MaxVariableOutputsList2=0
+MinVariableInputsList3=0
+MaxVariableInputsList3=0
+MinVariableOutputsList3=0
+MaxVariableOutputsList3=0
+;Define the cues, and signal types  each input, output and parameter.
+InputCue1=[~UNUSED3~]
+InputSigType1=Digital
+OutputCue1=1
+OutputSigType1=Digital
+InputCue2=[~UNUSED3~]
+InputSigType2=Digital
+OutputCue2=2
+OutputSigType2=Digital
+InputCue3=[~UNUSED3~]
+InputSigType3=Digital
+OutputCue3=3
+OutputSigType3=Digital
+InputCue4=[~UNUSED3~]
+InputSigType4=Digital
+OutputCue4=4
+OutputSigType4=Digital
+InputCue5=[~UNUSED3~]
+InputSigType5=Digital
+OutputCue5=5
+OutputSigType5=Digital
+InputCue6=[~UNUSED3~]
+InputSigType6=Digital
+OutputCue6=6
+OutputSigType6=Digital
+InputCue7=[~UNUSED3~]
+InputSigType7=Digital
+OutputCue7=7
+OutputSigType7=Digital
+InputCue8=[~UNUSED3~]
+InputSigType8=Digital
+OutputCue8=8
+OutputSigType8=Digital
+InputCue9=[~UNUSED3~]
+InputSigType9=Digital
+OutputCue9=9
+OutputSigType9=Digital
+InputCue10=[~UNUSED3~]
+InputSigType10=Digital
+OutputCue10=0
+OutputSigType10=Digital
+InputCue11=[~UNUSED3~]
+InputSigType11=Digital
+OutputCue11=Misc_1
+OutputSigType11=Digital
+InputCue12=[~UNUSED3~]
+InputSigType12=Digital
+OutputCue12=Misc_2
+OutputSigType12=Digital
+ParamCue1=SmartObjectId
+ParamSigType1=Constant
+MPp=1
+Pp1=5
+CedH=5
+SmartObjId=3d
+]
+; Parameter Properties for Smart Object ID
+[
+ObjTp=Dp
+H=5
+Tp=1
+HD=TRUE
+DV=3d
+NF=1
+DNF=1
+EncFmt=0
+DVLF=1
+Sgn=0
+]
+; Smart Objects Definition section
+[
+ObjTp=CED
+H=5
+Name=EPS.Crestron.Demo.UI_[Keypads] Keypads_BasicKeypad.ced
+;Cedver is the version of the Smart Graphics control, not the CED file format.
+;If the control definition changes, increment this.
+CedVer=1
+]
+;================================================================================
+[
+ObjTp=Symbol
+Name=EPS.Crestron.Demo.UI_[Keypads] Keypads_BasicDpad.ced
+Hint=BasicDpad (Smart Object ID=6)
+Code=6
+SGControlType=DPad
+SGControlName=BasicDpad
+GUID=443E7699-012D-4A78-9A28-5AC2B5042043
+SmplCName=EPS.Crestron.Demo.UI_[Keypads] Keypads_BasicDpad.ced
+SMWRev=4.02.19
+Expand=expand_random
+HelpID=10015
+;Define the number of inputs, outputs and parameters
+MinVariableInputs=5
+MaxVariableInputs=5
+MinVariableOutputs=5
+MaxVariableOutputs=5
+NumFixedParams=1
+MinVariableInputsList2=0
+MaxVariableInputsList2=0
+MinVariableOutputsList2=0
+MaxVariableOutputsList2=0
+MinVariableInputsList3=0
+MaxVariableInputsList3=0
+MinVariableOutputsList3=0
+MaxVariableOutputsList3=0
+;Define the cues, and signal types  each input, output and parameter.
+InputCue1=[~UNUSED3~]
+InputSigType1=Digital
+OutputCue1=Up
+OutputSigType1=Digital
+InputCue2=[~UNUSED3~]
+InputSigType2=Digital
+OutputCue2=Down
+OutputSigType2=Digital
+InputCue3=[~UNUSED3~]
+InputSigType3=Digital
+OutputCue3=Left
+OutputSigType3=Digital
+InputCue4=[~UNUSED3~]
+InputSigType4=Digital
+OutputCue4=Right
+OutputSigType4=Digital
+InputCue5=[~UNUSED3~]
+InputSigType5=Digital
+OutputCue5=Center
+OutputSigType5=Digital
+ParamCue1=SmartObjectId
+ParamSigType1=Constant
+MPp=1
+Pp1=6
+CedH=6
+SmartObjId=6d
+]
+; Parameter Properties for Smart Object ID
+[
+ObjTp=Dp
+H=6
+Tp=1
+HD=TRUE
+DV=6d
+NF=1
+DNF=1
+EncFmt=0
+DVLF=1
+Sgn=0
+]
+; Smart Objects Definition section
+[
+ObjTp=CED
+H=6
+Name=EPS.Crestron.Demo.UI_[Keypads] Keypads_BasicDpad.ced
 ;Cedver is the version of the Smart Graphics control, not the CED file format.
 ;If the control definition changes, increment this.
 CedVer=1

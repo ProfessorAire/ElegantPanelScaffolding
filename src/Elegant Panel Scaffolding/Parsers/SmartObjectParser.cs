@@ -2,6 +2,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
 namespace EPS.Parsers
@@ -16,6 +17,9 @@ namespace EPS.Parsers
                 ClassName = $"{child?.Element("ObjectName")?.Value ?? ""}",
                 Namespace = rootBuilder.Namespace
             };
+
+            var controlType = child?.Element("TargetControl")?.Value ?? "";
+            var isKeypad = controlType.Equals("Simple_Keypad", StringComparison.OrdinalIgnoreCase) || controlType.Equals("_DPad2", StringComparison.OrdinalIgnoreCase);
 
             var props = child?.Element("Properties");
 
@@ -96,8 +100,14 @@ namespace EPS.Parsers
 
                     if (!string.IsNullOrEmpty(joinName))
                     {
-                        builder.AddJoin(
-                            new JoinBuilder(joinNumber, builder.SmartJoin, joinName, joinType, joinDirection));
+                        var join = new JoinBuilder(joinNumber, builder.SmartJoin, joinName, joinType, joinDirection);
+
+                        if (joinType == JoinType.SmartDigitalButton && isKeypad)
+                        {
+                            join.ChangeEventName = joinName;
+                        }
+
+                        builder.AddJoin(join);
                     }
                 }
             }
@@ -566,7 +576,8 @@ namespace EPS.Parsers
                 .Replace("^", "")
                 .Replace("&", "")
                 .Replace("(", "")
-                .Replace(")", "");
+                .Replace(")", "")
+                .Replace("OK", "Ok");
 
             //Override various names here.
             if (signalName == "SetNumofItems")

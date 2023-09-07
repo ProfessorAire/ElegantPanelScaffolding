@@ -187,13 +187,16 @@ namespace Evands.EPS.Lists
 
             set
             {
-                if (value != null)
+                if (this.isConfigured)
                 {
-                    this.SelectedItem = this.getItems().Where(i => i.Value.Equals(value)).FirstOrDefault();
-                }
-                else
-                {
-                    this.SelectedItem = null;
+                    if (value != null)
+                    {
+                        this.SelectedItem = this.getItems().Where(i => Equals(i.Value, value)).FirstOrDefault();
+                    }
+                    else
+                    {
+                        this.SelectedItem = null;
+                    }
                 }
             }
         }
@@ -240,7 +243,10 @@ namespace Evands.EPS.Lists
         {
             if (isSelected)
             {
-                SelectedItem = sender as T2;
+                if (this.SelectedItem != sender)
+                {
+                    SelectedItem = sender as T2;
+                }
             }
             else
             {
@@ -263,6 +269,10 @@ namespace Evands.EPS.Lists
                 if (items[i] != item)
                 {
                     items[i].IsSelected = false;
+                }
+                else if (item != null && !item.IsSelected)
+                {
+                    item.IsSelected = true;
                 }
             }
         }
