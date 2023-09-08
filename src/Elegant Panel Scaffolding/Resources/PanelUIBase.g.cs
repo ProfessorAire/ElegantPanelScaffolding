@@ -646,7 +646,7 @@ namespace Evands.EPS.Common
                     break;
             }
 
-            ProcessInputQueue();
+            //ProcessInputQueue();
         }
 
         /// <summary>
@@ -795,9 +795,9 @@ namespace Evands.EPS.Common
                 }
                 catch (Exception ex)
                 {
-                    if (UserCodeExceptionEncountered != null)
+                    if (this.UserCodeExceptionEncountered != null)
                     {
-                        UserCodeExceptionEncountered(this, new UnhandledExceptionEventArgs(ex, false));
+                        this.UserCodeExceptionEncountered(this, new ApplicationException("Touchpanel user code exception occurred.\r\n{0}", ex));
                     }
                 }
             }
