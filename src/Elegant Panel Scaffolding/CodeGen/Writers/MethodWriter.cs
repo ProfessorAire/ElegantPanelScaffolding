@@ -6,7 +6,7 @@ namespace EPS.CodeGen.Writers
 {
     public class MethodWriter : WriterBase
     {
-        private readonly StringBuilder sb = new StringBuilder();
+        private readonly StringBuilder sb = new();
 
         private List<(string Type, string Name)> Parameters { get; } = new List<(string Type, string Name)>();
 
@@ -26,59 +26,59 @@ namespace EPS.CodeGen.Writers
 
         public void AddParameter(string type, string name, string help)
         {
-            Parameters.Add((type, name));
-            Help.Parameters.Add((name, help));
+            this.Parameters.Add((type, name));
+            this.Help.Parameters.Add((name, help));
         }
 
         public MethodWriter(string methodName, string methodHelp, string returnType = "void", int indentLevel = 0)
         {
-            Name = methodName;
-            ReturnType = returnType;
+            this.Name = methodName;
+            this.ReturnType = returnType;
             this.indentLevel = indentLevel;
-            Help = new HelpWriter(indentLevel)
+            this.Help = new HelpWriter(indentLevel)
             {
                 Summary = methodHelp
             };
         }
 
-        public override string ToString() => ToString(indentLevel);
+        public override string ToString() => this.ToString(this.indentLevel);
 
         public override string ToString(int indent)
         {
-            _ = sb.Clear();
+            _ = this.sb.Clear();
 
             // Help Stuff First
-            _ = sb.Append(Help.ToString(indent));
+            _ = this.sb.Append(this.Help.ToString(indent));
 
             // Main Method and Parameters
-            _ = sb.Append(indent.GetTabs());
-            _ = sb.Append($"{Accessor.GetTextValue()}{Modifier.GetTextValue()}{(!string.IsNullOrEmpty(ReturnType) ? $"{ReturnType} " : "")}{Name}(");
+            _ = this.sb.Append(indent.GetTabs());
+            _ = this.sb.Append($"{this.Accessor.GetTextValue()}{this.Modifier.GetTextValue()}{(!string.IsNullOrEmpty(this.ReturnType) ? $"{this.ReturnType} " : "")}{this.Name}(");
             var isFirst = true;
-            foreach (var p in Parameters)
+            foreach (var p in this.Parameters)
             {
                 if (!isFirst)
                 {
-                    _ = sb.Append(", ");
+                    _ = this.sb.Append(", ");
                 }
-                _ = sb.Append($"{p.Type} {p.Name}");
+                _ = this.sb.Append($"{p.Type} {p.Name}");
                 isFirst = false;
             }
-            _ = sb.Append(')');
+            _ = this.sb.Append(')');
 
-            if (Modifier == Modifier.Partial || Modifier == Modifier.Abstract)
+            if (this.Modifier is Modifier.Partial or Modifier.Abstract)
             {
-                _ = sb.Append(';');
-                return sb.ToString();
+                _ = this.sb.Append(';');
+                return this.sb.ToString();
             }
 
-            _ = sb.AppendLine();
-            _ = sb.AppendLine($"{indent.GetTabs()}{{");
+            _ = this.sb.AppendLine();
+            _ = this.sb.AppendLine($"{indent.GetTabs()}{{");
             indent++;
 
             // Method Calls
-            for (var i = 0; i < MethodLines.Count; i++)
+            for (var i = 0; i < this.MethodLines.Count; i++)
             {
-                var l = MethodLines[i];
+                var l = this.MethodLines[i];
 
                 if (l.Contains("}") && !l.Contains("{"))
                 {
@@ -86,19 +86,19 @@ namespace EPS.CodeGen.Writers
                 }
                 if (!string.IsNullOrEmpty(l))
                 {
-                    _ = sb.Append(indent.GetTabs());
+                    _ = this.sb.Append(indent.GetTabs());
                     var end = "";
-                    if (!l.EndsWith(";", System.StringComparison.InvariantCulture) && i < MethodLines.Count - 1)
+                    if (!l.EndsWith(";", System.StringComparison.InvariantCulture) && i < this.MethodLines.Count - 1)
                     {
                         if (!(l.EndsWith("{", System.StringComparison.InvariantCulture) || l.EndsWith("}", System.StringComparison.InvariantCulture)))
                         {
-                            if (!(MethodLines[i + 1].TrimStart('\t').StartsWith("{", StringComparison.InvariantCulture) || MethodLines[i + 1].TrimStart('\t').StartsWith("}", StringComparison.InvariantCulture) || l.EndsWith(",", System.StringComparison.InvariantCulture)))
+                            if (!(this.MethodLines[i + 1].TrimStart('\t').StartsWith("{", StringComparison.InvariantCulture) || this.MethodLines[i + 1].TrimStart('\t').StartsWith("}", StringComparison.InvariantCulture) || l.EndsWith(",", System.StringComparison.InvariantCulture)))
                             {
                                 end = ";";
                             }
                         }
                     }
-                    _ = sb.AppendLine(SanitizeSpaces($"{l}{end}", indent));
+                    _ = this.sb.AppendLine(SanitizeSpaces($"{l}{end}", indent));
                     if (l.Contains("{") && !l.Contains("}"))
                     {
                         indent++;
@@ -106,15 +106,15 @@ namespace EPS.CodeGen.Writers
                 }
                 else
                 {
-                    _ = sb.AppendLine();
+                    _ = this.sb.AppendLine();
                 }
             }
             indent--;
 
             //Close it Out
-            _ = sb.Append($"{indent.GetTabs()}}}");
+            _ = this.sb.Append($"{indent.GetTabs()}}}");
 
-            return sb.ToString();
+            return this.sb.ToString();
         }
 
         private static string SanitizeSpaces(string text, int indent) => text.Replace("\n", $"\n{indent.GetTabs()}");

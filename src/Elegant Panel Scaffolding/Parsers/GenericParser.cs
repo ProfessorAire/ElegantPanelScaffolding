@@ -127,10 +127,15 @@ namespace EPS.Parsers
                 return;
             }
             var isSubpageRefItem = rootBuilder.ClassType == ClassType.SrlElement;
-            var builder = new ClassBuilder(ClassType.Control) { ClassName = $"{(isSubpageRefItem ? rootBuilder.ClassName : "")}{child.Element("ObjectName")?.Value ?? ""}", NamespaceBase = rootBuilder.NamespaceBase };
-            builder.DigitalOffset = rootBuilder.DigitalOffset;
-            builder.AnalogOffset = rootBuilder.AnalogOffset;
-            builder.SerialOffset = rootBuilder.SerialOffset;
+            var builder = new ClassBuilder(ClassType.Control)
+            {
+                ClassName = $"{(isSubpageRefItem ? rootBuilder.ClassName : "")}{child.Element("ObjectName")?.Value ?? ""}",
+                NamespaceBase = rootBuilder.NamespaceBase,
+                DigitalOffset = rootBuilder.DigitalOffset,
+                AnalogOffset = rootBuilder.AnalogOffset,
+                SerialOffset = rootBuilder.SerialOffset
+            };
+
             if (rootBuilder.SmartJoin > 0)
             {
                 builder.SmartJoin = rootBuilder.SmartJoin;
@@ -145,9 +150,7 @@ namespace EPS.Parsers
                 foreach (var e in child.Element("Properties").Descendants().
                     Where(e => e.Name.LocalName.ToUpperInvariant().Contains("JOIN") || e.Name.LocalName.ToUpperInvariant().Contains("FEEDBACK")))
                 {
-#pragma warning disable CA1308 // Normalize strings to uppercase
                     var name = e.Name.LocalName.ToLower(CultureInfo.InvariantCulture);
-#pragma warning restore CA1308 // Normalize strings to uppercase
                     if (ushort.TryParse(e.Value, out var join) && join > 0)
                     {
                         if (name.StartsWith("digitalpresshigh", StringComparison.InvariantCulture))
@@ -469,7 +472,7 @@ namespace EPS.Parsers
                             builder.AddJoin(
                                 new JoinBuilder(join, builder.SmartJoin, "Click", JoinType.Digital, JoinDirection.FromPanel));
                         }
-                        else if (name == "negxdigitaljoin" || name == "negydigitaljoin" || name == "posxdigitaljoin" || name == "posydigitaljoin")
+                        else if (name is "negxdigitaljoin" or "negydigitaljoin" or "posxdigitaljoin" or "posydigitaljoin")
                         {
                             var tempName = name == "negxdigitaljoin" ? "GestureLeft" :
                                 name == "negydigitaljoin" ? "GestureDown" :

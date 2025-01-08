@@ -13,7 +13,7 @@
     <Copyright>Copyright © Christopher McNeely</Copyright>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <OutputPath>bin\$(Configuration)\</OutputPath>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <StartupObject>EPS.App</StartupObject>
@@ -21,6 +21,8 @@
     <SignAssembly>false</SignAssembly>
     <DelaySign>false</DelaySign>
     <Authors>Christopher McNeely</Authors>
+    <EnableNETAnalyzers>False</EnableNETAnalyzers>
+    <AnalysisLevel>none</AnalysisLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -31,11 +33,18 @@
   <ItemGroup>
     <Compile Remove="Resources\BooleanValueChangedEventArgs.g.cs" />
     <Compile Remove="Resources\DeviceHelper.g.cs" />
+    <Compile Remove="Resources\IListItemProvider.g.cs" />
+    <Compile Remove="Resources\ItemSelectionChangedEventArgs.g.cs" />
+    <Compile Remove="Resources\ListBase.g.cs" />
+    <Compile Remove="Resources\ListItemBase.g.cs" />
     <Compile Remove="Resources\ObjectEventArgs.g.cs" />
     <Compile Remove="Resources\PanelActions.g.cs" />
     <Compile Remove="Resources\PanelUIBase.g.cs" />
+    <Compile Remove="Resources\SelectedItemChangedEventArgs.g.cs" />
     <Compile Remove="Resources\StringValueChangedEventArgs.g.cs" />
     <Compile Remove="Resources\UShortValueChangedEventArgs.g.cs" />
+    <Compile Remove="Resources\ValueChangedEventArgs.g.cs" />
+    <Compile Remove="Resources\ValueSourceChangedEventArgs.g.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Help\Help.css" />
@@ -51,15 +60,11 @@
     <Resource Include="Resources\DeviceHelper.g.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AvalonEdit" Version="6.0.1" />
-    <PackageReference Include="ColorCode.HTML" Version="2.0.6" />
-    <PackageReference Include="Markdig" Version="0.20.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="SharpZipLib" Version="1.2.0" />
+    <PackageReference Include="AvalonEdit" Version="6.1.3.50" />
+    <PackageReference Include="ColorCode.HTML" Version="2.0.13" />
+    <PackageReference Include="Markdig" Version="0.30.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="SharpZipLib" Version="1.4.0" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
@@ -73,11 +78,18 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\BooleanValueChangedEventArgs.g.cs" />
+    <Resource Include="Resources\IListItemProvider.g.cs" />
+    <Resource Include="Resources\ItemSelectionChangedEventArgs.g.cs" />
+    <Resource Include="Resources\ListBase.g.cs" />
+    <Resource Include="Resources\ListItemBase.g.cs" />
     <Resource Include="Resources\ObjectEventArgs.g.cs" />
     <Resource Include="Resources\PanelUIBase.g.cs" />
     <Resource Include="Resources\PanelActions.g.cs" />
+    <Resource Include="Resources\SelectedItemChangedEventArgs.g.cs" />
     <Resource Include="Resources\StringValueChangedEventArgs.g.cs" />
     <Resource Include="Resources\UShortValueChangedEventArgs.g.cs" />
+    <Resource Include="Resources\ValueChangedEventArgs.g.cs" />
+    <Resource Include="Resources\ValueSourceChangedEventArgs.g.cs" />
     <EmbeddedResource Include="Help\Help.css" />
     <EmbeddedResource Include="Help\Help.md" />
     <EmbeddedResource Include="Help\syntax.css" />

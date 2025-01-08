@@ -25,7 +25,7 @@ namespace EPS
                 return false;
             }
             field = value;
-            NotifyOfPropertyChange(propertyName);
+            this.NotifyOfPropertyChange(propertyName);
             return true;
         }
 

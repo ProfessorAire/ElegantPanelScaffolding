@@ -8,7 +8,7 @@ namespace EPS
         {
             while (element != null)
             {
-                if (element?.Name == "Child" || element?.Name == "Subpage" || element?.Name == "Page")
+                if (element.Name.LocalName is "Child" or "Subpage" or "Page")
                 {
                     var name = element.Element("ObjectName")?.Value;
 

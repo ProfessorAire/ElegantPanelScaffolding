@@ -5,7 +5,7 @@ namespace EPS.CodeGen.Writers
 {
     public class TextWriter : WriterBase
     {
-        private readonly StringBuilder sb = new StringBuilder();
+        private readonly StringBuilder sb = new();
 
         public HelpWriter Help { get; }
 
@@ -16,38 +16,38 @@ namespace EPS.CodeGen.Writers
         public TextWriter(int indentLevel = 0)
         {
             this.indentLevel = indentLevel;
-            Help = new HelpWriter(indentLevel);
+            this.Help = new HelpWriter(indentLevel);
         }
 
         public TextWriter(string text, int indentLevel = 0)
         {
-            Text.Add(text);
+            this.Text.Add(text);
             this.indentLevel = indentLevel;
-            Help = new HelpWriter(indentLevel);
+            this.Help = new HelpWriter(indentLevel);
         }
 
-        public override string ToString() => ToString(indentLevel);
+        public override string ToString() => this.ToString(this.indentLevel);
 
         public override string ToString(int indentLevel)
         {
-            if(Text.Count == 0)
+            if(this.Text.Count == 0)
             {
                 return string.Empty;
             }
 
-            _ = sb.Clear();
-            for (var i = 0; i < Text.Count; i++)
+            _ = this.sb.Clear();
+            for (var i = 0; i < this.Text.Count; i++)
             {
-                if (i < Text.Count - 1)
+                if (i < this.Text.Count - 1)
                 {
-                    _ = sb.AppendLine($"{indentLevel.GetTabs()}{Text[i]}");
+                    _ = this.sb.AppendLine($"{indentLevel.GetTabs()}{this.Text[i]}");
                 }
                 else
                 {
-                    _ = sb.Append($"{indentLevel.GetTabs()}{Text[i]}");
+                    _ = this.sb.Append($"{indentLevel.GetTabs()}{this.Text[i]}");
                 }
             }
-            return sb.ToString();
+            return this.sb.ToString();
         }
     }
 }

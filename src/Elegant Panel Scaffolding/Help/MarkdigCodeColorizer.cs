@@ -34,7 +34,7 @@ namespace EPS.Help
 
     public static class MarkdigCodeColorzerExtensions
     {
-        public static MarkdownPipelineBuilder UseColorizer(this MarkdownPipelineBuilder pipeline)
+        public static MarkdownPipelineBuilder UseCustomColorizer(this MarkdownPipelineBuilder pipeline)
         {
             if (pipeline == null)
             {

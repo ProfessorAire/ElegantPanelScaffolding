@@ -12,9 +12,9 @@ namespace EPS.UI.Controls
 
         public CodeContentGroupAttribute(string groupName, DetailPart part, string content)
         {
-            GroupName = groupName;
-            Part = part;
-            Content = content;
+            this.GroupName = groupName;
+            this.Part = part;
+            this.Content = content;
         }
     }
 
@@ -23,6 +23,17 @@ namespace EPS.UI.Controls
         codeTitle,
         codeContent,
         codeTag
+    }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    public class OrderAttribute : Attribute
+    {
+        public double Order { get; }
+
+        public OrderAttribute(double order)
+        {
+            this.Order = order;
+        }
     }
 
     [AttributeUsage(AttributeTargets.Property)]
@@ -38,8 +49,8 @@ namespace EPS.UI.Controls
 
         public FileTypeAttribute(string[] fileNames, string[] validExtensions)
         {
-            ValidExtensions = validExtensions;
-            FileNames = fileNames;
+            this.ValidExtensions = validExtensions;
+            this.FileNames = fileNames;
         }
     }
 
@@ -48,7 +59,7 @@ namespace EPS.UI.Controls
     {
         public char MaskChar { get; set; }
 
-        public MaskStringAttribute(char maskChar) => MaskChar = maskChar;
+        public MaskStringAttribute(char maskChar) => this.MaskChar = maskChar;
     }
 
 }

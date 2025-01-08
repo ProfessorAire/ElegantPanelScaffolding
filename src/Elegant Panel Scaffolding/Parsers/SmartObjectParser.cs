@@ -2,6 +2,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
 namespace EPS.Parsers
@@ -16,6 +17,9 @@ namespace EPS.Parsers
                 ClassName = $"{child?.Element("ObjectName")?.Value ?? ""}",
                 Namespace = rootBuilder.Namespace
             };
+
+            var controlType = child?.Element("TargetControl")?.Value ?? "";
+            var isKeypad = controlType.Equals("Simple_Keypad", StringComparison.OrdinalIgnoreCase) || controlType.Equals("_DPad2", StringComparison.OrdinalIgnoreCase);
 
             var props = child?.Element("Properties");
 
@@ -96,8 +100,14 @@ namespace EPS.Parsers
 
                     if (!string.IsNullOrEmpty(joinName))
                     {
-                        builder.AddJoin(
-                            new JoinBuilder(joinNumber, builder.SmartJoin, joinName, joinType, joinDirection));
+                        var join = new JoinBuilder(joinNumber, builder.SmartJoin, joinName, joinType, joinDirection);
+
+                        if (joinType == JoinType.SmartDigitalButton && isKeypad)
+                        {
+                            join.ChangeEventName = joinName;
+                        }
+
+                        builder.AddJoin(join);
                     }
                 }
             }
@@ -253,7 +263,7 @@ namespace EPS.Parsers
                                     inName = inName.Replace("Item %i ", "Is");
                                 }
 
-                                if (inName.StartsWith("In") && !inName.Contains("Checked"))
+                                if (inName.StartsWith("In", StringComparison.InvariantCultureIgnoreCase) && !inName.Contains("Checked"))
                                 {
                                     inName = inName.Remove(0, 2);
                                 }
@@ -274,7 +284,7 @@ namespace EPS.Parsers
                                     }
                                 }
 
-                                if (outName.StartsWith("In") && !outName.Contains("Checked"))
+                                if (outName.StartsWith("In", StringComparison.InvariantCultureIgnoreCase) && !outName.Contains("Checked"))
                                 {
                                     outName = outName.Remove(0, 2);
                                 }
@@ -296,13 +306,13 @@ namespace EPS.Parsers
                                     joinDirection = JoinDirection.Both;
                                 }
 
-                                if (joinDirection == JoinDirection.Both || joinDirection == JoinDirection.ToPanel)
+                                if (joinDirection is JoinDirection.Both or JoinDirection.ToPanel)
                                 {
                                     itemBuilder.AddJoin(
                                         new JoinBuilder(startJoin, itemBuilder.SmartJoin, inName, inJoinType, JoinDirection.ToPanel));
                                 }
                                 
-                                if(joinDirection == JoinDirection.Both || joinDirection == JoinDirection.FromPanel)
+                                if(joinDirection is JoinDirection.Both or JoinDirection.FromPanel)
                                 {
                                     itemBuilder.AddJoin(
                                         new JoinBuilder(startJoin, itemBuilder.SmartJoin, outName, outJoinType, JoinDirection.FromPanel));
@@ -437,7 +447,7 @@ namespace EPS.Parsers
 
                                     var outName = inName;
 
-                                    if (outName == "IsPressed" || outName == "IsChecked")
+                                    if (outName == "IsPressed" || outName == "IsChecked" || outName.EndsWith("Press", StringComparison.InvariantCultureIgnoreCase))
                                     {
                                         if (outJoinType == JoinType.SmartDigital)
                                         {
@@ -451,12 +461,12 @@ namespace EPS.Parsers
                                         inName = "Selected";
                                     }
 
-                                    if (inName.StartsWith("Is") && !inName.Contains("Checked"))
+                                    if (inName.StartsWith("Is", StringComparison.InvariantCultureIgnoreCase) && !inName.Contains("Checked"))
                                     {
                                         inName = inName.Remove(0, 2);
                                     }
 
-                                    if (outName.StartsWith("Is") && !outName.Contains("Checked"))
+                                    if (outName.StartsWith("Is", StringComparison.InvariantCultureIgnoreCase) && !outName.Contains("Checked"))
                                     {
                                         outName = outName.Remove(0, 2);
                                     }
@@ -471,13 +481,13 @@ namespace EPS.Parsers
                                     }
                                     else
                                     {
-                                        if (joinDirection == JoinDirection.Both || joinDirection == JoinDirection.ToPanel)
+                                        if (joinDirection is JoinDirection.Both or JoinDirection.ToPanel)
                                         {
                                             itemBuilder.AddJoin(
                                                 new JoinBuilder(joinNumber, itemBuilder.SmartJoin, inName, inJoinType, JoinDirection.ToPanel));
                                         }
 
-                                        if (joinDirection == JoinDirection.Both || joinDirection == JoinDirection.FromPanel)
+                                        if (joinDirection is JoinDirection.Both or JoinDirection.FromPanel)
                                         {
                                             itemBuilder.AddJoin(
                                                 new JoinBuilder(joinNumber, itemBuilder.SmartJoin, outName, outJoinType, JoinDirection.FromPanel));
@@ -554,7 +564,9 @@ namespace EPS.Parsers
             {
                 return signalName;
             }
+
             signalName = signalName.Replace(" ", "")
+                .Replace("%i", string.Empty)
                 .Replace("-", "")
                 .Replace("#", "Pound")
                 .Replace("*", "Star")
@@ -564,7 +576,8 @@ namespace EPS.Parsers
                 .Replace("^", "")
                 .Replace("&", "")
                 .Replace("(", "")
-                .Replace(")", "");
+                .Replace(")", "")
+                .Replace("OK", "Ok");
 
             //Override various names here.
             if (signalName == "SetNumofItems")

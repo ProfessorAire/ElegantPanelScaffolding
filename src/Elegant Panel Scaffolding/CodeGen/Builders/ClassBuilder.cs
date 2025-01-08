@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace EPS.CodeGen.Builders
 {
@@ -13,7 +14,7 @@ namespace EPS.CodeGen.Builders
         public ushort SmartJoin { get; set; }
         public ushort ItemOffset { get; set; }
         private string className = "";
-        public string ClassName { get => SanitizeName(className); set => className = value; }
+        public string ClassName { get => SanitizeName(this.className); set => this.className = value; }
         public string Namespace { get; set; } = "";
         public string NamespaceBase { get; set; } = "";
 
@@ -33,10 +34,10 @@ namespace EPS.CodeGen.Builders
         {
             get
             {
-                if (!string.IsNullOrEmpty(ClassName) && (!ClassName.StartsWith("null", StringComparison.InvariantCultureIgnoreCase)) &&
-                    (Pages.Count > 0 ||
-                    Controls.Count > 0 ||
-                    Joins.Count > 0))
+                if (!string.IsNullOrEmpty(this.ClassName) && (!this.ClassName.StartsWith("null", StringComparison.InvariantCultureIgnoreCase)) &&
+                    (this.Pages.Count > 0 ||
+                    this.Controls.Count > 0 ||
+                    this.Joins.Count > 0))
                 {
                     return true;
                 }
@@ -46,45 +47,45 @@ namespace EPS.CodeGen.Builders
 
         public ClassType ClassType { get; set; } = ClassType.Touchpanel;
 
-        public ClassBuilder(ClassType classType) => ClassType = classType;
+        public ClassBuilder(ClassType classType) => this.ClassType = classType;
 
         public void AddJoin(JoinBuilder join)
         {
-            if (!Joins.Contains(join))
+            if (!this.Joins.Contains(join))
             {
-                Joins.Add(join);
+                this.Joins.Add(join);
             }
         }
 
         public void AddWriter(Writers.WriterBase writer)
         {
-            if (writer is Writers.EventWriter ew && !EventWriters.Where(e => e.Name == ew.Name).Any())
+            if (writer is Writers.EventWriter ew && !this.EventWriters.Where(e => e.Name == ew.Name).Any())
             {
-                EventWriters.Add(ew);
+                this.EventWriters.Add(ew);
                 return;
             }
 
-            if (writer is Writers.FieldWriter fw && !FieldWriters.Where(e => e.Name == fw.Name).Any())
+            if (writer is Writers.FieldWriter fw && !this.FieldWriters.Where(e => e.Name == fw.Name).Any())
             {
-                FieldWriters.Add(fw);
+                this.FieldWriters.Add(fw);
                 return;
             }
 
-            if (writer is Writers.PropertyWriter pw && !PropertyWriters.Where(e => e.Name == pw.Name).Any())
+            if (writer is Writers.PropertyWriter pw && !this.PropertyWriters.Where(e => e.Name == pw.Name).Any())
             {
-                PropertyWriters.Add(pw);
+                this.PropertyWriters.Add(pw);
                 return;
             }
 
-            if (writer is Writers.MethodWriter mw && !MethodWriters.Where(e => e.Name == mw.Name).Any())
+            if (writer is Writers.MethodWriter mw && !this.MethodWriters.Where(e => e.Name == mw.Name).Any())
             {
-                MethodWriters.Add(mw);
+                this.MethodWriters.Add(mw);
                 return;
             }
 
-            if (writer is Writers.TextWriter tw && !OtherWriters.Where(e => e.Text == tw.Text).Any())
+            if (writer is Writers.TextWriter tw && !this.OtherWriters.Where(e => e.Text == tw.Text).Any())
             {
-                OtherWriters.Add(tw);
+                this.OtherWriters.Add(tw);
                 return;
             }
 
@@ -96,7 +97,7 @@ namespace EPS.CodeGen.Builders
             {
                 if (page != null)
                 {
-                    Pages.Add(page);
+                    this.Pages.Add(page);
                 }
             }
         }
@@ -110,7 +111,7 @@ namespace EPS.CodeGen.Builders
 
             if (control.IsValid && !control.ClassName.ToUpperInvariant().Contains("NULL"))
             {
-                Controls.Add(control);
+                this.Controls.Add(control);
             }
         }
 
@@ -118,7 +119,7 @@ namespace EPS.CodeGen.Builders
         {
             if (list != null && !list.Name.ToUpperInvariant().Contains("NULL"))
             {
-                Lists.Add(list);
+                this.Lists.Add(list);
             }
         }
 
@@ -127,32 +128,32 @@ namespace EPS.CodeGen.Builders
             var options = Options.Current;
             var items = new List<(string className, string classPath, Writers.NamespaceWriter nameSpace)>();
             if (options == null) { return items; }
-            if (!Namespace.StartsWith(NamespaceBase, StringComparison.InvariantCulture))
+            if (!this.Namespace.StartsWith(this.NamespaceBase, StringComparison.InvariantCulture))
             {
-                Namespace = NamespaceBase;
+                this.Namespace = this.NamespaceBase;
             }
             if (!string.IsNullOrEmpty(rootNamespace))
             {
-                Namespace = rootNamespace;
+                this.Namespace = rootNamespace;
             }
 
             Writers.NamespaceWriter nsb;
 
-            if (ClassType == ClassType.Touchpanel)
+            if (this.ClassType == ClassType.Touchpanel)
             {
-                nsb = new Writers.NamespaceWriter($"{Namespace}.{ClassName}");
-                Namespace = $"{Namespace}.{ClassName}.Components";
-                NamespaceBase = ClassName;
+                nsb = new Writers.NamespaceWriter($"{this.Namespace}.{this.ClassName}");
+                this.Namespace = $"{this.Namespace}.{this.ClassName}.Components";
+                this.NamespaceBase = this.ClassName;
             }
-            else if (ClassType == ClassType.Page)
+            else if (this.ClassType == ClassType.Page)
             {
-                nsb = new Writers.NamespaceWriter($"{Namespace}");
-                NamespaceBase = Namespace;
-                Namespace = $"{Namespace}.{ClassName}Components";
+                nsb = new Writers.NamespaceWriter($"{this.Namespace}");
+                this.NamespaceBase = this.Namespace;
+                this.Namespace = $"{this.Namespace}.{this.ClassName}Components";
             }
             else
             {
-                nsb = new Writers.NamespaceWriter(Namespace);
+                nsb = new Writers.NamespaceWriter(this.Namespace);
             }
 
             var asm = System.Reflection.Assembly.GetExecutingAssembly();
@@ -163,37 +164,37 @@ namespace EPS.CodeGen.Builders
             nsb.AddHeader("//");
             nsb.AddHeader($"//\t\tChanges to this file may break expected behavior and will be lost if the code is regenerated.");
             nsb.AddHeader($"//\t\tCreate a new file with a new partial declaration of the contents of this file and edit that instead.");
-            nsb.AddHeader($"//\t\tYou can use the '_Setup()`, '_InitializeValues()', and '_Dispose()' partial methods to hook into the construction, initialization, and disposal logic.");
+            nsb.AddHeader($"//\t\tYou can use the 'SetupUi()`, 'InitializeUi()', and 'DisposeUi()' partial methods to hook into the construction, initialization, and disposal logic.");
             nsb.AddHeader($"// </auto-generated>");
 
             nsb.AddUsing("System");
             nsb.AddUsing("System.Collections.Generic");
 
-            if (ClassType != ClassType.Touchpanel)
+            if (this.ClassType != ClassType.Touchpanel)
             {
                 nsb.AddUsing("Crestron.SimplSharpPro.DeviceSupport");
             }
 
-            nsb.AddUsing($"{options.PanelNamespace}.Core");
+            nsb.AddUsing("Evands.EPS.Common");
 
             Writers.ClassWriter mainClass;
 
-            if (ClassType == ClassType.Touchpanel)
+            if (this.ClassType == ClassType.Touchpanel)
             {
-                ClassName = "Panel";
-                mainClass = new Writers.ClassWriter("Panel");
+                this.ClassName = "Panel";
+                mainClass = new Writers.ClassWriter("Panel") { ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged };
             }
-            else if (ClassType == ClassType.SrlElement)
+            else if (this.ClassType == ClassType.SrlElement)
             {
-                mainClass = new Writers.ClassWriter($"{ClassName}");
+                mainClass = new Writers.ClassWriter($"{this.ClassName}") { ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged };
             }
             else
             {
-                mainClass = new Writers.ClassWriter(ClassName);
+                mainClass = new Writers.ClassWriter(this.ClassName) { ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged };
             }
 
             mainClass.Modifier = Modifier.Partial;
-            if (ClassType == ClassType.Touchpanel)
+            if (this.ClassType == ClassType.Touchpanel)
             {
                 mainClass.Implements.Add("PanelUIBase");
             }
@@ -203,18 +204,18 @@ namespace EPS.CodeGen.Builders
             }
 
             // Main Class Constructor
-            var ctor = new Writers.MethodWriter(ClassName, "Creates a new instance of the class.", "", 2);
+            var ctor = new Writers.MethodWriter(this.ClassName, "Creates a new instance of the class.", "", 2);
 
-            // Partial _Setup method.
-            var partialSetup = new Writers.MethodWriter("_Setup", "Implement this in accompanying classes in order to setup functionality on the construction of the root class.\nNo values should be sent to this touchpanel in this method!", "void", 2)
+            // Partial SetupUi method.
+            var partialSetup = new Writers.MethodWriter("SetupUi", "Implement this in accompanying classes in order to setup functionality on the construction of the root class.\nNo values should be sent to this touchpanel in this method!", "void", 2)
             {
                 Modifier = Modifier.Partial,
                 Accessor = Accessor.None
             };
             mainClass.Methods.Add(partialSetup);
 
-            // Partial _Dispose method.
-            var partialDispose = new Writers.MethodWriter("_Dispose", "Implement this in accompanying classes in order to dispose of objects as needed.", "void", 2)
+            // Partial DisposeUi method.
+            var partialDispose = new Writers.MethodWriter("DisposeUi", "Implement this in accompanying classes in order to dispose of objects as needed.", "void", 2)
             {
                 Modifier = Modifier.Partial,
                 Accessor = Accessor.None
@@ -222,7 +223,7 @@ namespace EPS.CodeGen.Builders
             mainClass.Methods.Add(partialDispose);
 
             // Partial Initialize Values Method.
-            var partialInit = new Writers.MethodWriter("_InitializeValues", "Implement in accompanying classes in order to send initial values to the touchpanels when the root class Threads are started.", "void", 2)
+            var partialInit = new Writers.MethodWriter("InitializeUi", "Implement in accompanying classes in order to send initial values to the touchpanels when the root class Threads are started.", "void", 2)
             {
                 Modifier = Modifier.Partial,
                 Accessor = Accessor.None
@@ -230,7 +231,7 @@ namespace EPS.CodeGen.Builders
             mainClass.Methods.Add(partialInit);
 
             // Parent Panel.
-            if (ClassType != ClassType.Touchpanel)
+            if (this.ClassType != ClassType.Touchpanel)
             {
                 var parentPanel = new Writers.FieldWriter("ParentPanel", "Panel", 2);
                 parentPanel.Help.Summary = $"The <see cref=\"Panel\"/> that this object belongs to.";
@@ -240,7 +241,7 @@ namespace EPS.CodeGen.Builders
             }
 
             // Pages and Controls
-            if (ClassType == ClassType.SrlElement)
+            if (this.ClassType == ClassType.SrlElement)
             {
                 var digitalOffsetField = new Writers.FieldWriter("digitalOffset", "ushort", 2) { Accessor = Accessor.Private, DefaultValue = "0" };
                 digitalOffsetField.Help.Summary = "The offset amount this item uses for its digital joins.";
@@ -280,63 +281,65 @@ namespace EPS.CodeGen.Builders
                 ctor.MethodLines.Add("}");
                 ctor.MethodLines.Add("");
 
-                for (var i = 0; i < Controls.Count; i++)
+                for (var i = 0; i < this.Controls.Count; i++)
                 {
-                    ctor.MethodLines.Add($"{Controls[i].ClassName.Replace(ClassName, "")} = new {Controls[i].ClassName}(ParentPanel, this.digitalOffset, this.analogOffset, this.serialOffset, this.itemOffset);");
+                    ctor.MethodLines.Add($"{this.Controls[i].ClassName.Replace(this.ClassName, "")} = new {this.Controls[i].ClassName}(ParentPanel, this.digitalOffset, this.analogOffset, this.serialOffset, this.itemOffset);");
                 }
             }
-            else if (ClassType == ClassType.Control && (AnalogOffset > 0 || DigitalOffset > 0 || SerialOffset > 0))
+            else if (this.ClassType == ClassType.Control && (this.AnalogOffset > 0 || this.DigitalOffset > 0 || this.SerialOffset > 0))
             {
-                foreach(var c in Controls)
+                foreach (var c in this.Controls)
                 {
-                    c.AnalogOffset = AnalogOffset;
-                    c.DigitalOffset = DigitalOffset;
-                    c.SerialOffset = SerialOffset;
+                    c.AnalogOffset = this.AnalogOffset;
+                    c.DigitalOffset = this.DigitalOffset;
+                    c.SerialOffset = this.SerialOffset;
                 }
 
-                foreach(var j in Joins)
+                foreach (var j in this.Joins)
                 {
-                    j.AnalogOffset = AnalogOffset;
-                    j.DigitalOffset = DigitalOffset;
-                    j.SerialOffset = SerialOffset;
+                    j.AnalogOffset = this.AnalogOffset;
+                    j.DigitalOffset = this.DigitalOffset;
+                    j.SerialOffset = this.SerialOffset;
                 }
             }
-            else if (ClassType == ClassType.Touchpanel)
+            else if (this.ClassType == ClassType.Touchpanel)
             {
-                foreach (var p in Pages)
+                foreach (var p in this.Pages)
                 {
                     ctor.MethodLines.Add($"{p.ClassName} = new Components.{p.ClassName}(this);");
                 }
-                foreach (var c in Controls)
+                foreach (var c in this.Controls)
                 {
                     ctor.MethodLines.Add($"{c.ClassName} = new Components.{c.ClassName}(this);");
                 }
             }
-            else if (ClassType == ClassType.Page)
+            else if (this.ClassType == ClassType.Page)
             {
-                foreach (var p in Pages)
+                foreach (var p in this.Pages)
                 {
-                    ctor.MethodLines.Add($"{p.ClassName} = new {ClassName}Components.{p.ClassName}(ParentPanel);");
+                    ctor.MethodLines.Add($"{p.ClassName} = new {this.ClassName}Components.{p.ClassName}(ParentPanel);");
                 }
-                foreach (var c in Controls)
+                foreach (var c in this.Controls)
                 {
-                    ctor.MethodLines.Add($"{c.ClassName} = new {ClassName}Components.{c.ClassName}(ParentPanel);");
+                    ctor.MethodLines.Add($"{c.ClassName} = new {this.ClassName}Components.{c.ClassName}(ParentPanel);");
                 }
             }
-            
-            if (ClassType == ClassType.Control || ClassType == ClassType.SmartObject)
+
+            if (this.ClassType is ClassType.Control or ClassType.SmartObject)
             {
-                foreach (var l in Lists)
+                foreach (var l in this.Lists)
                 {
                     foreach (var w in l.GetWriters())
                     {
-                        AddWriter(w);
+                        this.AddWriter(w);
                     }
+
+                    mainClass.Implements.Add($"Evands.EPS.Common.IListItemProvider<{l.Control.ClassName}>");
                 }
             }
 
             // Before adding the ctor, all the TextWriters should be providing constructor lines, so we'll add them there.
-            foreach (var w in OtherWriters)
+            foreach (var w in this.OtherWriters)
             {
                 if (ctor.MethodLines.Last().Length > 0)
                 {
@@ -352,15 +355,15 @@ namespace EPS.CodeGen.Builders
                 ctor.MethodLines.Add("");
             }
 
-            foreach (var j in Joins)
+            foreach (var j in this.Joins)
             {
                 var text = j.GetInitializers().ToString();
 
-                if (ClassType == ClassType.Touchpanel)
+                if (this.ClassType == ClassType.Touchpanel)
                 {
                     text = text.Replace("ParentPanel.Actions", "Actions");
                 }
-                else if (ClassType == ClassType.SrlElement && !string.IsNullOrWhiteSpace(text))
+                else if (this.ClassType == ClassType.SrlElement && !string.IsNullOrWhiteSpace(text))
                 {
                     static string ProcessText(string text, int offset)
                     {
@@ -399,13 +402,13 @@ namespace EPS.CodeGen.Builders
                 }
             }
 
-            // Call _Setup Last
+            // Call SetupUi Last
             if (ctor.MethodLines.Last().Length > 0)
             {
                 ctor.MethodLines.Add("");
             }
 
-            ctor.MethodLines.Add("_Setup();");
+            ctor.MethodLines.Add("SetupUi();");
 
             mainClass.Constructors.Add(ctor);
 
@@ -414,7 +417,7 @@ namespace EPS.CodeGen.Builders
             // Initialize Values Method
             var initValuesMethod = new Writers.MethodWriter("InitializeValues", "Attempts to initialize values for the current class.", "void", 2);
 
-            if (ClassType == ClassType.Touchpanel)
+            if (this.ClassType == ClassType.Touchpanel)
             {
                 initValuesMethod.Accessor = Accessor.Protected;
                 initValuesMethod.Modifier = Modifier.Override;
@@ -423,106 +426,73 @@ namespace EPS.CodeGen.Builders
             {
                 initValuesMethod.Accessor = Accessor.Internal;
             }
-            initValuesMethod.MethodLines.Add("_InitializeValues();");
 
-            foreach (var join in Joins)
+            initValuesMethod.MethodLines.Add("InitializeUi();");
+
+            foreach (var join in this.Joins)
             {
-                join.IsListElement = ClassType == ClassType.SrlElement;
+                join.IsListElement = this.ClassType == ClassType.SrlElement;
                 foreach (var w in join.GetWriters())
                 {
-                    AddWriter(w);
+                    this.AddWriter(w);
                 }
             }
 
             // Other Pages
-            foreach (var c in Pages)
+            foreach (var c in this.Pages)
             {
                 var typeName = string.Empty;
 
-                if (ClassType == ClassType.Touchpanel)
+                if (this.ClassType == ClassType.Touchpanel)
                 {
                     typeName = $"Components.{c.ClassName}";
                 }
                 else
                 {
-                    typeName = $"{ClassName}Components.{c.ClassName}";
+                    typeName = $"{this.ClassName}Components.{c.ClassName}";
                 }
 
                 var fw = new Writers.FieldWriter(c.ClassName, typeName);
                 fw.Help.Summary = $"Provides access to the {c.ClassName} Page.";
-                FieldWriters.Add(fw);
+                this.FieldWriters.Add(fw);
                 initValuesMethod.MethodLines.Add($"{c.ClassName}.InitializeValues();");
             }
 
             // Other Controls
-            foreach (var c in Controls)
+            foreach (var c in this.Controls)
             {
                 var typeName = string.Empty;
 
-                if (ClassType == ClassType.Touchpanel || ClassType == ClassType.SrlElement)
+                if (this.ClassType is ClassType.Touchpanel or ClassType.SrlElement)
                 {
                     typeName = c.ClassName;
                 }
                 else
                 {
-                    typeName = $"{ClassName}Components.{c.ClassName}";
+                    typeName = $"{this.ClassName}Components.{c.ClassName}";
                 }
 
                 var fw = new Writers.FieldWriter(c.ClassName, typeName);
-                if (ClassType == ClassType.SrlElement)
+                if (this.ClassType is ClassType.SrlElement)
                 {
-                    fw.Name = c.ClassName.Replace(ClassName, "");
+                    fw.Name = c.ClassName.Replace(this.ClassName, "");
                 }
+
                 fw.Help.Summary = $"Provides access to the {fw.Name} Control.";
-                FieldWriters.Add(fw);
+                this.FieldWriters.Add(fw);
                 initValuesMethod.MethodLines.Add($"{fw.Name}.InitializeValues();");
             }
+
+            initValuesMethod.MethodLines.Add("this.IsUiInitialized = true;");
 
             // Add initialize values method
             mainClass.Methods.Add(initValuesMethod);
 
-            // Build Clear All Event Subscriptions method.
-            //var fromJoins = Joins; //.Where(j => j.JoinDirection == JoinDirection.FromPanel || j.JoinDirection == JoinDirection.Both);
-            //if (fromJoins.Any())
-            //{
-            //    var subMW = new Writers.MethodWriter("ClearAllEventSubscriptions", "Clears all of the subscriptions on events.", "void");
-
-            //    foreach (var j in fromJoins)
-            //    {
-            //        if (!(j.JoinType == JoinType.DigitalButton))
-            //        {
-            //            if (j.JoinType == JoinType.SmartDigitalButton || j.JoinType == JoinType.DigitalButton)
-            //            {
-            //                subMW.MethodLines.Add($"{j.JoinName}Pressed = null;");
-            //                subMW.MethodLines.Add($"{j.JoinName}Released = null;");
-            //            }
-            //            else if (j.ChangeEventName != "Changed" && !string.IsNullOrEmpty(j.ChangeEventName))
-            //            {
-            //                subMW.MethodLines.Add($"{j.ChangeEventName} = null;");
-            //            }
-            //            else
-            //            {
-            //                System.Diagnostics.Debug.Print($"Just a Changed Event: {j.JoinName}");
-            //            }
-            //        }
-            //        else
-            //        {
-            //            subMW.MethodLines.Add($"{j.JoinName}Pressed = null;");
-            //            subMW.MethodLines.Add($"{j.JoinName}Released = null;");
-            //        }
-            //    }
-
-            //    mainClass.Methods.Add(subMW);
-            //}
-
-            // Build Dispose Method
-
-
             // Dispose Method
             Writers.MethodWriter disp;
-            if (ClassType == ClassType.Touchpanel)
+            if (this.ClassType == ClassType.Touchpanel)
             {
-                disp = new Writers.MethodWriter("DisposeChildren", "Calls the partial void _Dispose in order to allow disposing of custom objects.", "void", 2)
+                disp = new Writers.MethodWriter("DisposeChildren", "Calls the partial void DisposeUi in order to allow disposing of custom objects.", "void", 2)
                 {
                     Accessor = Accessor.Protected,
                     Modifier = Modifier.Override
@@ -530,25 +500,25 @@ namespace EPS.CodeGen.Builders
             }
             else
             {
-                disp = new Writers.MethodWriter("Dispose", "Calls the partial void _Dispose in order to allow disposing of custom objects.", "void", 2)
+                disp = new Writers.MethodWriter("Dispose", "Calls the partial void DisposeUi in order to allow disposing of custom objects.", "void", 2)
                 {
                     Accessor = Accessor.Public,
                     Modifier = Modifier.None
                 };
             }
 
-            disp.MethodLines.Add("_Dispose();");
+            disp.MethodLines.Add("DisposeUi();");
 
-            foreach (var p in Pages)
+            foreach (var p in this.Pages)
             {
                 disp.MethodLines.Add($"{p.ClassName}.Dispose();");
             }
 
-            foreach (var c in Controls)
+            foreach (var c in this.Controls)
             {
-                if (ClassType == ClassType.SrlElement)
+                if (this.ClassType == ClassType.SrlElement)
                 {
-                    disp.MethodLines.Add($"{c.ClassName.Replace(ClassName, "")}.Dispose();");
+                    disp.MethodLines.Add($"{c.ClassName.Replace(this.ClassName, "")}.Dispose();");
                 }
                 else
                 {
@@ -556,11 +526,11 @@ namespace EPS.CodeGen.Builders
                 }
             }
 
-            if (Lists.Count > 0)
+            if (this.Lists.Count > 0)
             {
                 disp.MethodLines.Add($"foreach (var i in Items)");
                 disp.MethodLines.Add("{");
-                foreach (var l in Lists)
+                foreach (var l in this.Lists)
                 {
                     disp.MethodLines.Add($"i.Dispose();");
                 }
@@ -574,22 +544,22 @@ namespace EPS.CodeGen.Builders
 
             mainClass.Methods.Add(disp);
 
-            foreach (var c in Controls)
+            foreach (var c in this.Controls)
             {
-                if (ClassType == ClassType.SrlElement)
+                if (this.ClassType == ClassType.SrlElement)
                 {
                     c.ClassType = ClassType.SrlElement;
                 }
-                var built = c.Build($"{Namespace}", ParentPanelClass);
+                var built = c.Build($"{this.Namespace}", ParentPanelClass);
                 foreach (var builder in built)
                 {
                     items.Add(builder);
                 }
             }
 
-            foreach (var l in Lists)
+            foreach (var l in this.Lists)
             {
-                var built = l.Control.Build($"{Namespace}", ParentPanelClass);
+                var built = l.Control.Build($"{this.Namespace}", ParentPanelClass);
                 foreach (var builder in built)
                 {
                     items.Add(builder);
@@ -597,34 +567,40 @@ namespace EPS.CodeGen.Builders
             }
 
             // Add the writers to the class.
-            mainClass.Properties.AddRange(PropertyWriters);
-            mainClass.Fields.AddRange(FieldWriters);
-            mainClass.Events.AddRange(EventWriters);
-            mainClass.Methods.AddRange(MethodWriters);
+            mainClass.Properties.AddRange(this.PropertyWriters);
+            mainClass.Properties.Add(new Writers.PropertyWriter("IsUiInitialized", "bool", false) { Accessor = Accessor.Protected, PrivateSetter = true, Help = new Writers.HelpWriter { Summary = "Gets a value indicating whether the InitializeUi method has been called." } });
+            mainClass.Fields.AddRange(this.FieldWriters);
+            mainClass.Events.AddRange(this.EventWriters);
+            mainClass.Methods.AddRange(this.MethodWriters);
 
             nsb.Classes.Add(mainClass);
 
-            var path = "";
-            if (ClassType == ClassType.Touchpanel)
+            if (mainClass.Properties.Count > 0)
             {
-                path = $"{options?.CompilePath}\\{NamespaceBase}\\Panel.g.cs";
+                nsb.AddUsing("System.ComponentModel");
             }
-            else if (ClassType == ClassType.Page)
+
+            var path = "";
+            if (this.ClassType == ClassType.Touchpanel)
             {
-                path = $"{options?.CompilePath}\\{NamespaceBase.Replace(options?.RootNamespace, "").Trim('.').Replace(".", "\\")}\\{ClassName}.g.cs";
+                path = $"{options?.CompilePath}\\{this.NamespaceBase}\\Panel.g.cs";
+            }
+            else if (this.ClassType == ClassType.Page)
+            {
+                path = $"{options?.CompilePath}\\{this.NamespaceBase.Replace(options?.RootNamespace, "").Trim('.').Replace(".", "\\")}\\{this.ClassName}.g.cs";
             }
             else
             {
-                path = $"{options?.CompilePath}\\{(ClassType != ClassType.Touchpanel ? $"{Namespace.Replace(options?.RootNamespace, "").Trim('.').Replace(".", "\\")}\\" : "")}{ClassName}.g.cs";
+                path = $"{options?.CompilePath}\\{(this.ClassType != ClassType.Touchpanel ? $"{this.Namespace.Replace(options?.RootNamespace, "").Trim('.').Replace(".", "\\")}\\" : "")}{this.ClassName}.g.cs";
             }
 
 
             // This is the end!
-            items.Add((ClassName, path, nsb));
+            items.Add((this.ClassName, path, nsb));
 
-            foreach (var cb in Pages)
+            foreach (var cb in this.Pages)
             {
-                foreach (var i in cb.Build($"{Namespace}", ParentPanelClass))
+                foreach (var i in cb.Build($"{this.Namespace}", ParentPanelClass))
                 {
                     items.Add(i);
                 }
@@ -634,13 +610,29 @@ namespace EPS.CodeGen.Builders
 
         private static string SanitizeName(string name)
         {
-            name = name.Replace(" ", "").Replace(".", "").Replace("-", "");
-            while (name.Contains('[') && name.Contains(']'))
+            var saniRegex = new Regex(@"(?:\[.*\](?<g2>[^\]]+))|(?:\[(?<g1>[^[\]]*)])");
+            if (!string.IsNullOrWhiteSpace(name))
             {
-                name = name.Replace(name.Substring(name.IndexOf('['), name.IndexOf(']') - name.IndexOf('[')), "");
+                name = name.Replace(" ", "").Replace(".", "").Replace("-", "");
+
+                var match = saniRegex.Match(name);
+                if (match.Success)
+                {
+                    if (match.Groups["g1"].Success)
+                    {
+                        name = match.Groups["g1"].Value;
+                    }
+                    else if (match.Groups["g2"].Success)
+                    {
+                        name = match.Groups["g2"].Value;
+                    }
+                }
+
+                name = name.Replace("[", "").Replace("]", "");
+                return name;
             }
-            name = name.Replace("[", "").Replace("]", "");
-            return name;
+
+            return string.Empty;
         }
     }
 }

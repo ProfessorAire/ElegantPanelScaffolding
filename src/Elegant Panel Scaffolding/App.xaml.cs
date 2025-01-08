@@ -11,8 +11,7 @@ namespace EPS
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            StartupUri = new Uri("UI/MainWindow.xaml", UriKind.RelativeOrAbsolute);
-
+            this.StartupUri = new Uri("UI/MainWindow.xaml", UriKind.RelativeOrAbsolute);
         }
     }
 }

@@ -58,11 +58,11 @@ To obtain a functional set of classes it requires preparing the touchpanel proje
 4. Duplicate names are allowed, but the application does not check for them! If you have two controls on the same page or subpage with the same name, you'll only get generated code for one of those controls. This will lead to potential conflicts. Make sure you only use duplicate names across different pages or subpages.
 5. Using current parsing methods some references to classes from parent classes have the parent class name removed, ergo if you have a subpage `Header` and a text control named `HeaderText` then the header's `Dispose()` method will end up calling `Text.Dispose();` instead of `HeaderText.Dispose()`. This will be updated in future versions, but is worth being aware of.
 6. The following `partial` methods are generated for each class.
-   * `partial void _Setup()`
+   * `partial void SetupUI()`
      * This can be declared in any custom class implementation and it will get called at the end of the class' constructor. This happens *before* any connections to touchpanels are made, so you have to be careful to *not* attempt to set any properties that would send information to a touchpanel. This information will not make it to the touchpanel and you may notice the system being out of sync from what you expect.
-   * `partial void _Dispose()`
+   * `partial void DisposeUI()`
      * All generated classes implement IDisposable, in order to allow a single call to the root panel's `Dispose()` method to properly walk through the children disposing of them. If you need to dispose of any objects you declare in your partial class declarations, this is the way to do so.
-   * `partial void _InitializeValues()`
+   * `partial void InitializeUI()`
      * This method is called whenever the root touchpanel object is started via the `StartThreads()` method. Use this when you need to explicitly set a startup value for control properties.
 
 ### Registering and starting/stopping the panel functionality

@@ -6,7 +6,7 @@ namespace EPS.CodeGen.Writers
 {
     public class NamespaceWriter : WriterBase
     {
-        private readonly StringBuilder sb = new StringBuilder();
+        private readonly StringBuilder sb = new();
 
         public List<ClassWriter> Classes { get; } = new List<ClassWriter>();
 
@@ -16,68 +16,68 @@ namespace EPS.CodeGen.Writers
 
         public List<string> Headers { get; } = new List<string>();
 
-        public NamespaceWriter(string name) => Name = name;
+        public NamespaceWriter(string name) => this.Name = name;
 
         public void AddUsing(string usingStatement)
         {
-            if (!Usings.Contains(usingStatement))
+            if (!this.Usings.Contains(usingStatement))
             {
-                Usings.Add(usingStatement);
+                this.Usings.Add(usingStatement);
             }
         }
 
         public void AddHeader(string headerText)
         {
-            if (!Headers.Contains(headerText))
+            if (!this.Headers.Contains(headerText))
             {
-                Headers.Add(headerText);
+                this.Headers.Add(headerText);
             }
         }
 
-        public override string ToString() => ToString(0);
+        public override string ToString() => this.ToString(0);
 
         public override string ToString(int indentLevel)
         {
-            _ = sb.Clear();
-            foreach(var h in Headers)
+            _ = this.sb.Clear();
+            foreach(var h in this.Headers)
             {
-                sb.AppendLine(h);
+                this.sb.AppendLine(h);
             }
 
-            if (Headers.Count > 0)
+            if (this.Headers.Count > 0)
             {
-                sb.AppendLine();
+                this.sb.AppendLine();
             }
 
-            Usings.Sort();
-            foreach (var u in Usings)
+            this.Usings.Sort();
+            foreach (var u in this.Usings)
             {
-                _ = sb.Append(indentLevel.GetTabs());
-                _ = sb.AppendLine($"{(u.StartsWith("using", StringComparison.InvariantCulture) ? "" : "using ")}{u}{(u.EndsWith(";", System.StringComparison.InvariantCulture) ? "" : ";")}");
+                _ = this.sb.Append(indentLevel.GetTabs());
+                _ = this.sb.AppendLine($"{(u.StartsWith("using", StringComparison.InvariantCulture) ? "" : "using ")}{u}{(u.EndsWith(";", System.StringComparison.InvariantCulture) ? "" : ";")}");
             }
 
-            _ = sb.AppendLine();
+            _ = this.sb.AppendLine();
 
-            _ = sb.Append(indentLevel.GetTabs());
-            _ = sb.AppendLine($"namespace {Name}");
+            _ = this.sb.Append(indentLevel.GetTabs());
+            _ = this.sb.AppendLine($"namespace {this.Name}");
 
-            _ = sb.Append(indentLevel.GetTabs());
-            _ = sb.AppendLine("{");
+            _ = this.sb.Append(indentLevel.GetTabs());
+            _ = this.sb.AppendLine("{");
             indentLevel++;
 
-            for (var i = 0; i < Classes.Count; i++)
+            for (var i = 0; i < this.Classes.Count; i++)
             {
-                var c = Classes[i];
-                _ = sb.AppendLine(c.ToString(indentLevel));
-                if (i < Classes.Count - 1)
+                var c = this.Classes[i];
+                _ = this.sb.AppendLine(c.ToString(indentLevel));
+                if (i < this.Classes.Count - 1)
                 {
-                    _ = sb.AppendLine();
+                    _ = this.sb.AppendLine();
                 }
             }
 
-            _ = sb.AppendLine("}");
+            _ = this.sb.AppendLine("}");
 
-            return sb.ToString();
+            return this.sb.ToString();
         }
     }
 }

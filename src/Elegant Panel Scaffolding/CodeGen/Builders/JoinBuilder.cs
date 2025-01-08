@@ -56,8 +56,8 @@ namespace EPS.CodeGen.Builders
         /// </summary>
         public string ChangeEventName
         {
-            get => string.IsNullOrWhiteSpace(changeEventName) ? JoinType == JoinType.DigitalButton || JoinType == JoinType.SmartDigitalButton ? string.Empty : $"{FormatPropertyName(JoinName)}Changed" : changeEventName;
-            set => changeEventName = value;
+            get => string.IsNullOrWhiteSpace(this.changeEventName) ? this.JoinType is JoinType.DigitalButton or JoinType.SmartDigitalButton ? string.Empty : $"{FormatPropertyName(this.JoinName)}Changed" : this.changeEventName;
+            set => this.changeEventName = value;
         }
 
         /// <summary>
@@ -81,11 +81,11 @@ namespace EPS.CodeGen.Builders
         /// <param name="joinMethod">The join's interaction method.</param>
         public JoinBuilder(uint joinNumber, uint smartId, string joinName, JoinType joinType, JoinDirection joinDirection)
         {
-            JoinNumber = joinNumber;
-            SmartJoinNumber = smartId;
-            JoinName = joinName;
-            JoinType = joinType;
-            JoinDirection = joinDirection;
+            this.JoinNumber = joinNumber;
+            this.SmartJoinNumber = smartId;
+            this.JoinName = joinName;
+            this.JoinType = joinType;
+            this.JoinDirection = joinDirection;
         }
 
         /// <summary>
@@ -96,13 +96,13 @@ namespace EPS.CodeGen.Builders
         {
             var writer = new TextWriter();
 
-            if (JoinDirection == JoinDirection.FromPanel || JoinDirection == JoinDirection.Both)
+            if (this.JoinDirection is JoinDirection.FromPanel or JoinDirection.Both)
             {
-                var raiseMethod = $"Raise{ChangeEventName}";
+                var raiseMethod = $"Raise{this.ChangeEventName}";
 
-                var joinType = JoinType;
+                var joinType = this.JoinType;
 
-                if (SmartJoinNumber > 0)
+                if (this.SmartJoinNumber > 0)
                 {
                     if (joinType == JoinType.Digital)
                     {
@@ -122,35 +122,35 @@ namespace EPS.CodeGen.Builders
                     }
                 }
 
-                var offset = GetOffsetString();
+                var offset = this.GetOffsetString();
 
                 switch (joinType)
                 {
                     case JoinType.Digital:
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, (value) => {raiseMethod}(value));");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({this.JoinNumber}, (value) => {raiseMethod}(value));");
                         break;
                     case JoinType.DigitalButton:
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}{offset}, (value) => Raise{ChangeEventName}Pressed(value), true);");
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}{offset}, (value) => Raise{ChangeEventName}Released(value), false);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({this.JoinNumber}{offset}, (value) => Raise{this.ChangeEventName}Pressed(value), true);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({this.JoinNumber}{offset}, (value) => Raise{this.ChangeEventName}Released(value), false);");
                         break;
                     case JoinType.Analog:
-                        writer.Text.Add($"ParentPanel.Actions.AddUShort({JoinNumber}{offset}, (value) => {raiseMethod}(value));");
+                        writer.Text.Add($"ParentPanel.Actions.AddUShort({this.JoinNumber}{offset}, (value) => {raiseMethod}(value));");
                         break;
                     case JoinType.Serial:
-                        writer.Text.Add($"ParentPanel.Actions.AddString({JoinNumber}{offset}, (value) => {raiseMethod}(value));");
+                        writer.Text.Add($"ParentPanel.Actions.AddString({this.JoinNumber}{offset}, (value) => {raiseMethod}(value));");
                         break;
                     case JoinType.SmartDigital:
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(value));");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({this.JoinNumber}, {this.SmartJoinNumber}, (value) => {raiseMethod}(value));");
                         break;
                     case JoinType.SmartDigitalButton:
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => Raise{ChangeEventName}Pressed(value), true);");
-                        writer.Text.Add($"ParentPanel.Actions.AddBool({JoinNumber}, {SmartJoinNumber}, (value) => Raise{ChangeEventName}Released(value), false);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({this.JoinNumber}, {this.SmartJoinNumber}, (value) => Raise{this.ChangeEventName}Pressed(value), true);");
+                        writer.Text.Add($"ParentPanel.Actions.AddBool({this.JoinNumber}, {this.SmartJoinNumber}, (value) => Raise{this.ChangeEventName}Released(value), false);");
                         break;
                     case JoinType.SmartAnalog:
-                        writer.Text.Add($"ParentPanel.Actions.AddUShort({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(value));");
+                        writer.Text.Add($"ParentPanel.Actions.AddUShort({this.JoinNumber}, {this.SmartJoinNumber}, (value) => {raiseMethod}(value));");
                         break;
                     case JoinType.SmartSerial:
-                        writer.Text.Add($"ParentPanel.Actions.AddString({JoinNumber}, {SmartJoinNumber}, (value) => {raiseMethod}(value));");
+                        writer.Text.Add($"ParentPanel.Actions.AddString({this.JoinNumber}, {this.SmartJoinNumber}, (value) => {raiseMethod}(value));");
                         break;
                 }
             }
@@ -164,22 +164,22 @@ namespace EPS.CodeGen.Builders
         /// <returns>A list of <see cref="WriterBase"/> objects.</returns>
         public List<WriterBase> GetWriters()
         {
-            if (JoinNumber == 0 || JoinType == JoinType.None)
+            if (this.JoinNumber == 0 || this.JoinType == JoinType.None)
             {
                 return new List<WriterBase>(0);
             }
 
-            if (JoinDirection == JoinDirection.ToPanel)
+            if (this.JoinDirection == JoinDirection.ToPanel)
             {
-                return GetWritersToPanel();
+                return this.GetWritersToPanel();
             }
-            else if (JoinDirection == JoinDirection.FromPanel)
+            else if (this.JoinDirection == JoinDirection.FromPanel)
             {
-                return GetWritersFromPanel();
+                return this.GetWritersFromPanel();
             }
-            else if (JoinDirection == JoinDirection.Both)
+            else if (this.JoinDirection == JoinDirection.Both)
             {
-                return GetWritersForBoth();
+                return this.GetWritersForBoth();
             }
 
             return new List<WriterBase>(0);
@@ -193,45 +193,45 @@ namespace EPS.CodeGen.Builders
         {
             var result = new List<WriterBase>();
 
-            var sigType = GetJoinTypeString();
-            var sigTypeName = GetJoinTypeNameString();
-            var offsetText = GetOffsetString();
+            var sigType = this.GetJoinTypeString();
+            var sigTypeName = this.GetJoinTypeNameString();
+            var offsetText = this.GetOffsetString();
 
 
             var args = $"{sigTypeName}ValueChangedEventArgs";
-            var propertyName = FormatPropertyName(JoinName);
-            var fieldName = FormatFieldName(JoinName);
-            var smartSuffix = SmartJoinNumber > 0 ? "Smart" : string.Empty;
-            var smartValue = SmartJoinNumber > 0 ? $"{SmartJoinNumber}, " : string.Empty;
+            var propertyName = FormatPropertyName(this.JoinName);
+            var fieldName = FormatFieldName(this.JoinName);
+            var smartSuffix = this.SmartJoinNumber > 0 ? "Smart" : string.Empty;
+            var smartValue = this.SmartJoinNumber > 0 ? $"{this.SmartJoinNumber}, " : string.Empty;
 
-            var changeEventName = ChangeEventName;
+            var changeEventName = this.ChangeEventName;
 
-            if (JoinType == JoinType.DigitalPulse || JoinType == JoinType.AnalogSet || JoinType == JoinType.SerialSet)
+            if (this.JoinType is JoinType.DigitalPulse or JoinType.AnalogSet or JoinType.SerialSet)
             {
-                var prefix = JoinType == JoinType.DigitalPulse ? "Latch" : "";
+                var prefix = this.JoinType == JoinType.DigitalPulse ? "Latch" : "";
                 var singleSetter = new MethodWriter($"{prefix}{propertyName}", $"Sends the value to a single touchpanel.");
                 singleSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
                 singleSetter.AddParameter("BasicTriListWithSmartObject", "panel", "The panel to change the associated join value on.");
-                singleSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value, panel);");
+                singleSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({this.JoinNumber}{offsetText}), value, panel);");
 
                 result.Add(singleSetter);
 
                 var allSetter = new MethodWriter($"{prefix}{propertyName}", $"Sends the value to all touchpanels.");
                 allSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
-                allSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value);");
-                allSetter.MethodLines.Add($"var ce = {changeEventName};");
-                allSetter.MethodLines.Add($"if (ce != null)");
+                allSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({this.JoinNumber}{offsetText}), value);");
+                allSetter.MethodLines.Add($"var changeEvent = {changeEventName};");
+                allSetter.MethodLines.Add($"if (changeEvent != null)");
                 allSetter.MethodLines.Add("{");
-                allSetter.MethodLines.Add($"ce.Invoke(this, new {args}(value));");
+                allSetter.MethodLines.Add($"changeEvent.Invoke(this, new {args}(value));");
                 allSetter.MethodLines.Add("}");
 
                 result.Add(allSetter);
 
-                if (JoinType == JoinType.DigitalPulse)
+                if (this.JoinType == JoinType.DigitalPulse)
                 {
                     var pulseMw = new MethodWriter($"{propertyName}", $"Pulses the {propertyName} digital signal.");
                     pulseMw.AddParameter("int", "duration", "The duration in milliseconds to pulse the signal for.");
-                    pulseMw.MethodLines.Add($"ParentPanel.Pulse({smartValue}(uint)({JoinNumber}{offsetText}), duration);");
+                    pulseMw.MethodLines.Add($"ParentPanel.Pulse({smartValue}(uint)({this.JoinNumber}{offsetText}), duration);");
 
                     result.Add(pulseMw);
                 }
@@ -240,57 +240,45 @@ namespace EPS.CodeGen.Builders
             {
                 // First create the EventWriter.
                 // This handles change event notifications, which are triggered when the value going to the panel is changed.
-                result.Add(GetEventWriter());
+                result.Add(this.GetEventWriter());
 
                 // Next create the property and backing field writers.
-                var pw = GetPropertyWriter();
-                var fw = GetFieldWriter();
+                var pw = this.GetPropertyWriter(fieldName);
 
-                pw.Getter.Add($"return {fieldName};");
-
-                if (fieldName == "value")
-                {
-                    fieldName = $"this.{fieldName}";
-                }
-
-                pw.Setter.Add($"{fieldName} = value;");
-                pw.Setter.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value);");
-
-                if (JoinDirection == JoinDirection.ToPanel)
-                {
-                    pw.Setter.Add($"var ce = {changeEventName};");
-                    pw.Setter.Add($"if (ce != null)");
-                    pw.Setter.Add("{");
-                    pw.Setter.Add($"ce.Invoke(this, new {args}(value));");
-                    pw.Setter.Add("}");
-                }
+                pw.Setter.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({this.JoinNumber}{offsetText}), value);");
 
                 result.Add(pw);
 
-                result.Add(fw);
+                if (this.JoinType == JoinType.Analog || this.JoinType == JoinType.SmartAnalog)
+                {
+                    var methodSetAll = new MethodWriter($"Set{propertyName}Feedback", $"Sets the value of the <see cref=\"{propertyName}\"/> join on all touchpanels.");
+                    methodSetAll.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
+                    methodSetAll.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({this.JoinNumber}{offsetText}), value);");
+                    result.Add(methodSetAll);
+                }
 
                 var methodSetter = new MethodWriter($"Set{propertyName}", $"Sets the value of the <see cref=\"{propertyName}\"/> join on a single touchpanel.");
                 methodSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
                 methodSetter.AddParameter("BasicTriListWithSmartObject", "panel", "The panel to change the associated join value on.");
-                methodSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({JoinNumber}{offsetText}), value, panel);");
-                
-                if (JoinDirection == JoinDirection.ToPanel)
+                methodSetter.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({this.JoinNumber}{offsetText}), value, panel);");
+
+                if (this.JoinDirection == JoinDirection.ToPanel)
                 {
-                    methodSetter.MethodLines.Add($"var ce = {changeEventName};");
-                    methodSetter.MethodLines.Add($"if (ce != null)");
+                    methodSetter.MethodLines.Add($"var changeEvent = {changeEventName};");
+                    methodSetter.MethodLines.Add($"if (changeEvent != null)");
                     methodSetter.MethodLines.Add("{");
-                    methodSetter.MethodLines.Add($"ce.Invoke(this, new {args}(value));");
+                    methodSetter.MethodLines.Add($"changeEvent.Invoke(this, new {args}(value));");
                     methodSetter.MethodLines.Add("}");
                 }
 
                 result.Add(methodSetter);
 
-                if ((JoinType == JoinType.Digital || JoinType == JoinType.DigitalPulse || JoinType == JoinType.SmartDigital) &&
-                    (JoinDirection == JoinDirection.ToPanel || JoinDirection == JoinDirection.Both))
+                if ((this.JoinType == JoinType.Digital || this.JoinType == JoinType.DigitalPulse || this.JoinType == JoinType.SmartDigital) &&
+                    (this.JoinDirection == JoinDirection.ToPanel || this.JoinDirection == JoinDirection.Both))
                 {
                     var pulseMw = new MethodWriter($"Pulse{propertyName}", $"Pulses the {propertyName} digital signal. Any local signal changed events won't be fired by this method.");
                     pulseMw.AddParameter("int", "duration", "The duration in milliseconds to pulse the signal for.");
-                    pulseMw.MethodLines.Add($"ParentPanel.Pulse({smartValue}(uint)({JoinNumber}{offsetText}), duration);");
+                    pulseMw.MethodLines.Add($"ParentPanel.Pulse({smartValue}(uint)({this.JoinNumber}{offsetText}), duration);");
                     result.Add(pulseMw);
                 }
             }
@@ -304,39 +292,33 @@ namespace EPS.CodeGen.Builders
         /// <returns></returns>
         private List<WriterBase> GetWritersFromPanel()
         {
-            if (JoinType == JoinType.DigitalButton || JoinType == JoinType.SmartDigitalButton)
+            if (this.JoinType is JoinType.DigitalButton or JoinType.SmartDigitalButton)
             {
-                return GetButtonWritersFromPanel();
+                return this.GetButtonWritersFromPanel();
             }
 
             var result = new List<WriterBase>();
 
-            var sigType = GetJoinTypeString();
-            var sigTypeName = GetJoinTypeNameString();
+            var sigType = this.GetJoinTypeString();
+            var fieldName = FormatFieldName(this.JoinName);
 
-            var args = $"{sigTypeName}ValueChangedEventArgs";
-
-            var fieldName = FormatFieldName(JoinName);
-
-            var changeEventName = ChangeEventName;
+            var changeEventName = this.ChangeEventName;
 
             // First create the EventWriter.
             // This handles change event notifications, which are triggered when the value going to the panel is changed.
-            result.Add(GetEventWriter());
-
-            // Next create the property and backing field writers.
-            var pw = GetPropertyWriter();
-            var fw = GetFieldWriter();
-
-            pw.Getter.Add($"return {fieldName};");
-            pw.HasSetter = false;
-            result.Add(pw);
-            result.Add(fw);
+            result.Add(this.GetEventWriter());
 
             if (fieldName == "value")
             {
                 fieldName = $"this.{fieldName}";
             }
+
+            // Next create the property and backing field writers.
+            var pw = this.GetPropertyWriter(fieldName);
+
+            pw.PrivateSetter = true;
+
+            result.Add(pw);
 
             var raiseMethod = new MethodWriter($"Raise{changeEventName}", $"Raises the {changeEventName} event.")
             {
@@ -345,11 +327,12 @@ namespace EPS.CodeGen.Builders
 
             raiseMethod.AddParameter($"{sigType}", "value", "The new value of the property.");
 
-            raiseMethod.MethodLines.Add($"{fieldName} = value;");
-            raiseMethod.MethodLines.Add($"if ({changeEventName} != null)");
-            raiseMethod.MethodLines.Add("{");
-            raiseMethod.MethodLines.Add($"{changeEventName}(this, new {args}(value));");
-            raiseMethod.MethodLines.Add("}");
+            raiseMethod.MethodLines.Add($"this.{this.JoinName} = value;");
+            //raiseMethod.MethodLines.Add($"var changeEvent = {changeEventName};");
+            //raiseMethod.MethodLines.Add($"if (changeEvent != null)");
+            //raiseMethod.MethodLines.Add("{");
+            //raiseMethod.MethodLines.Add($"changeEvent.Invoke(this, new {args}(value));");
+            //raiseMethod.MethodLines.Add("}");
 
             result.Add(raiseMethod);
 
@@ -362,89 +345,111 @@ namespace EPS.CodeGen.Builders
         /// <returns></returns>
         private List<WriterBase> GetWritersForBoth()
         {
-            var result = GetWritersToPanel();
+            var result = this.GetWritersToPanel();
 
-            if (JoinType == JoinType.DigitalButton || JoinType == JoinType.SmartDigitalButton)
-            {
-                result.AddRange(GetButtonWritersFromPanel());
-                return result;
-            }
-
-            var fieldName = FormatFieldName(JoinName);
-            var changeEventName = ChangeEventName;
-            var sigType = GetJoinTypeString();
-            var args = $"{GetJoinTypeNameString()}ValueChangedEventArgs";
-
-            if (fieldName == "value")
-            {
-                fieldName = $"this.{fieldName}";
-            }
-
-            var raiseMethod = new MethodWriter($"Raise{changeEventName}", $"Raises the {changeEventName} event.")
-            {
-                Accessor = Accessor.Private
-            };
-
-            raiseMethod.AddParameter($"{sigType}", "value", "The new value of the property.");
-
-            raiseMethod.MethodLines.Add($"{fieldName} = value;");
-            raiseMethod.MethodLines.Add($"if ({changeEventName} != null)");
-            raiseMethod.MethodLines.Add("{");
-            raiseMethod.MethodLines.Add($"{changeEventName}(this, new {args}(value));");
-            raiseMethod.MethodLines.Add("}");
-
-            result.Add(raiseMethod);
-
+            result.AddRange(this.GetWritersFromPanel());
             return result;
+            //if (JoinType == JoinType.DigitalButton || JoinType == JoinType.SmartDigitalButton)
+            //{
+            //    result.AddRange(GetButtonWritersFromPanel());
+            //    return result;
+            //}
+
+            //var fieldName = FormatFieldName(JoinName);
+            //var changeEventName = ChangeEventName;
+            //var sigType = GetJoinTypeString();
+            //var args = $"{GetJoinTypeNameString()}ValueChangedEventArgs";
+
+            //if (fieldName == "value")
+            //{
+            //    fieldName = $"this.{fieldName}";
+            //}
+
+            //var raiseMethod = new MethodWriter($"Raise{changeEventName}", $"Raises the {changeEventName} event.")
+            //{
+            //    Accessor = Accessor.Private
+            //};
+
+            //raiseMethod.AddParameter($"{sigType}", "value", "The new value of the property.");
+
+            //raiseMethod.MethodLines.Add($"{fieldName} = value;");
+            //raiseMethod.MethodLines.Add($"var changeEvent = {changeEventName};");
+            //raiseMethod.MethodLines.Add($"if (changeEvent != null)");
+            //raiseMethod.MethodLines.Add("{");
+            //raiseMethod.MethodLines.Add($"changeEvent.Invoke(this, new {args}(value));");
+            //raiseMethod.MethodLines.Add("}");
+
+            //result.Add(raiseMethod);
+
+            //return result;
         }
 
         private List<WriterBase> GetButtonWritersFromPanel()
         {
-            var sigType = GetJoinTypeString();
-            var args = $"{GetJoinTypeNameString()}ValueChangedEventArgs";
+            var sigType = this.GetJoinTypeString();
+            var args = $"{this.GetJoinTypeNameString()}ValueChangedEventArgs";
 
-            var raisePressed = new MethodWriter($"Raise{ChangeEventName}Pressed", $"Raises the {ChangeEventName}Pressed event.")
+            var buttonState = new PropertyWriter($"{this.ChangeEventName}PressState", sigType, true)
+            {
+                ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged,
+                PrivateSetter = true
+            };
+
+            buttonState.Help.Summary = $"Gets a value indicating whether the {this.ChangeEventName}PressState is pressed or released.";
+
+            var raisePressed = new MethodWriter($"Raise{this.ChangeEventName}Pressed", $"Raises the {this.ChangeEventName}Pressed event.")
             {
                 Accessor = Accessor.Private
             };
+
             raisePressed.AddParameter($"{sigType}", "value", "The pressed event boolean.");
-            raisePressed.MethodLines.Add($"var ce = {ChangeEventName}Pressed;");
-            raisePressed.MethodLines.Add($"if (ce != null)");
+            raisePressed.MethodLines.Add($"this.{this.ChangeEventName}PressState = true;");
+            raisePressed.MethodLines.Add($"var changeEvent = this.{this.ChangeEventName}Pressed;");
+            raisePressed.MethodLines.Add($"if (changeEvent != null)");
             raisePressed.MethodLines.Add("{");
-            raisePressed.MethodLines.Add($"ce.Invoke(this, new {args}(value));");
+            raisePressed.MethodLines.Add($"changeEvent.Invoke(this, new {args}(true));");
             raisePressed.MethodLines.Add("}");
 
-            var raiseReleased = new MethodWriter($"Raise{ChangeEventName}Released", $"Raises the {ChangeEventName}Released event.")
+            var raiseReleased = new MethodWriter($"Raise{this.ChangeEventName}Released", $"Raises the {this.ChangeEventName}Released event.")
             {
                 Accessor = Accessor.Private
             };
+
             raiseReleased.AddParameter($"{sigType}", "value", "The released event boolean.");
-            raiseReleased.MethodLines.Add($"var ce = {ChangeEventName}Released;");
-            raiseReleased.MethodLines.Add($"if (ce != null)");
+            raiseReleased.MethodLines.Add($"this.{this.ChangeEventName}PressState = false;");
+            raiseReleased.MethodLines.Add($"var changeEvent = this.{this.ChangeEventName}Released;");
+            raiseReleased.MethodLines.Add($"if (changeEvent != null)");
             raiseReleased.MethodLines.Add("{");
-            raiseReleased.MethodLines.Add($"ce.Invoke(this, new {args}(value));");
+            raiseReleased.MethodLines.Add($"changeEvent.Invoke(this, new {args}(false));");
             raiseReleased.MethodLines.Add("}");
 
-            var pressedEvent = new EventWriter($"{ChangeEventName}Pressed")
+            var pressedEvent = new EventWriter($"{this.ChangeEventName}Pressed")
             {
                 Handler = $"EventHandler<{args}>"
             };
 
             pressedEvent.Help.Summary = "Raised when the button is pressed.";
 
-            var releasedEvent = new EventWriter($"{ChangeEventName}Released")
+            var releasedEvent = new EventWriter($"{this.ChangeEventName}Released")
             {
                 Handler = $"EventHandler<{args}>"
             };
 
             releasedEvent.Help.Summary = "Raised when the button is released.";
 
+            var changedEvent = new EventWriter($"{this.ChangeEventName}PressStateChanged")
+            {
+                Handler = $"EventHandler<{args}>"
+            };
+
             var result = new List<WriterBase>()
             {
+                buttonState,
                 raisePressed,
                 raiseReleased,
                 pressedEvent,
-                releasedEvent
+                releasedEvent,
+                changedEvent
             };
 
             return result;
@@ -453,17 +458,28 @@ namespace EPS.CodeGen.Builders
         /// <summary>
         /// Gets a property writer correctly prepared for use with this join.
         /// </summary>
+        /// <param name="fieldName">The name of the backing field.</param>
         /// <returns>A <see cref="PropertyWriter"/> object.</returns>
-        private PropertyWriter GetPropertyWriter()
+        private PropertyWriter GetPropertyWriter(string fieldName)
         {
-            var propertyName = FormatPropertyName(JoinName);
+            var propertyName = FormatPropertyName(this.JoinName);
 
             var propertyWriter = new PropertyWriter(
-                propertyName, GetJoinTypeString());
-
-            if (!string.IsNullOrEmpty(Description))
+                propertyName,
+                this.GetJoinTypeString(),
+                true)
             {
-                propertyWriter.Help.Summary = Description;
+                ImplementINotifyPropertyChanged = Options.Current.ImplementINotifyPropertyChanged
+            };
+
+            if (propertyWriter.BackingFieldWriter != null)
+            {
+                propertyWriter.BackingFieldWriter.Name = fieldName;
+            }
+
+            if (!string.IsNullOrEmpty(this.Description))
+            {
+                propertyWriter.Help.Summary = this.Description;
             }
             else
             {
@@ -486,11 +502,11 @@ namespace EPS.CodeGen.Builders
         /// <returns>A <see cref="FieldWriter"/> object.</returns>
         private EventWriter GetEventWriter()
         {
-            var propName = FormatPropertyName(JoinName);
+            var propName = FormatPropertyName(this.JoinName);
 
-            var eventWriter = new EventWriter(ChangeEventName)
+            var eventWriter = new EventWriter(this.ChangeEventName)
             {
-                Handler = $"EventHandler<{GetJoinTypeNameString()}ValueChangedEventArgs>"
+                Handler = $"EventHandler<{this.GetJoinTypeNameString()}ValueChangedEventArgs>"
             };
 
             eventWriter.Help.Summary = $"Raised when the {propName} value changes.";
@@ -498,20 +514,21 @@ namespace EPS.CodeGen.Builders
             return eventWriter;
         }
 
-        /// <summary>
-        /// Gets a field writer prepared for use with this join.
-        /// </summary>
-        /// <returns>A <see cref="FieldWriter"/> object.</returns>
-        private FieldWriter GetFieldWriter()
-        {
-            var fieldWriter = new FieldWriter(FormatFieldName(JoinName), GetJoinTypeString())
-            {
-                Accessor = Accessor.Private
-            };
-            fieldWriter.Help.Summary = $"Backing field for the <see cref=\"{FormatPropertyName(JoinName)}\"/> property.";
+        ///// <summary>
+        ///// Gets a field writer prepared for use with this join.
+        ///// </summary>
+        ///// <returns>A <see cref="FieldWriter"/> object.</returns>
+        //private FieldWriter GetFieldWriter()
+        //{
+        //    var fieldWriter = new FieldWriter(FormatFieldName(JoinName), GetJoinTypeString())
+        //    {
+        //        Accessor = Accessor.Private
+        //    };
 
-            return fieldWriter;
-        }
+        //    fieldWriter.Help.Summary = $"Backing field for the <see cref=\"{FormatPropertyName(JoinName)}\"/> property.";
+
+        //    return fieldWriter;
+        //}
 
         /// <summary>
         /// Gets the shorthand version of the signal class type.
@@ -519,8 +536,8 @@ namespace EPS.CodeGen.Builders
         /// <returns>A string with the value "bool", "ushort", or "string".</returns>
         private string GetJoinTypeString()
         {
-            return JoinType == JoinType.Analog || JoinType == JoinType.SmartAnalog ? "ushort" :
-                JoinType == JoinType.Serial || JoinType == JoinType.SmartSerial ? "string" :
+            return this.JoinType is JoinType.Analog or JoinType.SmartAnalog ? "ushort" :
+                this.JoinType is JoinType.Serial or JoinType.SmartSerial ? "string" :
                 "bool";
         }
 
@@ -530,8 +547,8 @@ namespace EPS.CodeGen.Builders
         /// <returns>A string with the value "Boolean", "UShort", or "String".</returns>
         private string GetJoinTypeNameString()
         {
-            return JoinType == JoinType.Analog || JoinType == JoinType.SmartAnalog ? "UShort" :
-                JoinType == JoinType.Serial || JoinType == JoinType.SmartSerial ? "String" :
+            return this.JoinType is JoinType.Analog or JoinType.SmartAnalog ? "UShort" :
+                this.JoinType is JoinType.Serial or JoinType.SmartSerial ? "String" :
                 "Boolean";
         }
 
@@ -541,55 +558,26 @@ namespace EPS.CodeGen.Builders
         /// <returns>A string representing the text to include in offset calculations.</returns>
         private string GetOffsetString()
         {
-            if (!IsListElement)
+            if (!this.IsListElement)
             {
-                switch (JoinType)
+                return this.JoinType switch
                 {
-                    case JoinType.Analog:
-                    case JoinType.AnalogSet:
-                        return AnalogOffset > 0 ? $" + {AnalogOffset}" : string.Empty;
-                    case JoinType.Digital:
-                    case JoinType.DigitalButton:
-                    case JoinType.DigitalPulse:
-                        return DigitalOffset > 0 ? $" + {DigitalOffset}" : string.Empty;
-                    case JoinType.Serial:
-                    case JoinType.SerialSet:
-                        return SerialOffset > 0 ? $" + {SerialOffset}" : string.Empty;
-                    case JoinType.SmartDigital:
-                    case JoinType.SmartDigitalButton:
-                    case JoinType.SmartSerial:
-                    case JoinType.SrlVisibility:
-                    case JoinType.SrlEnable:
-                    case JoinType.SmartAnalog:
-                    default:
-                        return string.Empty;
-                }
+                    JoinType.Analog or JoinType.AnalogSet => this.AnalogOffset > 0 ? $" + {this.AnalogOffset}" : string.Empty,
+                    JoinType.Digital or JoinType.DigitalButton or JoinType.DigitalPulse => this.DigitalOffset > 0 ? $" + {this.DigitalOffset}" : string.Empty,
+                    JoinType.Serial or JoinType.SerialSet => this.SerialOffset > 0 ? $" + {this.SerialOffset}" : string.Empty,
+                    _ => string.Empty,
+                };
             }
+
+            return this.JoinType switch
             {
-                switch (JoinType)
-                {
-                    case JoinType.Analog:
-                    case JoinType.SmartAnalog:
-                    case JoinType.AnalogSet:
-                        return " + this.analogOffset";
-                    case JoinType.Digital:
-                    case JoinType.DigitalButton:
-                    case JoinType.DigitalPulse:
-                    case JoinType.SmartDigital:
-                    case JoinType.SmartDigitalButton:
-                        return " + this.digitalOffset";
-                    case JoinType.Serial:
-                    case JoinType.SmartSerial:
-                    case JoinType.SerialSet:
-                        return " + this.serialOffset";
-                    case JoinType.SrlVisibility:
-                        return " + itemOffset + 2010";
-                    case JoinType.SrlEnable:
-                        return " + itemOffset + 10";
-                    default:
-                        return string.Empty;
-                }
-            }
+                JoinType.Analog or JoinType.SmartAnalog or JoinType.AnalogSet => " + this.analogOffset",
+                JoinType.Digital or JoinType.DigitalButton or JoinType.DigitalPulse or JoinType.SmartDigital or JoinType.SmartDigitalButton => " + this.digitalOffset",
+                JoinType.Serial or JoinType.SmartSerial or JoinType.SerialSet => " + this.serialOffset",
+                JoinType.SrlVisibility => " + itemOffset + 2010",
+                JoinType.SrlEnable => " + itemOffset + 10",
+                _ => string.Empty,
+            };
         }
 
         /// <summary>
@@ -614,14 +602,12 @@ namespace EPS.CodeGen.Builders
         /// <returns>A string valid to use as a field name.</returns>
         private static string FormatFieldName(string name)
         {
-#pragma warning disable CA1308 // Normalize strings to uppercase
             if (string.IsNullOrWhiteSpace(name))
             {
                 return string.Empty;
             }
 
-            return SanitizeString($"{name.ToLower(CultureInfo.InvariantCulture)[0]}{name.Substring(1)}");
-#pragma warning restore CA1308 // Normalize strings to uppercase
+            return SanitizeString($"{name.ToLowerInvariant()[0]}{name.Substring(1)}");
         }
 
         /// <summary>
