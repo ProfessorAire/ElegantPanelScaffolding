@@ -161,7 +161,7 @@ namespace EPS.CodeGen.Writers
                         if (this.BackingFieldWriter != null)
                         {
                             _ = this.sb.Append(indent.GetTabs());
-                            _ = this.sb.AppendLine($"{this.BackingFieldWriter.Name} = value;");
+                            _ = this.sb.AppendLine($"this.{this.BackingFieldWriter.Name} = value;");
                         }
 
                         foreach (var l in this.Setter)

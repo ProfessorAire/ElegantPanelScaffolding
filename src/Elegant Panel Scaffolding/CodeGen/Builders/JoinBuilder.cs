@@ -249,6 +249,14 @@ namespace EPS.CodeGen.Builders
 
                 result.Add(pw);
 
+                if (this.JoinType == JoinType.Analog || this.JoinType == JoinType.SmartAnalog)
+                {
+                    var methodSetAll = new MethodWriter($"Set{propertyName}Feedback", $"Sets the value of the <see cref=\"{propertyName}\"/> join on all touchpanels.");
+                    methodSetAll.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
+                    methodSetAll.MethodLines.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({this.JoinNumber}{offsetText}), value);");
+                    result.Add(methodSetAll);
+                }
+
                 var methodSetter = new MethodWriter($"Set{propertyName}", $"Sets the value of the <see cref=\"{propertyName}\"/> join on a single touchpanel.");
                 methodSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
                 methodSetter.AddParameter("BasicTriListWithSmartObject", "panel", "The panel to change the associated join value on.");
