@@ -48,7 +48,7 @@ namespace EPS.CodeGen.Writers
                 }
                 else
                 {
-                    this.Help.Summary = $"Provides access to the {this.Name} object";
+                    this.Help.Summary = $"Provides access to the {this.Name} object.";
                 }
 
             }
