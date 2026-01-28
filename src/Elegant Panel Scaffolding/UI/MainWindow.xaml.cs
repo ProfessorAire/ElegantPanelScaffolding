@@ -62,14 +62,36 @@ namespace EPS.UI
             };
             if (browser.ShowDialog() == true)
             {
+                // Store original paths
+                var originalCompilePath = this.Options.CompilePath;
+                var originalCommonPath = this.Options.CommonPath;
+                var originalTouchpanelPath = this.Options.ApplicationTouchpanelPath;
+                
                 try
                 {
+                    // Set the configuration file path
+                    this.Options.ConfigurationFilePath = browser.FileName;
+                    Options.Current.ConfigurationFilePath = browser.FileName;
+                    
+                    // Convert paths to relative before saving
+                    this.Options.CompilePath = Options.MakeRelativePath(browser.FileName, this.Options.CompilePath);
+                    this.Options.CommonPath = Options.MakeRelativePath(browser.FileName, this.Options.CommonPath);
+                    this.Options.ApplicationTouchpanelPath = Options.MakeRelativePath(browser.FileName, this.Options.ApplicationTouchpanelPath);
+                    
                     File.WriteAllText(browser.FileName, Newtonsoft.Json.JsonConvert.SerializeObject(this.Options));
+                    
                     this.ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File Saved");
                 }
                 catch
                 {
                     this.ShowToast(Color.FromRgb(180, 20, 20), Colors.Black, $"Unable to save file: {Path.GetFileName(browser.FileName)}");
+                }
+                finally
+                {
+                    // Always restore absolute paths
+                    this.Options.CompilePath = originalCompilePath;
+                    this.Options.CommonPath = originalCommonPath;
+                    this.Options.ApplicationTouchpanelPath = originalTouchpanelPath;
                 }
             }
             else
@@ -97,6 +119,14 @@ namespace EPS.UI
                         var opt = Newtonsoft.Json.JsonConvert.DeserializeObject<Options>(File.ReadAllText(browser.FileName));
                         if (opt != null)
                         {
+                            // Set the configuration file path
+                            opt.ConfigurationFilePath = browser.FileName;
+                            
+                            // Convert relative paths to absolute
+                            opt.CompilePath = Options.MakeAbsolutePath(browser.FileName, opt.CompilePath);
+                            opt.CommonPath = Options.MakeAbsolutePath(browser.FileName, opt.CommonPath);
+                            opt.ApplicationTouchpanelPath = Options.MakeAbsolutePath(browser.FileName, opt.ApplicationTouchpanelPath);
+                            
                             this.Options = opt;
                             Options.Current = this.Options;
                             this.ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File Loaded");

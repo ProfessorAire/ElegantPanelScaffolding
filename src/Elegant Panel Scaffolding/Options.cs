@@ -19,6 +19,11 @@ namespace EPS
         [Browsable(false)]
         public string Version { get => this.version; set => this.SetField(ref this.version, value); }
 
+        private string configurationFilePath = "";
+        [JsonIgnore]
+        [Browsable(false)]
+        public string ConfigurationFilePath { get => this.configurationFilePath; set => this.SetField(ref this.configurationFilePath, value); }
+
         private bool includeCoreFiles = true;
         [Description("If true then the core (template) files are included in the code generation. If you need to modify these files, setting this to false will prevent your changes from being overwritten.")]
         [DisplayName("Include Core Files")]
@@ -119,6 +124,73 @@ namespace EPS
         {
             get => this.implementINotifyPropertyChanged;
             set => this.SetField(ref this.implementINotifyPropertyChanged, value);
+        }
+
+        /// <summary>
+        /// Converts an absolute path to a relative path based on the configuration file path.
+        /// </summary>
+        /// <param name="configFilePath">The path to the configuration file.</param>
+        /// <param name="absolutePath">The absolute path to convert.</param>
+        /// <returns>The relative path, or the original absolute path if conversion fails.</returns>
+        public static string MakeRelativePath(string configFilePath, string absolutePath)
+        {
+            if (string.IsNullOrWhiteSpace(configFilePath) || 
+                string.IsNullOrWhiteSpace(absolutePath) ||
+                !System.IO.Path.IsPathRooted(absolutePath))
+            {
+                return absolutePath;
+            }
+
+            var configDir = System.IO.Path.GetDirectoryName(configFilePath);
+            if (string.IsNullOrWhiteSpace(configDir))
+            {
+                return absolutePath;
+            }
+
+            try
+            {
+                var configUri = new Uri(configDir + System.IO.Path.DirectorySeparatorChar);
+                var pathUri = new Uri(absolutePath);
+                
+                if (configUri.Scheme != pathUri.Scheme)
+                {
+                    return absolutePath;
+                }
+
+                var relativeUri = configUri.MakeRelativeUri(pathUri);
+                var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+                
+                return relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar);
+            }
+            catch
+            {
+                // If URI creation fails, return the original path
+                return absolutePath;
+            }
+        }
+
+        /// <summary>
+        /// Converts a relative path to an absolute path based on the configuration file path.
+        /// </summary>
+        /// <param name="configFilePath">The path to the configuration file.</param>
+        /// <param name="relativePath">The relative path to convert.</param>
+        /// <returns>The absolute path, or the original relative path if conversion fails.</returns>
+        public static string MakeAbsolutePath(string configFilePath, string relativePath)
+        {
+            if (string.IsNullOrWhiteSpace(relativePath) ||
+                System.IO.Path.IsPathRooted(relativePath) ||
+                string.IsNullOrWhiteSpace(configFilePath))
+            {
+                return relativePath;
+            }
+
+            var configDir = System.IO.Path.GetDirectoryName(configFilePath);
+            if (string.IsNullOrWhiteSpace(configDir))
+            {
+                return relativePath;
+            }
+
+            return System.IO.Path.GetFullPath(System.IO.Path.Combine(configDir, relativePath));
         }
     }
 }
