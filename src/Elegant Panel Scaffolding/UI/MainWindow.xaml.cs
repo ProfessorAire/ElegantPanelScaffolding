@@ -62,6 +62,11 @@ namespace EPS.UI
             };
             if (browser.ShowDialog() == true)
             {
+                // Store original paths
+                var originalCompilePath = this.Options.CompilePath;
+                var originalCommonPath = this.Options.CommonPath;
+                var originalTouchpanelPath = this.Options.ApplicationTouchpanelPath;
+                
                 try
                 {
                     // Set the configuration file path
@@ -69,23 +74,24 @@ namespace EPS.UI
                     Options.Current.ConfigurationFilePath = browser.FileName;
                     
                     // Convert paths to relative before saving
-                    var originalCompilePath = this.Options.CompilePath;
-                    var originalCommonPath = this.Options.CommonPath;
-                    
                     this.Options.CompilePath = this.Options.MakeRelativePath(this.Options.CompilePath);
                     this.Options.CommonPath = this.Options.MakeRelativePath(this.Options.CommonPath);
+                    this.Options.ApplicationTouchpanelPath = this.Options.MakeRelativePath(this.Options.ApplicationTouchpanelPath);
                     
                     File.WriteAllText(browser.FileName, Newtonsoft.Json.JsonConvert.SerializeObject(this.Options));
-                    
-                    // Restore absolute paths
-                    this.Options.CompilePath = originalCompilePath;
-                    this.Options.CommonPath = originalCommonPath;
                     
                     this.ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File Saved");
                 }
                 catch
                 {
                     this.ShowToast(Color.FromRgb(180, 20, 20), Colors.Black, $"Unable to save file: {Path.GetFileName(browser.FileName)}");
+                }
+                finally
+                {
+                    // Always restore absolute paths
+                    this.Options.CompilePath = originalCompilePath;
+                    this.Options.CommonPath = originalCommonPath;
+                    this.Options.ApplicationTouchpanelPath = originalTouchpanelPath;
                 }
             }
             else
@@ -119,6 +125,7 @@ namespace EPS.UI
                             // Convert relative paths to absolute
                             opt.CompilePath = opt.MakeAbsolutePath(opt.CompilePath);
                             opt.CommonPath = opt.MakeAbsolutePath(opt.CommonPath);
+                            opt.ApplicationTouchpanelPath = opt.MakeAbsolutePath(opt.ApplicationTouchpanelPath);
                             
                             this.Options = opt;
                             Options.Current = this.Options;

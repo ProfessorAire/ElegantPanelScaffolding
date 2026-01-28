@@ -144,18 +144,26 @@ namespace EPS
                 return absolutePath;
             }
 
-            var configUri = new Uri(configDir + System.IO.Path.DirectorySeparatorChar);
-            var pathUri = new Uri(absolutePath);
-            
-            if (configUri.Scheme != pathUri.Scheme)
+            try
             {
+                var configUri = new Uri(configDir + System.IO.Path.DirectorySeparatorChar);
+                var pathUri = new Uri(absolutePath);
+                
+                if (configUri.Scheme != pathUri.Scheme)
+                {
+                    return absolutePath;
+                }
+
+                var relativeUri = configUri.MakeRelativeUri(pathUri);
+                var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+                
+                return relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar);
+            }
+            catch
+            {
+                // If URI creation fails, return the original path
                 return absolutePath;
             }
-
-            var relativeUri = configUri.MakeRelativeUri(pathUri);
-            var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
-            
-            return relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar);
         }
 
         /// <summary>

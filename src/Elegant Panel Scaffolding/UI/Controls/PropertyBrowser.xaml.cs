@@ -184,13 +184,24 @@ namespace EPS.UI.Controls
                                 {
                                     // Check if path is valid
                                     var fullPath = path;
-                                    if (!System.IO.Path.IsPathRooted(path))
+                                    var isRelative = !System.IO.Path.IsPathRooted(path);
+                                    
+                                    if (isRelative)
                                     {
                                         // If it's a relative path, try to resolve it
                                         var options = this.PropertyObject as Options;
                                         if (options != null && !string.IsNullOrWhiteSpace(options.ConfigurationFilePath))
                                         {
                                             fullPath = options.MakeAbsolutePath(path);
+                                            // Update the property with the absolute path
+                                            property.SetValue(this.PropertyObject, fullPath);
+                                        }
+                                        else
+                                        {
+                                            // Relative path without a saved configuration
+                                            errorText.Text = "Relative paths require a saved configuration file. Please save your configuration first or use an absolute path.";
+                                            errorText.Visibility = Visibility.Visible;
+                                            return;
                                         }
                                     }
 
@@ -206,9 +217,9 @@ namespace EPS.UI.Controls
                                         errorText.Visibility = Visibility.Collapsed;
                                     }
                                 }
-                                catch
+                                catch (Exception ex)
                                 {
-                                    errorText.Text = "Invalid path format.";
+                                    errorText.Text = $"Invalid path: {ex.Message}";
                                     errorText.Visibility = Visibility.Visible;
                                 }
                             }
