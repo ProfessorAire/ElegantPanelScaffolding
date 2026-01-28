@@ -129,16 +129,19 @@ namespace EPS
         /// <summary>
         /// Converts an absolute path to a relative path based on the configuration file path.
         /// </summary>
-        public string MakeRelativePath(string absolutePath)
+        /// <param name="configFilePath">The path to the configuration file.</param>
+        /// <param name="absolutePath">The absolute path to convert.</param>
+        /// <returns>The relative path, or the original absolute path if conversion fails.</returns>
+        public static string MakeRelativePath(string configFilePath, string absolutePath)
         {
-            if (string.IsNullOrWhiteSpace(this.ConfigurationFilePath) || 
+            if (string.IsNullOrWhiteSpace(configFilePath) || 
                 string.IsNullOrWhiteSpace(absolutePath) ||
                 !System.IO.Path.IsPathRooted(absolutePath))
             {
                 return absolutePath;
             }
 
-            var configDir = System.IO.Path.GetDirectoryName(this.ConfigurationFilePath);
+            var configDir = System.IO.Path.GetDirectoryName(configFilePath);
             if (string.IsNullOrWhiteSpace(configDir))
             {
                 return absolutePath;
@@ -169,16 +172,19 @@ namespace EPS
         /// <summary>
         /// Converts a relative path to an absolute path based on the configuration file path.
         /// </summary>
-        public string MakeAbsolutePath(string relativePath)
+        /// <param name="configFilePath">The path to the configuration file.</param>
+        /// <param name="relativePath">The relative path to convert.</param>
+        /// <returns>The absolute path, or the original relative path if conversion fails.</returns>
+        public static string MakeAbsolutePath(string configFilePath, string relativePath)
         {
             if (string.IsNullOrWhiteSpace(relativePath) ||
                 System.IO.Path.IsPathRooted(relativePath) ||
-                string.IsNullOrWhiteSpace(this.ConfigurationFilePath))
+                string.IsNullOrWhiteSpace(configFilePath))
             {
                 return relativePath;
             }
 
-            var configDir = System.IO.Path.GetDirectoryName(this.ConfigurationFilePath);
+            var configDir = System.IO.Path.GetDirectoryName(configFilePath);
             if (string.IsNullOrWhiteSpace(configDir))
             {
                 return relativePath;

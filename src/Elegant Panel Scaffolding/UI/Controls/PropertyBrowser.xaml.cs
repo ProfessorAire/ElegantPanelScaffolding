@@ -192,7 +192,7 @@ namespace EPS.UI.Controls
                                         var options = this.PropertyObject as Options;
                                         if (options != null && !string.IsNullOrWhiteSpace(options.ConfigurationFilePath))
                                         {
-                                            fullPath = options.MakeAbsolutePath(path);
+                                            fullPath = Options.MakeAbsolutePath(options.ConfigurationFilePath, path);
                                             // Update the property with the absolute path
                                             property.SetValue(this.PropertyObject, fullPath);
                                         }

@@ -74,9 +74,9 @@ namespace EPS.UI
                     Options.Current.ConfigurationFilePath = browser.FileName;
                     
                     // Convert paths to relative before saving
-                    this.Options.CompilePath = this.Options.MakeRelativePath(this.Options.CompilePath);
-                    this.Options.CommonPath = this.Options.MakeRelativePath(this.Options.CommonPath);
-                    this.Options.ApplicationTouchpanelPath = this.Options.MakeRelativePath(this.Options.ApplicationTouchpanelPath);
+                    this.Options.CompilePath = Options.MakeRelativePath(browser.FileName, this.Options.CompilePath);
+                    this.Options.CommonPath = Options.MakeRelativePath(browser.FileName, this.Options.CommonPath);
+                    this.Options.ApplicationTouchpanelPath = Options.MakeRelativePath(browser.FileName, this.Options.ApplicationTouchpanelPath);
                     
                     File.WriteAllText(browser.FileName, Newtonsoft.Json.JsonConvert.SerializeObject(this.Options));
                     
@@ -123,9 +123,9 @@ namespace EPS.UI
                             opt.ConfigurationFilePath = browser.FileName;
                             
                             // Convert relative paths to absolute
-                            opt.CompilePath = opt.MakeAbsolutePath(opt.CompilePath);
-                            opt.CommonPath = opt.MakeAbsolutePath(opt.CommonPath);
-                            opt.ApplicationTouchpanelPath = opt.MakeAbsolutePath(opt.ApplicationTouchpanelPath);
+                            opt.CompilePath = Options.MakeAbsolutePath(browser.FileName, opt.CompilePath);
+                            opt.CommonPath = Options.MakeAbsolutePath(browser.FileName, opt.CommonPath);
+                            opt.ApplicationTouchpanelPath = Options.MakeAbsolutePath(browser.FileName, opt.ApplicationTouchpanelPath);
                             
                             this.Options = opt;
                             Options.Current = this.Options;
