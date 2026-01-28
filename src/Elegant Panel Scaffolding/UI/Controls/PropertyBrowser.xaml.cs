@@ -142,6 +142,8 @@ namespace EPS.UI.Controls
                         Grid.SetColumn(g2, 1);
                         _ = g.Children.Add(g2);
 
+                        g2.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(1, GridUnitType.Auto) });
+                        g2.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(1, GridUnitType.Auto) });
                         g2.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) });
                         g2.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Auto) });
 
@@ -150,11 +152,71 @@ namespace EPS.UI.Controls
                             HorizontalAlignment = HorizontalAlignment.Stretch,
                             Margin = fourThick,
                             VerticalAlignment = VerticalAlignment.Center,
-                            IsReadOnly = true
+                            IsReadOnly = false
                         };
                         _ = textBox.SetBinding(TextBox.TextProperty, new Binding(property.Name) { UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                         Grid.SetColumn(textBox, 0);
+                        Grid.SetRow(textBox, 0);
                         _ = g2.Children.Add(textBox);
+
+                        // Create error message TextBlock
+                        var errorText = new TextBlock()
+                        {
+                            HorizontalAlignment = HorizontalAlignment.Stretch,
+                            Margin = new Thickness(4, 0, 4, 4),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Foreground = System.Windows.Media.Brushes.Red,
+                            TextWrapping = TextWrapping.Wrap,
+                            Visibility = Visibility.Collapsed
+                        };
+                        Grid.SetColumn(errorText, 0);
+                        Grid.SetRow(errorText, 1);
+                        Grid.SetColumnSpan(errorText, 2);
+                        _ = g2.Children.Add(errorText);
+
+                        // Add LostFocus event handler for validation
+                        textBox.LostFocus += (o, a) =>
+                        {
+                            var path = textBox.Text;
+                            if (!string.IsNullOrWhiteSpace(path))
+                            {
+                                try
+                                {
+                                    // Check if path is valid
+                                    var fullPath = path;
+                                    if (!System.IO.Path.IsPathRooted(path))
+                                    {
+                                        // If it's a relative path, try to resolve it
+                                        var options = this.PropertyObject as Options;
+                                        if (options != null && !string.IsNullOrWhiteSpace(options.ConfigurationFilePath))
+                                        {
+                                            fullPath = options.MakeAbsolutePath(path);
+                                        }
+                                    }
+
+                                    // Validate the path format
+                                    var pathRoot = System.IO.Path.GetPathRoot(fullPath);
+                                    if (string.IsNullOrWhiteSpace(pathRoot))
+                                    {
+                                        errorText.Text = "Invalid path format.";
+                                        errorText.Visibility = Visibility.Visible;
+                                    }
+                                    else
+                                    {
+                                        errorText.Visibility = Visibility.Collapsed;
+                                    }
+                                }
+                                catch
+                                {
+                                    errorText.Text = "Invalid path format.";
+                                    errorText.Visibility = Visibility.Visible;
+                                }
+                            }
+                            else
+                            {
+                                errorText.Visibility = Visibility.Collapsed;
+                            }
+                        };
 
                         var browseButton = new Button()
                         {
@@ -176,11 +238,13 @@ namespace EPS.UI.Controls
                                 if (!string.IsNullOrWhiteSpace(browser.SelectedPath))
                                 {
                                     property.SetValue(this.PropertyObject, browser.SelectedPath);
+                                    errorText.Visibility = Visibility.Collapsed;
                                 }
                             }
                         };
 
                         Grid.SetColumn(browseButton, 1);
+                        Grid.SetRow(browseButton, 0);
                         _ = g2.Children.Add(browseButton);
                     }
                     else if (property.PropertyType.Name == nameof(String) &&

@@ -64,7 +64,23 @@ namespace EPS.UI
             {
                 try
                 {
+                    // Set the configuration file path
+                    this.Options.ConfigurationFilePath = browser.FileName;
+                    Options.Current.ConfigurationFilePath = browser.FileName;
+                    
+                    // Convert paths to relative before saving
+                    var originalCompilePath = this.Options.CompilePath;
+                    var originalCommonPath = this.Options.CommonPath;
+                    
+                    this.Options.CompilePath = this.Options.MakeRelativePath(this.Options.CompilePath);
+                    this.Options.CommonPath = this.Options.MakeRelativePath(this.Options.CommonPath);
+                    
                     File.WriteAllText(browser.FileName, Newtonsoft.Json.JsonConvert.SerializeObject(this.Options));
+                    
+                    // Restore absolute paths
+                    this.Options.CompilePath = originalCompilePath;
+                    this.Options.CommonPath = originalCommonPath;
+                    
                     this.ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File Saved");
                 }
                 catch
@@ -97,6 +113,13 @@ namespace EPS.UI
                         var opt = Newtonsoft.Json.JsonConvert.DeserializeObject<Options>(File.ReadAllText(browser.FileName));
                         if (opt != null)
                         {
+                            // Set the configuration file path
+                            opt.ConfigurationFilePath = browser.FileName;
+                            
+                            // Convert relative paths to absolute
+                            opt.CompilePath = opt.MakeAbsolutePath(opt.CompilePath);
+                            opt.CommonPath = opt.MakeAbsolutePath(opt.CommonPath);
+                            
                             this.Options = opt;
                             Options.Current = this.Options;
                             this.ShowToast(Color.FromRgb(20, 180, 20), Colors.Black, "File Loaded");
