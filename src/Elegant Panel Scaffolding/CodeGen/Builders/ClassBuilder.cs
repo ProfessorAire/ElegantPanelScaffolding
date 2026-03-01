@@ -207,7 +207,7 @@ namespace EPS.CodeGen.Builders
             var ctor = new Writers.MethodWriter(this.ClassName, "Creates a new instance of the class.", "", 2);
 
             // Partial SetupUi method.
-            var partialSetup = new Writers.MethodWriter("SetupUi", "Implement this in accompanying classes in order to setup functionality on the construction of the root class.\nNo values should be sent to this touchpanel in this method!", "void", 2)
+            var partialSetup = new Writers.MethodWriter("SetupUi", "Implement this in accompanying classes in order to set up functionality on the construction of the root class.\nNo values should be sent to this touchpanel in this method.", "void", 2)
             {
                 Modifier = Modifier.Partial,
                 Accessor = Accessor.None
