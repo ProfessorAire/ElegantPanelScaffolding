@@ -1,6 +1,6 @@
-﻿using EPS.CodeGen.Builders;
-using System;
+﻿using System;
 using System.Xml.Linq;
+using EPS.CodeGen.Builders;
 
 namespace EPS.Parsers
 {
@@ -8,7 +8,7 @@ namespace EPS.Parsers
     {
         public static JoinBuilder? ParseElement(XElement hardkeyElement, Options options)
         {
-            if(options == null)
+            if (options == null)
             {
                 throw new ArgumentNullException(nameof(options));
             }
@@ -21,11 +21,19 @@ namespace EPS.Parsers
                     var keys = Options.Current.HardkeyNames.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                     if (keys.Length > keyNumber - 1)
                     {
-                        return new JoinBuilder(joinNumber, 0, $"{keys[keyNumber - 1]}", JoinType.DigitalButton, JoinDirection.FromPanel);
+                        var name = $"{keys[keyNumber - 1]}";
+                        return new JoinBuilder(joinNumber, 0, name, JoinType.DigitalButton, JoinDirection.FromPanel)
+                        {
+                            ChangeEventName = $"{name}"
+                        };
                     }
                     else
                     {
-                        return new JoinBuilder(joinNumber, 0, $"{options.HardkeyPrefix}{keyNumber}", JoinType.DigitalButton, JoinDirection.FromPanel);
+                        var name = $"{options.HardkeyPrefix}{keyNumber}";
+                        return new JoinBuilder(joinNumber, 0, name, JoinType.DigitalButton, JoinDirection.FromPanel)
+                        {
+                            ChangeEventName = $"{name}"
+                        };
                     }
                 }
             }

@@ -1,12 +1,5 @@
-﻿using EPS.CodeGen.Writers;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Forms;
+﻿using System.Collections.Generic;
+using EPS.CodeGen.Writers;
 
 namespace EPS.CodeGen.Builders
 {
@@ -197,7 +190,6 @@ namespace EPS.CodeGen.Builders
             var sigTypeName = this.GetJoinTypeNameString();
             var offsetText = this.GetOffsetString();
 
-
             var args = $"{sigTypeName}ValueChangedEventArgs";
             var propertyName = FormatPropertyName(this.JoinName);
             var fieldName = FormatFieldName(this.JoinName);
@@ -208,7 +200,7 @@ namespace EPS.CodeGen.Builders
 
             if (this.JoinType is JoinType.DigitalPulse or JoinType.AnalogSet or JoinType.SerialSet)
             {
-                var prefix = this.JoinType == JoinType.DigitalPulse ? "Latch" : "";
+                var prefix = this.JoinType == JoinType.DigitalPulse ? "Latch" : string.Empty;
                 var singleSetter = new MethodWriter($"{prefix}{propertyName}", $"Sends the value to a single touchpanel.");
                 singleSetter.AddParameter($"{sigType}", "value", "The new value for the join on the touchpanel.");
                 singleSetter.AddParameter("BasicTriListWithSmartObject", "panel", "The panel to change the associated join value on.");
@@ -618,8 +610,8 @@ namespace EPS.CodeGen.Builders
         private static string SanitizeString(string value)
         {
             return value
-                .Replace(" ", "")
-                .Replace("_", "")
+                .Replace(" ", string.Empty)
+                .Replace("_", string.Empty)
                 .Replace("*", "Star")
                 .Replace("#", "Pound")
                 .Replace("!", "ExMark")

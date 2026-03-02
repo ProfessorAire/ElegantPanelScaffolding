@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -13,10 +12,10 @@ namespace EPS.CodeGen.Builders
         public ushort SerialOffset { get; set; }
         public ushort SmartJoin { get; set; }
         public ushort ItemOffset { get; set; }
-        private string className = "";
+        private string className = string.Empty;
         public string ClassName { get => SanitizeName(this.className); set => this.className = value; }
-        public string Namespace { get; set; } = "";
-        public string NamespaceBase { get; set; } = "";
+        public string Namespace { get; set; } = string.Empty;
+        public string NamespaceBase { get; set; } = string.Empty;
 
         protected List<ClassBuilder> Pages { get; } = new List<ClassBuilder>();
         protected List<ClassBuilder> Controls { get; } = new List<ClassBuilder>();
@@ -37,7 +36,8 @@ namespace EPS.CodeGen.Builders
                 if (!string.IsNullOrEmpty(this.ClassName) && (!this.ClassName.StartsWith("null", StringComparison.InvariantCultureIgnoreCase)) &&
                     (this.Pages.Count > 0 ||
                     this.Controls.Count > 0 ||
-                    this.Joins.Count > 0))
+                    this.Joins.Count > 0 ||
+                    this.Lists.Count > 0))
                 {
                     return true;
                 }
@@ -93,7 +93,7 @@ namespace EPS.CodeGen.Builders
 
         public void AddPage(ClassBuilder page)
         {
-            if (page?.IsValid ?? false && !page.ClassName.ToUpperInvariant().Contains("NULL"))
+            if (page?.IsValid ?? (false && !page.ClassName.ToUpperInvariant().Contains("NULL")))
             {
                 if (page != null)
                 {
@@ -204,7 +204,7 @@ namespace EPS.CodeGen.Builders
             }
 
             // Main Class Constructor
-            var ctor = new Writers.MethodWriter(this.ClassName, "Creates a new instance of the class.", "", 2);
+            var ctor = new Writers.MethodWriter(this.ClassName, "Creates a new instance of the class.", string.Empty, 2);
 
             // Partial SetupUi method.
             var partialSetup = new Writers.MethodWriter("SetupUi", "Implement this in accompanying classes in order to set up functionality on the construction of the root class.\nNo values should be sent to this touchpanel in this method.", "void", 2)
@@ -264,14 +264,14 @@ namespace EPS.CodeGen.Builders
 
                 if (ctor.MethodLines.Last().Length > 0)
                 {
-                    ctor.MethodLines.Add("");
+                    ctor.MethodLines.Add(string.Empty);
                 }
 
                 ctor.MethodLines.Add("this.digitalOffset = digitalOffset;");
                 ctor.MethodLines.Add("this.analogOffset = analogOffset;");
                 ctor.MethodLines.Add("this.serialOffset = serialOffset;");
                 ctor.MethodLines.Add("this.itemOffset = itemOffset;");
-                ctor.MethodLines.Add("");
+                ctor.MethodLines.Add(string.Empty);
 
                 ctor.MethodLines.Add("if (this.digitalOffset == 0 && this.analogOffset == 0 && this.serialOffset == 0)");
                 ctor.MethodLines.Add("{");
@@ -279,11 +279,11 @@ namespace EPS.CodeGen.Builders
                 ctor.MethodLines.Add("this.analogOffset = itemOffset;");
                 ctor.MethodLines.Add("this.serialOffset = itemOffset;");
                 ctor.MethodLines.Add("}");
-                ctor.MethodLines.Add("");
+                ctor.MethodLines.Add(string.Empty);
 
                 for (var i = 0; i < this.Controls.Count; i++)
                 {
-                    ctor.MethodLines.Add($"{this.Controls[i].ClassName.Replace(this.ClassName, "")} = new {this.Controls[i].ClassName}(ParentPanel, this.digitalOffset, this.analogOffset, this.serialOffset, this.itemOffset);");
+                    ctor.MethodLines.Add($"{this.Controls[i].ClassName.Replace(this.ClassName, string.Empty)} = new {this.Controls[i].ClassName}(ParentPanel, this.digitalOffset, this.analogOffset, this.serialOffset, this.itemOffset);");
                 }
             }
             else if (this.ClassType == ClassType.Control && (this.AnalogOffset > 0 || this.DigitalOffset > 0 || this.SerialOffset > 0))
@@ -343,16 +343,16 @@ namespace EPS.CodeGen.Builders
             {
                 if (ctor.MethodLines.Last().Length > 0)
                 {
-                    ctor.MethodLines.Add("");
+                    ctor.MethodLines.Add(string.Empty);
                 }
 
                 ctor.MethodLines.Add(w.ToString());
             }
 
             // For any events from the panel we need to add Actions.
-            if (ctor.MethodLines.Last().Length > 0)
+            if (ctor.MethodLines.Any() && ctor.MethodLines.Last().Length > 0)
             {
-                ctor.MethodLines.Add("");
+                ctor.MethodLines.Add(string.Empty);
             }
 
             foreach (var j in this.Joins)
@@ -405,7 +405,7 @@ namespace EPS.CodeGen.Builders
             // Call SetupUi Last
             if (ctor.MethodLines.Last().Length > 0)
             {
-                ctor.MethodLines.Add("");
+                ctor.MethodLines.Add(string.Empty);
             }
 
             ctor.MethodLines.Add("SetupUi();");
@@ -475,7 +475,7 @@ namespace EPS.CodeGen.Builders
                 var fw = new Writers.FieldWriter(c.ClassName, typeName);
                 if (this.ClassType is ClassType.SrlElement)
                 {
-                    fw.Name = c.ClassName.Replace(this.ClassName, "");
+                    fw.Name = c.ClassName.Replace(this.ClassName, string.Empty);
                 }
 
                 fw.Help.Summary = $"Provides access to the {fw.Name} Control.";
@@ -518,7 +518,7 @@ namespace EPS.CodeGen.Builders
             {
                 if (this.ClassType == ClassType.SrlElement)
                 {
-                    disp.MethodLines.Add($"{c.ClassName.Replace(this.ClassName, "")}.Dispose();");
+                    disp.MethodLines.Add($"{c.ClassName.Replace(this.ClassName, string.Empty)}.Dispose();");
                 }
                 else
                 {
@@ -580,20 +580,19 @@ namespace EPS.CodeGen.Builders
                 nsb.AddUsing("System.ComponentModel");
             }
 
-            var path = "";
+            var path = string.Empty;
             if (this.ClassType == ClassType.Touchpanel)
             {
                 path = $"{options?.CompilePath}\\{this.NamespaceBase}\\Panel.g.cs";
             }
             else if (this.ClassType == ClassType.Page)
             {
-                path = $"{options?.CompilePath}\\{this.NamespaceBase.Replace(options?.RootNamespace, "").Trim('.').Replace(".", "\\")}\\{this.ClassName}.g.cs";
+                path = $"{options?.CompilePath}\\{this.NamespaceBase.Replace(options?.RootNamespace, string.Empty).Trim('.').Replace(".", "\\")}\\{this.ClassName}.g.cs";
             }
             else
             {
-                path = $"{options?.CompilePath}\\{(this.ClassType != ClassType.Touchpanel ? $"{this.Namespace.Replace(options?.RootNamespace, "").Trim('.').Replace(".", "\\")}\\" : "")}{this.ClassName}.g.cs";
+                path = $"{options?.CompilePath}\\{(this.ClassType != ClassType.Touchpanel ? $"{this.Namespace.Replace(options?.RootNamespace, string.Empty).Trim('.').Replace(".", "\\")}\\" : string.Empty)}{this.ClassName}.g.cs";
             }
-
 
             // This is the end!
             items.Add((this.ClassName, path, nsb));
@@ -613,7 +612,7 @@ namespace EPS.CodeGen.Builders
             var saniRegex = new Regex(@"(?:\[.*\](?<g2>[^\]]+))|(?:\[(?<g1>[^[\]]*)])");
             if (!string.IsNullOrWhiteSpace(name))
             {
-                name = name.Replace(" ", "").Replace(".", "").Replace("-", "");
+                name = name.Replace(" ", string.Empty).Replace(".", string.Empty).Replace("-", string.Empty);
 
                 var match = saniRegex.Match(name);
                 if (match.Success)
@@ -628,7 +627,7 @@ namespace EPS.CodeGen.Builders
                     }
                 }
 
-                name = name.Replace("[", "").Replace("]", "");
+                name = name.Replace("[", string.Empty).Replace("]", string.Empty);
                 return name;
             }
 

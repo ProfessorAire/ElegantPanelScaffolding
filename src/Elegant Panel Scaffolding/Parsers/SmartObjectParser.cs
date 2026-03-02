@@ -1,9 +1,8 @@
-﻿using EPS.CodeGen.Builders;
-using System;
+﻿using System;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Xml.Linq;
+using EPS.CodeGen.Builders;
 
 namespace EPS.Parsers
 {
@@ -14,11 +13,11 @@ namespace EPS.Parsers
             if (child == null || rootBuilder == null) { return; }
             var builder = new ClassBuilder(ClassType.SmartObject)
             {
-                ClassName = $"{child?.Element("ObjectName")?.Value ?? ""}",
+                ClassName = $"{child?.Element("ObjectName")?.Value ?? string.Empty}",
                 Namespace = rootBuilder.Namespace
             };
 
-            var controlType = child?.Element("TargetControl")?.Value ?? "";
+            var controlType = child?.Element("TargetControl")?.Value ?? string.Empty;
             var isKeypad = controlType.Equals("Simple_Keypad", StringComparison.OrdinalIgnoreCase) || controlType.Equals("_DPad2", StringComparison.OrdinalIgnoreCase);
 
             var props = child?.Element("Properties");
@@ -52,7 +51,7 @@ namespace EPS.Parsers
                 foreach (var j in joinProps)
                 {
                     var joinTypeText = j?.Element("JoinType")?.Value;
-                    var joinName = SanitizeSignalName(j?.Element("SignalName")?.Value ?? "");
+                    var joinName = SanitizeSignalName(j?.Element("SignalName")?.Value ?? string.Empty);
                     _ = ushort.TryParse(j?.Element("JoinNumber")?.Value, out var joinNumber);
                     var isIn = false;
                     var isOut = false;
@@ -64,7 +63,6 @@ namespace EPS.Parsers
                     {
                         isOut = true;
                     }
-
 
                     var joinType = JoinType.Analog;
                     if (joinTypeText == "Serial")
@@ -120,7 +118,6 @@ namespace EPS.Parsers
                 return;
             }
 
-
             joinProps = props?.Elements().Where(e => e.Attribute("Type")?.Value == "EncapsulatedJoin");
 
             if (joinProps != null)
@@ -131,19 +128,18 @@ namespace EPS.Parsers
                     _ = ushort.TryParse(j?.Element("JoinNumber")?.Value, out var joinNumber);
                     var isIn = false;
                     var isOut = false;
-                    var inName = "";
-                    var outName = "";
+                    var inName = string.Empty;
+                    var outName = string.Empty;
                     if (j?.Element("Direction") != null && j.Element("Direction").Value.Contains("In"))
                     {
                         isIn = true;
-                        inName = SanitizeSignalName(j?.Element("InCueName")?.Value ?? "");
+                        inName = SanitizeSignalName(j?.Element("InCueName")?.Value ?? string.Empty);
                     }
                     if (j?.Element("Direction") != null && j.Element("Direction").Value.Contains("Out"))
                     {
                         isOut = true;
-                        outName = SanitizeSignalName(j?.Element("OutCueName")?.Value ?? "");
+                        outName = SanitizeSignalName(j?.Element("OutCueName")?.Value ?? string.Empty);
                     }
-
 
                     var joinType = JoinType.Analog;
                     if (joinTypeText == "Serial")
@@ -230,12 +226,12 @@ namespace EPS.Parsers
                             foreach (var j in groupJoins)
                             {
 
-                                var inName = j?.Element("InCueName")?.Value ?? "";
-                                var outName = j?.Element("OutCueName")?.Value ?? "";
+                                var inName = j?.Element("InCueName")?.Value ?? string.Empty;
+                                var outName = j?.Element("OutCueName")?.Value ?? string.Empty;
                                 var isIn = j?.Element("Direction")?.Value.Contains("In") ?? false;
                                 var isOut = j?.Element("Direction")?.Value.Contains("Out") ?? false;
                                 var startJoin = ushort.Parse(j?.Element("StartJoinNumber")?.Value ?? "0", NumberFormatInfo.InvariantInfo);
-                                var jt = j?.Element("JoinType")?.Value ?? "";
+                                var jt = j?.Element("JoinType")?.Value ?? string.Empty;
                                 var inJoinType = JoinType.None;
                                 var outJoinType = JoinType.None;
                                 if (jt == "Digital")
@@ -256,7 +252,7 @@ namespace EPS.Parsers
 
                                 if (inName.StartsWith("Set Item %i ", StringComparison.InvariantCulture))
                                 {
-                                    inName = inName.Replace("Set Item %i ", "");
+                                    inName = inName.Replace("Set Item %i ", string.Empty);
                                 }
                                 else if (inName.StartsWith("Item %i ", StringComparison.InvariantCulture))
                                 {
@@ -272,7 +268,7 @@ namespace EPS.Parsers
 
                                 if (outName.StartsWith("Item %i ", StringComparison.InvariantCulture))
                                 {
-                                    outName = outName.Replace("Item %i ", "");
+                                    outName = outName.Replace("Item %i ", string.Empty);
                                 }
 
                                 if (outName.ToUpperInvariant().Contains("PRESSED") || outName.ToUpperInvariant().Contains("RELEASED"))
@@ -311,8 +307,8 @@ namespace EPS.Parsers
                                     itemBuilder.AddJoin(
                                         new JoinBuilder(startJoin, itemBuilder.SmartJoin, inName, inJoinType, JoinDirection.ToPanel));
                                 }
-                                
-                                if(joinDirection is JoinDirection.Both or JoinDirection.FromPanel)
+
+                                if (joinDirection is JoinDirection.Both or JoinDirection.FromPanel)
                                 {
                                     itemBuilder.AddJoin(
                                         new JoinBuilder(startJoin, itemBuilder.SmartJoin, outName, outJoinType, JoinDirection.FromPanel));
@@ -391,17 +387,17 @@ namespace EPS.Parsers
                             {
                                 foreach (var j in groupJoins)
                                 {
-                                    var inName = j?.Element("SignalName")?.Value ?? "";
+                                    var inName = j?.Element("SignalName")?.Value ?? string.Empty;
 
                                     if (string.IsNullOrEmpty(inName))
                                     {
                                         continue;
                                     }
-                                    
+
                                     var isIn = j?.Element("Direction")?.Value.Contains("In") ?? false;
                                     var isOut = j?.Element("Direction")?.Value.Contains("Out") ?? false;
                                     var joinNumber = ushort.Parse(j?.Element("JoinNumber")?.Value ?? "0", NumberFormatInfo.InvariantInfo);
-                                    var jt = j?.Element("JoinType")?.Value ?? "";
+                                    var jt = j?.Element("JoinType")?.Value ?? string.Empty;
                                     var inJoinType = JoinType.None;
                                     var outJoinType = JoinType.None;
 
@@ -423,7 +419,7 @@ namespace EPS.Parsers
 
                                     if (inName.StartsWith("Set Item %i ", StringComparison.InvariantCulture))
                                     {
-                                        inName = inName.Replace("Set Item %i ", "");
+                                        inName = inName.Replace("Set Item %i ", string.Empty);
                                     }
                                     else if (inName.StartsWith("Item %i ", StringComparison.InvariantCulture))
                                     {
@@ -451,7 +447,7 @@ namespace EPS.Parsers
                                     {
                                         if (outJoinType == JoinType.SmartDigital)
                                         {
-                                            outName = "";
+                                            outName = string.Empty;
                                             outJoinType = JoinType.SmartDigitalButton;
                                         }
                                     }
@@ -517,7 +513,7 @@ namespace EPS.Parsers
 
                         if (list != null)
                         {
-                            list.Name = props?.Parent?.Element("ObjectName")?.Value.Replace(" ", "") ?? "List";// + "Item" ?? "ListItem";
+                            list.Name = props?.Parent?.Element("ObjectName")?.Value.Replace(" ", string.Empty) ?? "List";// + "Item" ?? "ListItem";
                             builder.AddList(list);
                         }
                     }
@@ -565,18 +561,18 @@ namespace EPS.Parsers
                 return signalName;
             }
 
-            signalName = signalName.Replace(" ", "")
+            signalName = signalName.Replace(" ", string.Empty)
                 .Replace("%i", string.Empty)
-                .Replace("-", "")
+                .Replace("-", string.Empty)
                 .Replace("#", "Pound")
                 .Replace("*", "Star")
-                .Replace("%", "")
-                .Replace("@", "")
-                .Replace("!", "")
-                .Replace("^", "")
-                .Replace("&", "")
-                .Replace("(", "")
-                .Replace(")", "")
+                .Replace("%", string.Empty)
+                .Replace("@", string.Empty)
+                .Replace("!", string.Empty)
+                .Replace("^", string.Empty)
+                .Replace("&", string.Empty)
+                .Replace("(", string.Empty)
+                .Replace(")", string.Empty)
                 .Replace("OK", "Ok");
 
             //Override various names here.
