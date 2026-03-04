@@ -1,7 +1,7 @@
-﻿using EPS.UI.Controls;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.ComponentModel;
+using EPS.UI.Controls;
+using Newtonsoft.Json;
 
 namespace EPS
 {
@@ -14,20 +14,32 @@ namespace EPS
         public static Options Current = new();
 #pragma warning restore CA2211 // Non-constant fields should not be visible
 
-        private string version = "v0.1.4-beta";
+        private string version = "v0.1.5-beta";
         [JsonIgnore]
         [Browsable(false)]
-        public string Version { get => this.version; set => this.SetField(ref this.version, value); }
+        public string Version
+        {
+            get => this.version;
+            set => this.SetField(ref this.version, value);
+        }
 
-        private string configurationFilePath = "";
+        private string configurationFilePath = string.Empty;
         [JsonIgnore]
         [Browsable(false)]
-        public string ConfigurationFilePath { get => this.configurationFilePath; set => this.SetField(ref this.configurationFilePath, value); }
+        public string ConfigurationFilePath
+        {
+            get => this.configurationFilePath;
+            set => this.SetField(ref this.configurationFilePath, value);
+        }
 
         private bool includeCoreFiles = true;
         [Description("If true then the core (template) files are included in the code generation. If you need to modify these files, setting this to false will prevent your changes from being overwritten.")]
         [DisplayName("Include Core Files")]
-        public bool IncludeCoreFiles { get => this.includeCoreFiles; set => this.SetField(ref this.includeCoreFiles, value); }
+        public bool IncludeCoreFiles
+        {
+            get => this.includeCoreFiles;
+            set => this.SetField(ref this.includeCoreFiles, value);
+        }
 
         private string rootNamespace = "ProjectName.UI.Panels"; //"UI";
         [Description("The root namespace for the classes to reside in. Ie: ProjectName.UI.Panels")]
@@ -48,7 +60,7 @@ namespace EPS
         }
 
         [Browsable(false)]
-        public string PanelNamespace { get; set; } = "";
+        public string PanelNamespace { get; set; } = string.Empty;
 
         private string hardkeyPrefix = "Hardkey";
         [Description("The prefix to associate with Hardkeys. Hardkeys are only compiled once per project, not on a per-page basis. If Hardkey Names are provided this prefix is ignored.")]
@@ -68,7 +80,7 @@ namespace EPS
             set => this.SetField(ref this.parseHardkeys, value);
         }
 
-        private string hardkeyNames = "";
+        private string hardkeyNames = string.Empty;
         [Description("Comma separated list of hardkey names, starting from Key1.")]
         [DisplayName("Hardkey Names")]
         public string HardkeyNames
@@ -77,18 +89,24 @@ namespace EPS
             set => this.SetField(ref this.hardkeyNames, value);
         }
 
-        private string fieldPrefixes = "";
+        private string fieldPrefixes = string.Empty;
         [Description("Prefix to prepend to private field names.")]
         [DisplayName("Field Prefixes")]
-        public string FieldPrefixes { get => this.fieldPrefixes; set => this.SetField(ref this.fieldPrefixes, value); }
+        public string FieldPrefixes
+        {
+            get => this.fieldPrefixes; set => this.SetField(ref this.fieldPrefixes, value);
+        }
 
-        private string applicationTouchpanelPath = "";
+        private string applicationTouchpanelPath = string.Empty;
         [Description("The path to the touchpanel to generate classes from.")]
         [DisplayName("Touchpanel Path")]
         [FileType(new string[] { "Touchpanel & Environment Files" }, new string[] { "*.vtz;*.xml;*.c3p;*.zip" })]
-        public string ApplicationTouchpanelPath { get => this.applicationTouchpanelPath; set => this.SetField(ref this.applicationTouchpanelPath, value); }
+        public string ApplicationTouchpanelPath
+        {
+            get => this.applicationTouchpanelPath; set => this.SetField(ref this.applicationTouchpanelPath, value);
+        }
 
-        private string compilePath = "";
+        private string compilePath = string.Empty;
         [Description("The path that the generated classes will be saved to.")]
         [DisplayName("Destination Path")]
         [FolderPath()]
@@ -98,7 +116,7 @@ namespace EPS
             set => this.SetField(ref this.compilePath, value);
         }
 
-        private string commonPath = "";
+        private string commonPath = string.Empty;
         [Description("The path that classes common between touchpanels will be generated in. These files exist in the namespace Evands.EPS.Common.")]
         [DisplayName("Core Files Path")]
         [FolderPath()]
@@ -134,7 +152,7 @@ namespace EPS
         /// <returns>The relative path, or the original absolute path if conversion fails.</returns>
         public static string MakeRelativePath(string configFilePath, string absolutePath)
         {
-            if (string.IsNullOrWhiteSpace(configFilePath) || 
+            if (string.IsNullOrWhiteSpace(configFilePath) ||
                 string.IsNullOrWhiteSpace(absolutePath) ||
                 !System.IO.Path.IsPathRooted(absolutePath))
             {
@@ -151,7 +169,7 @@ namespace EPS
             {
                 var configUri = new Uri(configDir + System.IO.Path.DirectorySeparatorChar);
                 var pathUri = new Uri(absolutePath);
-                
+
                 if (configUri.Scheme != pathUri.Scheme)
                 {
                     return absolutePath;
@@ -159,7 +177,7 @@ namespace EPS
 
                 var relativeUri = configUri.MakeRelativeUri(pathUri);
                 var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
-                
+
                 return relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar);
             }
             catch
