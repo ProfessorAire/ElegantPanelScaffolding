@@ -121,6 +121,13 @@ namespace EPS.Parsers
                 return;
             }
 
+            if (child?.Element("TargetControl")?.Value == "Tab_Button" && props != null)
+            {
+                TabButtonParser.ParseTabButtonControl(child, builder);
+                rootBuilder.AddControl(builder);
+                return;
+            }
+
             joinProps = props?.Elements().Where(e => e.Attribute("Type")?.Value == "EncapsulatedJoin");
 
             if (joinProps != null)
