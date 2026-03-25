@@ -16,12 +16,18 @@ namespace EPS.CodeGen.Builders
         /// <summary>
         /// Gets or sets the number that the join uses.
         /// </summary>
-        public uint JoinNumber { get; set; }
+        public uint JoinNumber
+        {
+            get; set;
+        }
 
         /// <summary>
         /// Gets or sets the number for the SmartObject join #, if the join belongs to a SmartObject.
         /// </summary>
-        public uint SmartJoinNumber { get; set; }
+        public uint SmartJoinNumber
+        {
+            get; set;
+        }
 
         /// <summary>
         /// Gets or sets the <see cref="JoinType"/> associated with the join.
@@ -38,11 +44,20 @@ namespace EPS.CodeGen.Builders
         /// </summary>
         public string JoinName { get; set; } = string.Empty;
 
-        public uint DigitalOffset { get; set; }
+        public uint DigitalOffset
+        {
+            get; set;
+        }
 
-        public uint AnalogOffset { get; set; }
+        public uint AnalogOffset
+        {
+            get; set;
+        }
 
-        public uint SerialOffset { get; set; }
+        public uint SerialOffset
+        {
+            get; set;
+        }
 
         /// <summary>
         /// Gets or sets the name of the join's change event. If an empty string this defaults to $"{JoinName}Changed"
@@ -61,7 +76,10 @@ namespace EPS.CodeGen.Builders
         /// <summary>
         /// Gets or sets a value indicating whether the join belongs to a list element that uses offset numbers.
         /// </summary>
-        public bool IsListElement { get; set; }
+        public bool IsListElement
+        {
+            get; set;
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JoinBuilder"/> class.
@@ -341,39 +359,6 @@ namespace EPS.CodeGen.Builders
 
             result.AddRange(this.GetWritersFromPanel());
             return result;
-            //if (JoinType == JoinType.DigitalButton || JoinType == JoinType.SmartDigitalButton)
-            //{
-            //    result.AddRange(GetButtonWritersFromPanel());
-            //    return result;
-            //}
-
-            //var fieldName = FormatFieldName(JoinName);
-            //var changeEventName = ChangeEventName;
-            //var sigType = GetJoinTypeString();
-            //var args = $"{GetJoinTypeNameString()}ValueChangedEventArgs";
-
-            //if (fieldName == "value")
-            //{
-            //    fieldName = $"this.{fieldName}";
-            //}
-
-            //var raiseMethod = new MethodWriter($"Raise{changeEventName}", $"Raises the {changeEventName} event.")
-            //{
-            //    Accessor = Accessor.Private
-            //};
-
-            //raiseMethod.AddParameter($"{sigType}", "value", "The new value of the property.");
-
-            //raiseMethod.MethodLines.Add($"{fieldName} = value;");
-            //raiseMethod.MethodLines.Add($"var changeEvent = {changeEventName};");
-            //raiseMethod.MethodLines.Add($"if (changeEvent != null)");
-            //raiseMethod.MethodLines.Add("{");
-            //raiseMethod.MethodLines.Add($"changeEvent.Invoke(this, new {args}(value));");
-            //raiseMethod.MethodLines.Add("}");
-
-            //result.Add(raiseMethod);
-
-            //return result;
         }
 
         private List<WriterBase> GetButtonWritersFromPanel()

@@ -10,7 +10,10 @@ namespace EPS.Parsers
     {
         public static void ParseSmartObject(XElement child, ClassBuilder rootBuilder)
         {
-            if (child == null || rootBuilder == null) { return; }
+            if (child == null || rootBuilder == null)
+            {
+                return;
+            }
             var builder = new ClassBuilder(ClassType.SmartObject)
             {
                 ClassName = $"{child?.Element("ObjectName")?.Value ?? string.Empty}",
@@ -586,16 +589,46 @@ namespace EPS.Parsers
             }
             else if (char.IsDigit(signalName[0]))
             {
-                if (signalName[0] == '1') { signalName = signalName.Trim('1').Insert(0, "One"); }
-                else if (signalName[0] == '2') { signalName = signalName.Trim('2').Insert(0, "Two"); }
-                else if (signalName[0] == '3') { signalName = signalName.Trim('3').Insert(0, "Three"); }
-                else if (signalName[0] == '4') { signalName = signalName.Trim('4').Insert(0, "Four"); }
-                else if (signalName[0] == '5') { signalName = signalName.Trim('5').Insert(0, "Five"); }
-                else if (signalName[0] == '6') { signalName = signalName.Trim('6').Insert(0, "Six"); }
-                else if (signalName[0] == '7') { signalName = signalName.Trim('7').Insert(0, "Seven"); }
-                else if (signalName[0] == '8') { signalName = signalName.Trim('8').Insert(0, "Eight"); }
-                else if (signalName[0] == '9') { signalName = signalName.Trim('9').Insert(0, "Nine"); }
-                else if (signalName[0] == '0') { signalName = signalName.Trim('0').Insert(0, "Zero"); }
+                if (signalName[0] == '1')
+                {
+                    signalName = signalName.Trim('1').Insert(0, "One");
+                }
+                else if (signalName[0] == '2')
+                {
+                    signalName = signalName.Trim('2').Insert(0, "Two");
+                }
+                else if (signalName[0] == '3')
+                {
+                    signalName = signalName.Trim('3').Insert(0, "Three");
+                }
+                else if (signalName[0] == '4')
+                {
+                    signalName = signalName.Trim('4').Insert(0, "Four");
+                }
+                else if (signalName[0] == '5')
+                {
+                    signalName = signalName.Trim('5').Insert(0, "Five");
+                }
+                else if (signalName[0] == '6')
+                {
+                    signalName = signalName.Trim('6').Insert(0, "Six");
+                }
+                else if (signalName[0] == '7')
+                {
+                    signalName = signalName.Trim('7').Insert(0, "Seven");
+                }
+                else if (signalName[0] == '8')
+                {
+                    signalName = signalName.Trim('8').Insert(0, "Eight");
+                }
+                else if (signalName[0] == '9')
+                {
+                    signalName = signalName.Trim('9').Insert(0, "Nine");
+                }
+                else if (signalName[0] == '0')
+                {
+                    signalName = signalName.Trim('0').Insert(0, "Zero");
+                }
             }
             return signalName;
         }
