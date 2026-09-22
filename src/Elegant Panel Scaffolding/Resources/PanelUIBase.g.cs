@@ -28,8 +28,12 @@ using System.Collections.Generic;
 using Crestron.SimplSharp;
 using Crestron.SimplSharpPro;
 using Crestron.SimplSharpPro.DeviceSupport;
-using Crestron.SimplSharp.Reflection;
 using Crestron.SimplSharpPro.CrestronThread;
+#if NET47_OR_GREATER || NET
+using System.Reflection;
+#else
+using Crestron.SimplSharp.Reflection;
+#endif
 
 namespace Evands.EPS.Common
 {
@@ -86,7 +90,11 @@ namespace Evands.EPS.Common
         /// </summary>
         internal PanelActions Actions { get; private set; }
 
+        /// <summary>
+        /// Backing field for <see cref="Description"/>.
+        /// </summary>
         private string description = "";
+
         /// <summary>
         /// Gets/Sets the Description of the panel. This description will be set on all panels registered with this.
         /// </summary>
@@ -550,11 +558,6 @@ namespace Evands.EPS.Common
         public void StopThreads()
         {
             IsStarted = false;
-            if (processingThread != null && (processingThread.ThreadState == Thread.eThreadStates.ThreadRunning || processingThread.ThreadState == Thread.eThreadStates.ThreadSuspended))
-            {
-                processingThread.Abort();
-            }
-
             panelProcessingQueue.Clear();
         }
 
@@ -779,11 +782,14 @@ namespace Evands.EPS.Common
             {
                 try
                 {
-                    var action = panelProcessingQueue.Dequeue();
-                    CrestronInvoke.BeginInvoke((s) => { if (TouchEventReceived != null) { TouchEventReceived.Invoke(this, new EventArgs()); } });
-                    if (action != null)
+                    Actions action;
+                    if (panelProcessingQueue.Dequeue(1000, out action))
                     {
-                        action.Invoke();
+                        CrestronInvoke.BeginInvoke((s) => { if (TouchEventReceived != null) { TouchEventReceived.Invoke(this, new EventArgs()); } });
+                        if (action != null)
+                        {
+                            action.Invoke();
+                        }
                     }
                 }
                 catch (System.Threading.ThreadAbortException)

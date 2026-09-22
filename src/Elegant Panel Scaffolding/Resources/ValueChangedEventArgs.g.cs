@@ -24,9 +24,6 @@ using System.Linq;
 using System.Text;
 using Crestron.SimplSharp;
 
-/// <summary>
-/// The Lists namespace.
-/// </summary>
 namespace Evands.EPS.Lists
 {
     /// <summary>

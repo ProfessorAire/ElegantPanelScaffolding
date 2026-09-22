@@ -43,7 +43,7 @@ namespace Evands.EPS.Lists
         private T value;
 
         /// <summary>
-        /// Used internally by the <see cref="ListBase"/> object to detect selection changes.
+        /// Used internally by the <see cref="ListBase{T1,T2}"/> object to detect selection changes.
         /// </summary>
         internal event Action<ListItemBase<T>, bool> SelectionIsChanging;
 
@@ -88,7 +88,7 @@ namespace Evands.EPS.Lists
         }
 
         /// <summary>
-        /// Gets or sets the value of the object, as <typeparam name="T"/>.
+        /// Gets or sets the value of the object, as <typeparamref name="T"/>.
         /// </summary>
         public T Value
         {
