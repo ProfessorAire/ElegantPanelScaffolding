@@ -11,7 +11,7 @@
     <AssemblyTitle>Elegant Panel Scaffolding</AssemblyTitle>
     <Product>Elegant Panel Scaffolding</Product>
     <Copyright>Copyright © Christopher McNeely</Copyright>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
@@ -23,6 +23,7 @@
     <Authors>Christopher McNeely</Authors>
     <EnableNETAnalyzers>False</EnableNETAnalyzers>
     <AnalysisLevel>none</AnalysisLevel>
+		<Version>0.2.0.1000</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
