@@ -782,7 +782,7 @@ namespace Evands.EPS.Common
             {
                 try
                 {
-                    Actions action;
+                    Action action;
                     if (panelProcessingQueue.Dequeue(1000, out action))
                     {
                         CrestronInvoke.BeginInvoke((s) => { if (TouchEventReceived != null) { TouchEventReceived.Invoke(this, new EventArgs()); } });
