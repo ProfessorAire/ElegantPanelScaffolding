@@ -25,7 +25,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+#if NET47_OR_GREATER || NET
+using System.Reflection;
+#else
 using Crestron.SimplSharp.Reflection;
+#endif
 
 namespace Evands.EPS.Lists
 {
@@ -95,7 +99,7 @@ namespace Evands.EPS.Lists
 
                 if (this.getItems == null)
                 {
-                    throw new ApplicationException(string.Format("Unable to set ValueSource on a list if it hasn't been initialized. Call the Configure method prior to using the ListBase<{0}, {1}>.", typeof(T1).GetCType().Name, typeof(T2).GetCType().Name));
+                    throw new ApplicationException(string.Format("Unable to set ValueSource on a list if it hasn't been initialized. Call the Configure method prior to using the ListBase<{0}, {1}>.", typeof(T1).Name, typeof(T2).Name));
                 }
 
                 var oldValueSelection = this.SelectedValue;

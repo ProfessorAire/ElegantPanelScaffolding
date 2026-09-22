@@ -33,7 +33,7 @@ namespace Evands.EPS.Lists
     public class SelectedItemChangedEventArgs<T> : EventArgs
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SelectedItemChangedEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="SelectedItemChangedEventArgs{T}"/> class.
         /// </summary>
         /// <param name="newValue">The new value.</param>
         /// <param name="oldValue">The old value.</param>
