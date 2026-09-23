@@ -20,13 +20,22 @@ namespace EPS.CodeGen.Writers
 
         public HelpWriter Help { get; } = new HelpWriter();
 
-        public string Name { get; set; }
+        public string Name
+        {
+            get; set;
+        }
 
         public Accessor Accessor { get; set; } = Accessor.Public;
 
         public Modifier Modifier { get; set; } = Modifier.None;
 
-        public bool ImplementINotifyPropertyChanged { get; set; }
+        public bool ImplementINotifyPropertyChanged
+        {
+            get; set;
+        }
+
+        public bool PropertyChangesRequired => this.ImplementINotifyPropertyChanged
+            && this.Properties.Any(p => p.Name != "IsUiInitialized");
 
         public List<MethodWriter> Constructors { get; } = new List<MethodWriter>();
 
@@ -60,7 +69,7 @@ namespace EPS.CodeGen.Writers
             _ = this.sb.Append($"{this.Accessor.GetTextValue()}{this.Modifier.GetTextValue()}class {this.Name}");
 
             var implements = this.Implements;
-            if (this.ImplementINotifyPropertyChanged && this.Properties.Count > 0)
+            if (this.PropertyChangesRequired)
             {
                 implements.Add("System.ComponentModel.INotifyPropertyChanged");
             }
@@ -105,7 +114,7 @@ namespace EPS.CodeGen.Writers
 
             var events = this.Events;
 
-            if (this.ImplementINotifyPropertyChanged && this.Properties.Count > 0)
+            if (this.PropertyChangesRequired)
             {
                 var pce = new EventWriter("PropertyChanged")
                 {
