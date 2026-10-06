@@ -3,7 +3,9 @@
 @inject IThemeService ThemeService
 
 <div class="titlebar">
-	<div class="titlebar-drag-region">
+	<div class="titlebar-drag-region"
+		 @onmousedown="OnDragRegionMouseDown"
+		 @ondblclick="OnDragRegionDoubleClick">
 		<span class="titlebar-icon">
 			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 				<rect x="2" y="3" width="20" height="14" rx="2" />
@@ -63,6 +65,19 @@
 </div>
 
 @code {
+	private void OnDragRegionMouseDown(MouseEventArgs e)
+	{
+		// Button 0 = left mouse button.
+		if (e.Button == 0)
+			WindowService.BeginDrag();
+	}
+
+	private void OnDragRegionDoubleClick(MouseEventArgs e)
+	{
+		if (e.Button == 0)
+			WindowService.MaximizeRestore();
+	}
+
 	private void Minimize() => WindowService.Minimize();
 	private void MaximizeRestore() => WindowService.MaximizeRestore();
 	private void Close() => WindowService.Close();
