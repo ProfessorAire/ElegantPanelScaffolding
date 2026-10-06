@@ -1,0 +1,83 @@
+@page "/preview"
+@namespace EPS.Blazor.Pages
+@inject NavigationManager Nav
+
+<div class="preview-page flex" style="height:100%;">
+
+	<!-- File list panel -->
+	<div class="preview-sidebar flex-col">
+		<div class="preview-sidebar-header">Generated Files</div>
+		<ul class="file-list flex-1 overflow-auto">
+			@foreach (var (file, idx) in _files.Select((f, i) => (f, i)))
+			{
+				<li class="@(idx == _selectedIndex ? "active" : "")"
+					@onclick="() => SelectFile(idx)"
+					title="@file.Path">
+					@file.Name
+				</li>
+			}
+		</ul>
+		<div class="preview-sidebar-footer">
+			<button class="btn" style="width:100%;" @onclick='() => Nav.NavigateTo("/")'>
+				← Back
+			</button>
+		</div>
+	</div>
+
+	<!-- Code viewer panel -->
+	<div class="preview-editor flex-1 flex-col" style="min-width:0;">
+		<CSharpViewer Value="@_content" />
+	</div>
+</div>
+
+@code {
+	private IReadOnlyList<GeneratedFile> _files = PreviewState.Files;
+	private int _selectedIndex = 0;
+	private string _content = PreviewState.Files.Count > 0 ? PreviewState.Files[0].Content : string.Empty;
+
+	private void SelectFile(int index)
+	{
+		_selectedIndex = index;
+		if (index < _files.Count)
+			_content = _files[index].Content;
+	}
+}
+
+<style>
+	.preview-page { background: var(--color-bg); }
+
+	.preview-sidebar {
+		width: 240px;
+		min-width: 160px;
+		max-width: 360px;
+		background: var(--color-surface);
+		border-right: 1px solid var(--color-border);
+		flex-shrink: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.preview-sidebar-header {
+		padding: .5rem .75rem;
+		font-size: .75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: .05em;
+		color: var(--color-text-muted);
+		border-bottom: 1px solid var(--color-border);
+		flex-shrink: 0;
+	}
+
+	.preview-sidebar-footer {
+		padding: .5rem;
+		border-top: 1px solid var(--color-border);
+		flex-shrink: 0;
+	}
+
+	.preview-editor {
+		position: relative;
+		overflow: hidden;
+	}
+</style>
+
+

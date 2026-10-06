@@ -1,0 +1,12 @@
+@* Blazor router — scans EPS.Blazor.Pages for routable components. *@
+<Router AppAssembly="typeof(App).Assembly">
+	<Found Context="routeData">
+		<RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+		<FocusOnNavigate RouteData="routeData" Selector="h1" />
+	</Found>
+	<NotFound>
+		<LayoutView Layout="typeof(Layout.MainLayout)">
+			<p>Page not found.</p>
+		</LayoutView>
+	</NotFound>
+</Router>

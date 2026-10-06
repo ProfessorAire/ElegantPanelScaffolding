@@ -1,0 +1,106 @@
+@namespace EPS.Blazor.Components
+@inject IToastService ToastService
+@implements IDisposable
+
+@if (_toasts.Count > 0)
+{
+	<div class="toast-container">
+		@foreach (var toast in _toasts)
+		{
+			<div class="toast toast-@toast.Level.ToString().ToLower()">
+				<span class="toast-icon">@GetIcon(toast.Level)</span>
+				<span class="toast-message">@toast.Message</span>
+			</div>
+		}
+	</div>
+}
+
+@code {
+	private readonly List<ToastMessage> _toasts = new();
+	private readonly Dictionary<ToastMessage, System.Threading.Timer> _timers = new();
+
+	protected override void OnInitialized()
+	{
+		ToastService.OnToast += HandleToast;
+	}
+
+	private void HandleToast(ToastMessage msg)
+	{
+		InvokeAsync(() =>
+		{
+			_toasts.Add(msg);
+			StateHasChanged();
+
+			var timer = new System.Threading.Timer(_ =>
+			{
+				InvokeAsync(() =>
+				{
+					_toasts.Remove(msg);
+					if (_timers.TryGetValue(msg, out var t))
+					{
+						t.Dispose();
+						_timers.Remove(msg);
+					}
+					StateHasChanged();
+				});
+			}, null, msg.DurationSeconds * 1000, System.Threading.Timeout.Infinite);
+
+			_timers[msg] = timer;
+		});
+	}
+
+	private static string GetIcon(ToastLevel level) => level switch
+	{
+		ToastLevel.Success => "✓",
+		ToastLevel.Error   => "✕",
+		ToastLevel.Warning => "⚠",
+		_                  => "ℹ"
+	};
+
+	public void Dispose()
+	{
+		ToastService.OnToast -= HandleToast;
+		foreach (var t in _timers.Values) t.Dispose();
+		_timers.Clear();
+	}
+}
+
+<style>
+	.toast-container {
+		position: fixed;
+		bottom: 1rem;
+		right: 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: .5rem;
+		z-index: 9000;
+		pointer-events: none;
+	}
+
+	.toast {
+		display: flex;
+		align-items: flex-start;
+		gap: .5rem;
+		padding: .6rem 1rem;
+		border-radius: 6px;
+		border: 1px solid transparent;
+		font-size: .85rem;
+		max-width: 320px;
+		box-shadow: var(--shadow-md);
+		animation: toast-in .2s ease;
+		pointer-events: all;
+	}
+
+	@@keyframes toast-in {
+		from { opacity: 0; transform: translateY(8px); }
+		to   { opacity: 1; transform: translateY(0); }
+	}
+
+	.toast-icon { flex-shrink: 0; font-weight: 700; }
+	.toast-message { word-break: break-word; }
+
+	.toast-success { background: #2a3d2f; border-color: var(--nord14); color: var(--nord14); }
+	.toast-error   { background: #3d2a2a; border-color: var(--nord11); color: var(--nord11); }
+	.toast-warning { background: #3d362a; border-color: var(--nord13); color: var(--nord13); }
+	.toast-info    { background: #2a3040; border-color: var(--nord9);  color: var(--nord9);  }
+</style>

@@ -39,17 +39,12 @@ namespace EPS.CodeGen.Builders
                 }
                 else
                 {
-                    var zip = new ICSharpCode.SharpZipLib.Zip.ZipFile(fileName);
-                    if (zip.FindEntry("swf/Environment.xml", true) > -1)
+                    using var archive = System.IO.Compression.ZipFile.OpenRead(fileName);
+                    var entry = archive.GetEntry("swf/Environment.xml")
+                        ?? archive.GetEntry("Environment.xml");
+                    if (entry != null)
                     {
-                        var entry = zip.GetEntry("swf/Environment.xml");
-                        using var reader = new System.IO.StreamReader(zip.GetInputStream(entry));
-                        contents = await reader.ReadToEndAsync();
-                    }
-                    else if (zip.FindEntry("Environment.xml", true) > -1)
-                    {
-                        var entry = zip.GetEntry("Environment.xml");
-                        using var reader = new System.IO.StreamReader(zip.GetInputStream(entry));
+                        using var reader = new System.IO.StreamReader(entry.Open());
                         contents = await reader.ReadToEndAsync();
                     }
                 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Text.Json.Serialization;
 using EPS.UI.Controls;
-using Newtonsoft.Json;
 
 namespace EPS
 {

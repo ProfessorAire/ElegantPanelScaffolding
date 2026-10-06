@@ -1,0 +1,239 @@
+@page "/help"
+@namespace EPS.Blazor.Pages
+@inject NavigationManager Nav
+@using Markdig
+@using System.Reflection
+
+<div class="help-page flex-col" style="height:100%;">
+
+	<!-- Header bar -->
+	<div class="help-header flex items-center gap-sm">
+		<button class="btn-icon" @onclick='() => Nav.NavigateTo("/")' title="Back">
+			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
+			</svg>
+		</button>
+		<div class="help-nav-tabs flex gap-sm">
+			<button class="tab-btn @(_tab == "help" ? "active" : "")" @onclick='() => _tab = "help"'>Help</button>
+			<button class="tab-btn @(_tab == "about" ? "active" : "")" @onclick='() => _tab = "about"'>About</button>
+			<button class="tab-btn @(_tab == "licenses" ? "active" : "")" @onclick='() => _tab = "licenses"'>Licenses</button>
+		</div>
+	</div>
+
+	<!-- Content -->
+	<div class="help-content flex-1 overflow-auto p-md">
+		@if (_tab == "help")
+		{
+			<div class="markdown-body">
+				@((MarkupString)_helpHtml)
+			</div>
+		}
+		else if (_tab == "about")
+		{
+			<div class="about-panel">
+				<h1>Elegant Panel Scaffolding</h1>
+				<p class="text-muted">Copyright © Christopher McNeely</p>
+				<p class="text-muted">Release — @Options.Current.Version</p>
+				<hr class="divider" style="margin:1rem 0;" />
+				<h3>Contributors</h3>
+				<p>Christopher McNeely</p>
+			</div>
+		}
+		else if (_tab == "licenses")
+		{
+			<div class="licenses-panel">
+				<div class="license-selector">
+					<label class="text-muted" style="font-size:.8rem;">Select a license:</label>
+					<select @onchange="LicenseSelected" style="margin-top:.25rem;">
+						@foreach (var (name, _) in _licenses)
+						{
+							<option value="@name">@name</option>
+						}
+					</select>
+				</div>
+				<pre class="license-text">@_selectedLicenseText</pre>
+			</div>
+		}
+	</div>
+</div>
+
+@code {
+	private string _tab = "help";
+	private string _helpHtml = string.Empty;
+	private List<(string Name, string Text)> _licenses = new();
+	private string _selectedLicenseText = string.Empty;
+
+	protected override void OnInitialized()
+	{
+		_helpHtml = BuildHelpHtml();
+		LoadLicenses();
+		if (_licenses.Count > 0)
+			_selectedLicenseText = _licenses[0].Text;
+	}
+
+	private static string BuildHelpHtml()
+	{
+		var assembly = Assembly.GetExecutingAssembly();
+		var stream = assembly.GetManifestResourceStream("EPS.Help.Help.md");
+		if (stream is null) return "<p>Help content not found.</p>";
+
+		using var reader = new System.IO.StreamReader(stream);
+		var md = reader.ReadToEnd();
+
+		var pipeline = new MarkdownPipelineBuilder()
+			.UseAdvancedExtensions()
+			.Build();
+
+		return Markdown.ToHtml(md, pipeline);
+	}
+
+	private void LoadLicenses()
+	{
+		var assembly = Assembly.GetExecutingAssembly();
+		var names = assembly.GetManifestResourceNames()
+			.Where(n => n.EndsWith(".License.txt", StringComparison.OrdinalIgnoreCase))
+			.OrderBy(n => n);
+
+		foreach (var resourceName in names)
+		{
+			using var stream = assembly.GetManifestResourceStream(resourceName);
+			if (stream is null) continue;
+			using var reader = new System.IO.StreamReader(stream);
+			var displayName = resourceName
+				.Replace("EPS.Licenses.", "")
+				.Replace(".License.txt", " License");
+
+			// Put the app's own license first
+			if (resourceName.Contains("Elegant Panel Scaffolding"))
+				_licenses.Insert(0, (displayName, reader.ReadToEnd()));
+			else
+				_licenses.Add((displayName, reader.ReadToEnd()));
+		}
+	}
+
+	private void LicenseSelected(ChangeEventArgs e)
+	{
+		var name = e.Value?.ToString();
+		var found = _licenses.FirstOrDefault(l => l.Name == name);
+		_selectedLicenseText = found.Text ?? string.Empty;
+	}
+}
+
+<style>
+	.help-page { background: var(--color-bg); }
+
+	.help-header {
+		padding: .4rem .75rem;
+		background: var(--color-surface);
+		border-bottom: 1px solid var(--color-border);
+		flex-shrink: 0;
+	}
+
+	.help-nav-tabs { gap: .25rem; }
+
+	.tab-btn {
+		padding: .3rem .75rem;
+		border: 1px solid transparent;
+		border-radius: 4px;
+		background: transparent;
+		color: var(--color-text);
+		cursor: pointer;
+		font-size: .85rem;
+		transition: background .1s, border-color .1s;
+	}
+	.tab-btn:hover { background: var(--color-surface-alt); }
+	.tab-btn.active {
+		background: var(--color-surface-alt);
+		border-color: var(--color-border);
+		color: var(--color-accent);
+		font-weight: 600;
+	}
+
+	.help-content { max-width: 860px; margin: 0 auto; width: 100%; }
+
+	/* ── Markdown body ── */
+	.markdown-body h1 { font-size: 1.8rem; border-bottom: 1px solid var(--color-border); padding-bottom: .4rem; margin-bottom: 1rem; }
+	.markdown-body h2 { font-size: 1.3rem; margin: 1.5rem 0 .5rem; }
+	.markdown-body h3 { font-size: 1.1rem; margin: 1rem 0 .4rem; }
+	.markdown-body p  { margin-bottom: .75rem; line-height: 1.7; }
+	.markdown-body ul, .markdown-body ol { padding-left: 1.5rem; margin-bottom: .75rem; }
+	.markdown-body li { margin-bottom: .25rem; }
+	.markdown-body blockquote {
+		border-left: 3px solid var(--color-accent);
+		padding-left: 1rem;
+		margin: .75rem 0;
+		color: var(--color-text-muted);
+	}
+	.markdown-body table {
+		width: 100%;
+		border-collapse: collapse;
+		margin-bottom: 1rem;
+	}
+	.markdown-body th, .markdown-body td {
+		border: 1px solid var(--color-border);
+		padding: .4rem .75rem;
+		text-align: left;
+	}
+	.markdown-body th { background: var(--color-surface-alt); font-weight: 600; }
+	.markdown-body tr:nth-child(even) { background: var(--color-surface); }
+
+	/* Nord syntax highlight for markdown code blocks */
+	.markdown-body pre {
+		background: var(--color-code-bg);
+		border: 1px solid var(--color-border);
+		border-radius: 6px;
+		padding: 1rem;
+		overflow-x: auto;
+		margin-bottom: 1rem;
+		position: relative;
+	}
+	.markdown-body pre code {
+		background: transparent;
+		padding: 0;
+		font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+		font-size: .85em;
+		line-height: 1.65;
+		color: var(--color-code-text);
+	}
+	/* Prism-style token coloring using Nord Aurora/Frost */
+	.markdown-body .token.comment,
+	.markdown-body .token.prolog,
+	.markdown-body .token.doctype,
+	.markdown-body .token.cdata      { color: #4C566A; font-style: italic; }
+	.markdown-body .token.keyword    { color: #81A1C1; }
+	.markdown-body .token.string     { color: #A3BE8C; }
+	.markdown-body .token.number     { color: #B48EAD; }
+	.markdown-body .token.boolean    { color: #81A1C1; }
+	.markdown-body .token.function   { color: #88C0D0; }
+	.markdown-body .token.class-name { color: #8FBCBB; }
+	.markdown-body .token.operator   { color: #81A1C1; }
+	.markdown-body .token.punctuation { color: #ECEFF4; }
+	.markdown-body .token.tag        { color: #81A1C1; }
+	.markdown-body .token.attr-name  { color: #8FBCBB; }
+	.markdown-body .token.attr-value { color: #A3BE8C; }
+	.markdown-body .token.variable   { color: #D08770; }
+	.markdown-body .token.builtin    { color: #EBCB8B; }
+
+	/* About panel */
+	.about-panel { max-width: 480px; }
+	.about-panel h1 { margin-bottom: .5rem; }
+
+	/* License panel */
+	.licenses-panel { display: flex; flex-direction: column; gap: 1rem; height: 100%; }
+	.license-selector { display: flex; flex-direction: column; gap: .25rem; }
+	.license-text {
+		flex: 1;
+		background: var(--color-code-bg);
+		border: 1px solid var(--color-border);
+		border-radius: 6px;
+		padding: 1rem;
+		font-size: .8rem;
+		white-space: pre-wrap;
+		word-break: break-word;
+		overflow-y: auto;
+		color: var(--color-code-text);
+		font-family: 'Cascadia Code', Consolas, monospace;
+		min-height: 200px;
+		max-height: calc(100vh - 260px);
+	}
+</style>

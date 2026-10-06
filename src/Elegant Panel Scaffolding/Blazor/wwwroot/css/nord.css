@@ -1,0 +1,125 @@
+/* ============================================================
+   Nord Color Palette — CSS Custom Properties
+   https://www.nordtheme.com/
+   ============================================================ */
+
+/* ── Shared Nord raw tokens ─────────────────────────────────── */
+:root {
+    /* Polar Night */
+    --nord0: #2E3440;
+    --nord1: #3B4252;
+    --nord2: #434C5E;
+    --nord3: #4C566A;
+
+    /* Snow Storm */
+    --nord4: #D8DEE9;
+    --nord5: #E5E9F0;
+    --nord6: #ECEFF4;
+
+    /* Frost */
+    --nord7:  #8FBCBB;
+    --nord8:  #88C0D0;
+    --nord9:  #81A1C1;
+    --nord10: #5E81AC;
+
+    /* Aurora */
+    --nord11: #BF616A;
+    --nord12: #D08770;
+    --nord13: #EBCB8B;
+    --nord14: #A3BE8C;
+    --nord15: #B48EAD;
+}
+
+/* ── Dark theme (default) ────────────────────────────────────── */
+[data-theme="dark"], :root {
+    --color-bg:          var(--nord0);
+    --color-surface:     var(--nord1);
+    --color-surface-alt: var(--nord2);
+    --color-border:      var(--nord3);
+    --color-text:        var(--nord4);
+    --color-text-muted:  var(--nord3);
+    --color-heading:     var(--nord6);
+
+    --color-accent:       var(--nord8);
+    --color-accent-alt:   var(--nord9);
+    --color-accent-deep:  var(--nord10);
+
+    --color-success: var(--nord14);
+    --color-warning: var(--nord13);
+    --color-error:   var(--nord11);
+    --color-info:    var(--nord9);
+
+    --color-code-bg:   var(--nord1);
+    --color-code-text: var(--nord6);
+
+    --color-btn-bg:      var(--nord3);
+    --color-btn-text:    var(--nord6);
+    --color-btn-hover:   var(--nord2);
+    --color-btn-primary: var(--nord10);
+
+    --color-input-bg:     var(--nord1);
+    --color-input-border: var(--nord3);
+    --color-input-text:   var(--nord4);
+    --color-input-focus:  var(--nord8);
+
+    --color-titlebar:        var(--nord0);
+    --color-titlebar-text:   var(--nord4);
+    --color-titlebar-btn:    var(--nord3);
+    --color-titlebar-close:  var(--nord11);
+
+    --color-scrollbar-track: var(--nord1);
+    --color-scrollbar-thumb: var(--nord3);
+
+    --color-tooltip-bg:   var(--nord2);
+    --color-tooltip-text: var(--nord6);
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.4);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.5);
+}
+
+/* ── Light theme ─────────────────────────────────────────────── */
+[data-theme="light"] {
+    --color-bg:          var(--nord6);
+    --color-surface:     var(--nord5);
+    --color-surface-alt: var(--nord4);
+    --color-border:      #C0C8D8;
+    --color-text:        var(--nord1);
+    --color-text-muted:  var(--nord3);
+    --color-heading:     var(--nord0);
+
+    --color-accent:       var(--nord10);
+    --color-accent-alt:   var(--nord9);
+    --color-accent-deep:  var(--nord8);
+
+    --color-success: #4a7c59;
+    --color-warning: #9a7d2e;
+    --color-error:   var(--nord11);
+    --color-info:    var(--nord10);
+
+    --color-code-bg:   var(--nord4);
+    --color-code-text: var(--nord1);
+
+    --color-btn-bg:      var(--nord4);
+    --color-btn-text:    var(--nord1);
+    --color-btn-hover:   var(--nord5);
+    --color-btn-primary: var(--nord10);
+
+    --color-input-bg:     var(--nord6);
+    --color-input-border: #C0C8D8;
+    --color-input-text:   var(--nord1);
+    --color-input-focus:  var(--nord10);
+
+    --color-titlebar:       var(--nord5);
+    --color-titlebar-text:  var(--nord1);
+    --color-titlebar-btn:   var(--nord4);
+    --color-titlebar-close: var(--nord11);
+
+    --color-scrollbar-track: var(--nord5);
+    --color-scrollbar-thumb: var(--nord4);
+
+    --color-tooltip-bg:   var(--nord4);
+    --color-tooltip-text: var(--nord1);
+
+    --shadow-sm: 0 1px 3px rgba(46,52,64,.15);
+    --shadow-md: 0 4px 12px rgba(46,52,64,.2);
+}
