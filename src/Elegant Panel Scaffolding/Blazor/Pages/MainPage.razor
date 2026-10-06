@@ -1,0 +1,263 @@
+@page "/"
+@namespace EPS.Blazor.Pages
+@inject IOptionsService OptionsService
+@inject ICompilerService CompilerService
+@inject IToastService Toast
+@inject NavigationManager Nav
+@using EPS.Blazor.Components
+
+<div class="main-page flex-col" style="height:100%;">
+
+	<!-- Toolbar -->
+	<div class="toolbar flex items-center gap-sm">
+		<div class="toolbar-group flex items-center gap-sm">
+			<!-- Save -->
+			<div class="tooltip-wrapper">
+				<button class="btn-icon" disabled="@_busy" @onclick="SaveConfig" title="Save Configuration">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M7 22H9V24H7V22M11 22H13V24H11V22M15 22H17V24H15V22M17 2H5C3.89 2 3 2.9 3 4V18C3 19.1 3.89 20 5 20H19C20.1 20 21 19.1 21 18V6L17 2M19 18H5V4H16.17L19 6.83V18M12 11C10.34 11 9 12.34 9 14S10.34 17 12 17 15 15.66 15 14 13.66 11 12 11M6 5H15V9H6V5Z"/>
+					</svg>
+				</button>
+				<span class="tooltip-content">Save Configuration</span>
+			</div>
+
+			<!-- Load -->
+			<div class="tooltip-wrapper">
+				<button class="btn-icon" disabled="@_busy" @onclick="LoadConfig" title="Load Configuration">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M6.1,10L4,18V8H21A2,2 0 0,0 19,6H12L10,4H4A2,2 0 0,0 2,6V18A2,2 0 0,0 4,20H19C19.9,20 20.7,19.4 20.9,18.5L23.2,10H6.1M19,18H6L7.6,12H20.6L19,18Z"/>
+					</svg>
+				</button>
+				<span class="tooltip-content">Load Configuration</span>
+			</div>
+
+			<!-- Help -->
+			<div class="tooltip-wrapper">
+				<button class="btn-icon" @onclick='() => Nav.NavigateTo("/help")' title="Help &amp; About">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M10,19H13V22H10V19M12,2C17.35,2.22 19.68,7.62 16.5,11.67C15.67,12.67 14.33,13.33 13.67,14.17C13,15 13,16 13,17H10C10,15.33 10,13.92 10.67,12.92C11.33,11.92 12.67,11.33 13.5,10.67C15.92,8.43 15.32,5.26 12,5A3,3 0 0,0 9,8H6A6,6 0 0,1 12,2Z"/>
+					</svg>
+				</button>
+				<span class="tooltip-content">Help &amp; About</span>
+			</div>
+		</div>
+
+		<div class="toolbar-divider"></div>
+
+		<span class="toolbar-hint text-muted">
+			Select a touchpanel project to compile into your classes.
+		</span>
+	</div>
+
+	<!-- Progress bar -->
+	@if (_busy)
+	{
+		<div class="progress-bar-track">
+			<div class="progress-bar-indeterminate"></div>
+		</div>
+	}
+
+	<!-- Property browser -->
+	<div class="prop-scroll flex-1 overflow-auto p-md">
+		<ErrorBoundary>
+			<ChildContent>
+				<PropertyBrowser PropertyObject="@OptionsService.Current" />
+			</ChildContent>
+			<ErrorContent Context="ex">
+				<div class="prop-error-panel">
+					<strong>PropertyBrowser error:</strong><br />
+					@ex.GetType().Name: @ex.Message
+					@if (ex.InnerException is not null)
+					{
+						<br />@ex.InnerException.Message
+					}
+				</div>
+			</ErrorContent>
+		</ErrorBoundary>
+	</div>
+
+	<!-- Action buttons -->
+	<div class="action-bar flex items-center justify-between">
+		<div class="flex gap-md">
+			<button class="btn btn-primary" disabled="@_busy" @onclick="PreviewAsync">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+					<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+				</svg>
+				PREVIEW
+			</button>
+			<button class="btn btn-primary" disabled="@_busy" @onclick="CompileAsync">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+					<path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+				</svg>
+				COMPILE
+			</button>
+		</div>
+	</div>
+
+	<!-- Toast container -->
+	<Toast />
+</div>
+
+@code {
+	private bool _busy;
+
+	private void SaveConfig()
+	{
+		var thread = new System.Threading.Thread(() =>
+		{
+			var dialog = new Microsoft.Win32.SaveFileDialog
+			{
+				AddExtension = true,
+				CheckPathExists = true,
+				Filter = "EPS File|*.eps",
+				Title = "Save Configuration…"
+			};
+			if (dialog.ShowDialog() == true)
+			{
+				if (OptionsService.SaveToFile(dialog.FileName))
+					Toast.Success("Configuration saved.");
+				else
+					Toast.Error("Failed to save configuration.");
+			}
+		});
+		thread.SetApartmentState(System.Threading.ApartmentState.STA);
+		thread.Start();
+	}
+
+	private void LoadConfig()
+	{
+		var thread = new System.Threading.Thread(() =>
+		{
+			var dialog = new Microsoft.Win32.OpenFileDialog
+			{
+				AddExtension = true,
+				CheckFileExists = true,
+				CheckPathExists = true,
+				Filter = "EPS File|*.eps",
+				Title = "Load Configuration…"
+			};
+			if (dialog.ShowDialog() == true)
+			{
+				if (OptionsService.LoadFromFile(dialog.FileName))
+				{
+					Toast.Success("Configuration loaded.");
+					InvokeAsync(StateHasChanged);
+				}
+				else
+				{
+					Toast.Error("Failed to load configuration.");
+				}
+			}
+		});
+		thread.SetApartmentState(System.Threading.ApartmentState.STA);
+		thread.Start();
+	}
+
+	private async Task PreviewAsync()
+	{
+		if (!File.Exists(OptionsService.Current.ApplicationTouchpanelPath))
+		{
+			Toast.Error("Touchpanel file not found. Check the Touchpanel Path.");
+			return;
+		}
+		_busy = true;
+		try
+		{
+			var files = await CompilerService.PreviewAsync(OptionsService.Current);
+			if (files.Count == 0)
+			{
+				Toast.Error("Preview failed — no output was generated.");
+				return;
+			}
+			// Store files for the preview page and navigate.
+			PreviewState.Files = files;
+			Nav.NavigateTo("/preview");
+			Toast.Success("Preview generated.");
+		}
+		catch (Exception ex)
+		{
+			Toast.Error($"Preview failed: {ex.Message}");
+		}
+		finally
+		{
+			_busy = false;
+		}
+	}
+
+	private async Task CompileAsync()
+	{
+		if (!File.Exists(OptionsService.Current.ApplicationTouchpanelPath))
+		{
+			Toast.Error("Touchpanel file not found. Check the Touchpanel Path.");
+			return;
+		}
+		if (!Directory.Exists(OptionsService.Current.CompilePath))
+		{
+			Toast.Error("Destination path does not exist. Check the Destination Path.");
+			return;
+		}
+		_busy = true;
+		try
+		{
+			var result = await CompilerService.CompileAsync(OptionsService.Current);
+			if (result.Success)
+				Toast.Success("Compilation successful!");
+			else
+				Toast.Error($"Compilation failed: {result.ErrorMessage}");
+		}
+		catch (Exception ex)
+		{
+			Toast.Error($"Compilation failed: {ex.Message}");
+		}
+		finally
+		{
+			_busy = false;
+		}
+	}
+}
+
+<style>
+	.main-page { background: var(--color-bg); }
+
+	.toolbar {
+		padding: .4rem .75rem;
+		background: var(--color-surface);
+		border-bottom: 1px solid var(--color-border);
+		flex-shrink: 0;
+	}
+
+	.toolbar-group .btn-icon {
+		color: var(--color-text);
+		width: 32px; height: 32px;
+		border-radius: 4px;
+	}
+	.toolbar-group .btn-icon:hover { background: var(--color-surface-alt); }
+
+	.toolbar-divider {
+		width: 1px;
+		height: 20px;
+		background: var(--color-border);
+		margin: 0 .25rem;
+	}
+
+	.toolbar-hint { font-size: .8rem; }
+
+	.prop-scroll { max-width: 820px; margin: 0 auto; width: 100%; }
+
+	.prop-error-panel {
+		padding: 1rem;
+		background: #3d2a2a;
+		border: 1px solid var(--color-error);
+		border-radius: 6px;
+		color: var(--color-error);
+		font-size: .85rem;
+		line-height: 1.6;
+	}
+
+	.action-bar {
+		padding: .75rem 1rem;
+		background: var(--color-surface);
+		border-top: 1px solid var(--color-border);
+		flex-shrink: 0;
+	}
+</style>

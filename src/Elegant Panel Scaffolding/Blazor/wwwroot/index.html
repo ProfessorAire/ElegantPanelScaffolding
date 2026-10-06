@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Elegant Panel Scaffolding</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/nord.css" />
+    <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+    <div id="app">Loading...</div>
+    <script src="js/theme.js"></script>
+    <script src="js/tooltip.js"></script>
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script>
+        // Initialize theme from localStorage before Blazor starts to avoid flash.
+        window.__initTheme();
+        Blazor.start().then(() => window.__initTooltips());
+    </script>
+</body>
+</html>

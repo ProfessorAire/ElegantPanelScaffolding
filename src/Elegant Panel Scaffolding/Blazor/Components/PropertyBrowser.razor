@@ -1,0 +1,375 @@
+@namespace EPS.Blazor.Components
+@inject IJSRuntime JS
+
+@if (PropertyObject is not null)
+{
+	<div class="property-browser">
+		@foreach (var prop in GetVisibleProperties())
+		{
+			var displayName = GetDisplayName(prop);
+			var description = GetDescription(prop);
+			var propType = prop.PropertyType;
+
+			@if (propType == typeof(bool))
+			{
+				<div class="prop-row tooltip-wrapper" data-tooltip="@description">
+					<label class="prop-label" title="@displayName">@displayName</label>
+					<div class="prop-control prop-bool">
+						<input type="checkbox"
+							   checked="@((bool)(prop.GetValue(PropertyObject) ?? false))"
+							   disabled="@(!prop.CanWrite)"
+							   @onchange="e => SetValue(prop, (bool)e.Value!)" />
+					</div>
+				</div>
+			}
+			else if (propType.IsEnum)
+			{
+				<div class="prop-row tooltip-wrapper" data-tooltip="@description">
+					<label class="prop-label" title="@displayName">@displayName</label>
+					<div class="prop-control">
+						<select disabled="@(!prop.CanWrite)"
+								value="@(prop.GetValue(PropertyObject)?.ToString())"
+								@onchange="e => SetValue(prop, Enum.Parse(propType, e.Value?.ToString() ?? string.Empty))">
+							@foreach (var name in Enum.GetNames(propType))
+							{
+								<option value="@name">@name</option>
+							}
+						</select>
+					</div>
+				</div>
+			}
+			else if (propType == typeof(string) && HasAttribute<FolderPathAttribute>(prop))
+			{
+				var pathError = _pathErrors.TryGetValue(prop.Name, out var err) ? err : null;
+				<div class="prop-row tooltip-wrapper" data-tooltip="@description">
+					<label class="prop-label" title="@displayName">@displayName</label>
+					<div class="prop-control">
+						<div class="prop-path-row">
+							<input type="text"
+								   value="@((string?)prop.GetValue(PropertyObject) ?? string.Empty)"
+								   @onchange="e => { SetValue(prop, e.Value?.ToString() ?? string.Empty); ValidatePath(prop.Name, e.Value?.ToString()); }"
+								   @onblur="e => ValidatePath(prop.Name, (string?)prop.GetValue(PropertyObject))" />
+							<button class="btn btn-browse" @onclick="() => BrowseFolder(prop)" title="Browse…">…</button>
+						</div>
+						@if (!string.IsNullOrEmpty(pathError))
+						{
+							<span class="text-error prop-error">@pathError</span>
+						}
+					</div>
+				</div>
+			}
+			else if (propType == typeof(string) && HasAttribute<FileTypeAttribute>(prop))
+			{
+				var ftAttr = prop.GetCustomAttribute<FileTypeAttribute>()!;
+				<div class="prop-row tooltip-wrapper" data-tooltip="@description">
+					<label class="prop-label" title="@displayName">@displayName</label>
+					<div class="prop-control">
+						<div class="prop-path-row">
+							<input type="text" readonly
+								   value="@((string?)prop.GetValue(PropertyObject) ?? string.Empty)" />
+							<button class="btn btn-browse" @onclick="() => BrowseFile(prop, ftAttr)" title="Browse…">…</button>
+						</div>
+					</div>
+				</div>
+			}
+			else if (propType == typeof(string) && HasAttribute<MaskStringAttribute>(prop))
+			{
+				var maskAttr = prop.GetCustomAttribute<MaskStringAttribute>()!;
+				<div class="prop-row tooltip-wrapper" data-tooltip="@description">
+					<label class="prop-label" title="@displayName">@displayName</label>
+					<div class="prop-control">
+						<input type="password"
+							   value="@((string?)prop.GetValue(PropertyObject) ?? string.Empty)"
+							   disabled="@(!prop.CanWrite)"
+							   @onchange="e => SetValue(prop, e.Value?.ToString() ?? string.Empty)" />
+					</div>
+				</div>
+			}
+			else if (propType == typeof(string))
+			{
+				<div class="prop-row tooltip-wrapper" data-tooltip="@description">
+					<label class="prop-label" title="@displayName">@displayName</label>
+					<div class="prop-control">
+						<input type="text"
+							   value="@((string?)prop.GetValue(PropertyObject) ?? string.Empty)"
+							   readonly="@(!prop.CanWrite)"
+							   @onchange="e => SetValue(prop, e.Value?.ToString() ?? string.Empty)" />
+					</div>
+				</div>
+			}
+			else if (propType == typeof(int))
+			{
+				<div class="prop-row tooltip-wrapper" data-tooltip="@description">
+					<label class="prop-label" title="@displayName">@displayName</label>
+					<div class="prop-control">
+						<input type="number"
+							   value="@((int)(prop.GetValue(PropertyObject) ?? 0))"
+							   readonly="@(!prop.CanWrite)"
+							   @onchange="e => SetValue(prop, int.TryParse(e.Value?.ToString(), out var iv) ? iv : 0)" />
+					</div>
+				</div>
+			}
+			else if (IsObservableCollection(propType))
+			{
+				var items = prop.GetValue(PropertyObject) as System.Collections.IEnumerable;
+				<div class="prop-section">
+					<div class="prop-section-title">@displayName</div>
+					@if (items is not null)
+					{
+						@foreach (var item in items)
+						{
+							<div class="prop-nested">
+								<div class="prop-nested-title">@item?.ToString()</div>
+								<PropertyBrowser PropertyObject="@item" />
+							</div>
+						}
+					}
+				</div>
+			}
+			else if (propType.IsClass && propType != typeof(string))
+			{
+				var nestedVal = prop.GetValue(PropertyObject);
+				var expandKey = $"expand_{prop.Name}";
+				var isExpanded = _expanded.Contains(expandKey);
+				<div class="prop-expander">
+					<button class="prop-expander-header" @onclick="() => ToggleExpand(expandKey)">
+						<span class="prop-expander-arrow">@(isExpanded ? "▾" : "▸")</span>
+						@displayName
+					</button>
+					@if (isExpanded && nestedVal is not null)
+					{
+						<div class="prop-expander-body">
+							<PropertyBrowser PropertyObject="@nestedVal" />
+						</div>
+					}
+				</div>
+			}
+		}
+	</div>
+}
+
+@code {
+	[Parameter] public object? PropertyObject { get; set; }
+
+	private readonly Dictionary<string, string?> _pathErrors = new();
+	private readonly HashSet<string> _expanded = new();
+
+	private IEnumerable<PropertyInfo> GetVisibleProperties()
+	{
+		if (PropertyObject is null) return Enumerable.Empty<PropertyInfo>();
+
+		return PropertyObject.GetType()
+			.GetProperties()
+			.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false)
+			.OrderBy(p => p.GetCustomAttribute<OrderAttribute>()?.Order ?? 0)
+			.ThenBy(p => p.Name);
+	}
+
+	private static string GetDisplayName(PropertyInfo prop) =>
+		prop.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName is { Length: > 0 } dn ? dn : prop.Name;
+
+	private static string GetDescription(PropertyInfo prop) =>
+		prop.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
+
+	private static bool HasAttribute<T>(PropertyInfo prop) where T : Attribute =>
+		prop.GetCustomAttribute<T>() is not null;
+
+	private static bool IsObservableCollection(Type t) =>
+		t.IsGenericType && t.GetGenericTypeDefinition() == typeof(System.Collections.ObjectModel.ObservableCollection<>);
+
+	private void SetValue(PropertyInfo prop, object? value)
+	{
+		if (prop.CanWrite && PropertyObject is not null)
+			prop.SetValue(PropertyObject, value);
+	}
+
+	private void ToggleExpand(string key)
+	{
+		if (!_expanded.Remove(key))
+			_expanded.Add(key);
+	}
+
+	private void ValidatePath(string propName, string? path)
+	{
+		if (string.IsNullOrWhiteSpace(path))
+		{
+			_pathErrors.Remove(propName);
+			return;
+		}
+		try
+		{
+			var isRelative = !Path.IsPathRooted(path);
+			if (isRelative && string.IsNullOrWhiteSpace(Options.Current.ConfigurationFilePath))
+			{
+				_pathErrors[propName] = "Relative paths require a saved configuration file. Please save first or use an absolute path.";
+			}
+			else if (string.IsNullOrWhiteSpace(Path.GetPathRoot(path)))
+			{
+				_pathErrors[propName] = "Invalid path format.";
+			}
+			else
+			{
+				_pathErrors.Remove(propName);
+			}
+		}
+		catch (Exception ex)
+		{
+			_pathErrors[propName] = $"Invalid path: {ex.Message}";
+		}
+	}
+
+	private void BrowseFolder(PropertyInfo prop)
+	{
+		// Invoke via WPF dispatcher — JS cannot open native dialogs from WebView2.
+		var thread = new System.Threading.Thread(() =>
+		{
+			var dialog = new System.Windows.Forms.FolderBrowserDialog
+			{
+				Description = "Select a folder…",
+				ShowNewFolderButton = true,
+				SelectedPath = (string?)prop.GetValue(PropertyObject) ?? string.Empty
+			};
+			if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK
+				&& !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+			{
+				SetValue(prop, dialog.SelectedPath);
+				_pathErrors.Remove(prop.Name);
+				InvokeAsync(StateHasChanged);
+			}
+		});
+		thread.SetApartmentState(System.Threading.ApartmentState.STA);
+		thread.Start();
+	}
+
+	private void BrowseFile(PropertyInfo prop, FileTypeAttribute attr)
+	{
+		var filterParts = new List<string>();
+		for (int i = 0; i < Math.Min(attr.FileNames.Length, attr.ValidExtensions.Length); i++)
+		{
+			var ext = attr.ValidExtensions[i];
+			if (!ext.StartsWith('*')) ext = "*" + ext;
+			if (ext.Length > 1 && ext[1] != '.') ext = ext.Insert(1, ".");
+			filterParts.Add($"{attr.FileNames[i]}|{ext}");
+		}
+		var filter = string.Join("|", filterParts);
+
+		var thread = new System.Threading.Thread(() =>
+		{
+			var dialog = new Microsoft.Win32.OpenFileDialog
+			{
+				AddExtension = true,
+				CheckFileExists = true,
+				CheckPathExists = true,
+				Filter = filter,
+				Title = "Select a file…"
+			};
+			if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.FileName))
+			{
+				SetValue(prop, dialog.FileName);
+				InvokeAsync(StateHasChanged);
+			}
+		});
+		thread.SetApartmentState(System.Threading.ApartmentState.STA);
+		thread.Start();
+	}
+}
+
+<style>
+	.property-browser {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		overflow:visible;
+	}
+
+	.prop-row {
+		display: grid;
+		grid-template-columns: minmax(120px, 200px) 1fr;
+		align-items: start;
+		gap: .5rem;
+		padding: .35rem .5rem;
+		border-radius: 4px;
+		transition: background .1s;
+	}
+	/* .prop-row:hover { background: var(--color-surface-alt); } */
+
+	.prop-label {
+		font-size: .8rem;
+		color: var(--color-text);
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		padding-top: .3rem;
+		cursor: default;
+		
+	}
+
+	.prop-control { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+	.prop-bool { padding-top: .35rem; }
+
+	.prop-path-row {
+		display: flex;
+		gap: .35rem;
+	}
+	.prop-path-row input { flex: 1; min-width: 0; }
+	.btn-browse {
+		padding: .25rem .6rem;
+		flex-shrink: 0;
+		font-size: .75rem;
+	}
+
+	.prop-error { font-size: .75rem; }
+
+	.prop-section {
+		border: 1px solid var(--color-border);
+		border-radius: 6px;
+		margin: .4rem 0;
+		overflow: hidden;
+	}
+	.prop-section-title {
+		background: var(--color-surface-alt);
+		font-size: .75rem;
+		font-weight: 600;
+		padding: .3rem .6rem;
+		color: var(--color-text-muted);
+		text-transform: uppercase;
+		letter-spacing: .04em;
+	}
+
+	.prop-nested { padding: .25rem .5rem; border-top: 1px solid var(--color-border); }
+	.prop-nested-title {
+		font-size: .75rem;
+		font-weight: 600;
+		color: var(--color-accent);
+		margin-bottom: .25rem;
+	}
+
+	.prop-expander { margin: .2rem 0; }
+	.prop-expander-header {
+		display: flex;
+		align-items: center;
+		gap: .4rem;
+		width: 100%;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: 4px;
+		padding: .35rem .6rem;
+		cursor: pointer;
+		font-size: .85rem;
+		font-weight: 600;
+		color: var(--color-text);
+		text-align: left;
+		transition: background .1s;
+	}
+	.prop-expander-header:hover { background: var(--color-surface-alt); }
+	.prop-expander-arrow { color: var(--color-accent); font-size: .7rem; width: 12px; flex-shrink: 0; }
+	.prop-expander-body {
+		padding: .5rem .5rem .5rem 1.2rem;
+		border: 1px solid var(--color-border);
+		border-top: none;
+		border-radius: 0 0 4px 4px;
+	}
+
+	/* Tooltips for property rows are rendered as fixed-position elements by
+	   js/tooltip.js, which reads the data-tooltip attribute on hover. This
+	   keeps them from being clipped by overflow:auto ancestor containers. */
+</style>

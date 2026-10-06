@@ -1,0 +1,213 @@
+@namespace EPS.Blazor.Components
+@using System.Text
+@using System.Text.RegularExpressions
+
+<div class="cs-viewer" @ref="_container">
+	<div class="cs-gutter" aria-hidden="true">
+		@for (int i = 1; i <= _lineCount; i++)
+		{
+			<div class="cs-line-num">@i</div>
+		}
+	</div>
+	<div class="cs-code">
+		@((MarkupString)_highlighted)
+	</div>
+</div>
+
+@code {
+	[Parameter] public string? Value { get; set; }
+
+	private string _highlighted = string.Empty;
+	private int _lineCount = 1;
+	private ElementReference _container;
+
+	// ── Nord palette ─────────────────────────────────────────────
+	private const string ColDefault   = "#D8DEE9";
+	private const string ColKeyword   = "#81A1C1";
+	private const string ColType      = "#8FBCBB";
+	private const string ColString    = "#A3BE8C";
+	private const string ColComment   = "#4C566A";
+	private const string ColNumber    = "#B48EAD";
+	private const string ColAttribute = "#EBCB8B";
+	private const string ColNamespace = "#88C0D0";
+	private const string ColOperator  = "#81A1C1";
+	private const string ColPunct     = "#ECEFF4";
+
+	// ── C# keywords ──────────────────────────────────────────────
+	private static readonly HashSet<string> Keywords = new(StringComparer.Ordinal)
+	{
+		"abstract","as","base","bool","break","byte","case","catch","char","checked",
+		"class","const","continue","decimal","default","delegate","do","double","else",
+		"enum","event","explicit","extern","false","finally","fixed","float","for",
+		"foreach","goto","if","implicit","in","int","interface","internal","is","lock",
+		"long","namespace","new","null","object","operator","out","override","params",
+		"private","protected","public","readonly","ref","return","sbyte","sealed",
+		"short","sizeof","stackalloc","static","string","struct","switch","this",
+		"throw","true","try","typeof","uint","ulong","unchecked","unsafe","ushort",
+		"using","virtual","void","volatile","while","async","await","var","record",
+		"init","with","get","set","add","remove","value","yield","partial","global",
+		"file","required","scoped","and","or","not","when","nameof","nint","nuint",
+	};
+
+	// Known BCL / framework types that should be coloured as types
+	private static readonly HashSet<string> WellKnownTypes = new(StringComparer.Ordinal)
+	{
+		"Action","Attribute","Boolean","Byte","Char","Console","DateTime","DateTimeOffset",
+		"Decimal","Dictionary","Double","Enum","EventArgs","EventHandler","Exception",
+		"Func","Guid","IComparable","IDisposable","IEnumerable","IList","Int16","Int32",
+		"Int64","IReadOnlyList","IReadOnlyCollection","KeyValuePair","List","Math",
+		"Object","SByte","Single","String","StringBuilder","Task","TimeSpan","Tuple",
+		"UInt16","UInt32","UInt64","Uri","ValueTask","Version","HashSet","Queue","Stack",
+		"SortedDictionary","LinkedList","IEnumerator","ICollection","NotImplementedException",
+		"ArgumentNullException","ArgumentException","InvalidOperationException",
+		"ArgumentOutOfRangeException","NullReferenceException","OverflowException",
+	};
+
+	// Composite token regex — order matters: earlier alternatives win
+	private static readonly Regex Tokenizer = new Regex(
+		@"(?<LineComment>//[^\r\n]*)" +
+		@"|(?<BlockComment>/\*[\s\S]*?\*/)" +
+		@"|(?<VerbatimString>@""(?:[^""]|"""")*"")" +
+		@"|(?<InterpolatedString>\$""(?:[^""\\]|\\.)*"")" +
+		@"|(?<String>""(?:[^""\\]|\\.)*"")" +
+		@"|(?<CharLiteral>'(?:[^'\\]|\\.)*')" +
+		@"|(?<Attribute>\[(?!^\s)[^\]\r\n]*\])" +
+		@"|(?<Number>\b(?:0x[0-9A-Fa-f]+|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?[fFdDmMlLuU]*)\b)" +
+		@"|(?<Identifier>[A-Za-z_]\w*)" +
+		@"|(?<Operator>[+\-*/%&|^~!<>=?]+)" +
+		@"|(?<Punctuation>[;:,.\(\)\[\]\{\}])" +
+		@"|(?<Whitespace>[ \t]+)" +
+		@"|(?<Newline>\r?\n)" +
+		@"|(?<Other>.)",
+		RegexOptions.Compiled | RegexOptions.Multiline);
+
+	protected override void OnParametersSet() => Render();
+
+	private void Render()
+	{
+		var source = Value ?? string.Empty;
+		_lineCount = source.Count(c => c == '\n') + 1;
+
+		var sb = new StringBuilder(source.Length * 4);
+		sb.Append("<div class=\"cs-line\">");
+
+		foreach (Match m in Tokenizer.Matches(source))
+		{
+			if (m.Groups["Newline"].Success)
+			{
+				sb.Append("</div><div class=\"cs-line\">");
+				continue;
+			}
+
+			string raw = m.Value;
+			string escaped = HtmlEncode(raw);
+
+			if (m.Groups["LineComment"].Success || m.Groups["BlockComment"].Success)
+			{
+				Span(sb, ColComment, escaped, italic: true);
+			}
+			else if (m.Groups["VerbatimString"].Success ||
+					 m.Groups["InterpolatedString"].Success ||
+					 m.Groups["String"].Success ||
+					 m.Groups["CharLiteral"].Success)
+			{
+				Span(sb, ColString, escaped);
+			}
+			else if (m.Groups["Attribute"].Success)
+			{
+				Span(sb, ColAttribute, escaped);
+			}
+			else if (m.Groups["Number"].Success)
+			{
+				Span(sb, ColNumber, escaped);
+			}
+			else if (m.Groups["Identifier"].Success)
+			{
+				string word = raw;
+				if (Keywords.Contains(word))
+					Span(sb, ColKeyword, escaped);
+				else if (WellKnownTypes.Contains(word) || (word.Length > 1 && char.IsUpper(word[0])))
+					Span(sb, ColType, escaped);
+				else if (word == "namespace" || word == "using")
+					Span(sb, ColNamespace, escaped);
+				else
+					sb.Append(escaped);
+			}
+			else if (m.Groups["Operator"].Success)
+			{
+				Span(sb, ColOperator, escaped);
+			}
+			else if (m.Groups["Punctuation"].Success)
+			{
+				Span(sb, ColPunct, escaped);
+			}
+			else
+			{
+				sb.Append(escaped);
+			}
+		}
+
+		sb.Append("</div>");
+		_highlighted = sb.ToString();
+	}
+
+	private static void Span(StringBuilder sb, string color, string content, bool italic = false)
+	{
+		sb.Append("<span style=\"color:");
+		sb.Append(color);
+		if (italic) sb.Append(";font-style:italic");
+		sb.Append("\">");
+		sb.Append(content);
+		sb.Append("</span>");
+	}
+
+	private static string HtmlEncode(string s) =>
+		s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
+}
+
+<style>
+	.cs-viewer {
+		display: flex;
+		flex-direction: row;
+		width: 100%;
+		height: 100%;
+		overflow: auto;
+		background: #2E3440;
+		font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+		font-size: 13px;
+		line-height: 1.6;
+		color: #D8DEE9;
+		tab-size: 4;
+	}
+
+	.cs-gutter {
+		flex-shrink: 0;
+		min-width: 3rem;
+		padding: .75rem .5rem .75rem .25rem;
+		text-align: right;
+		background: #2E3440;
+		color: #4C566A;
+		border-right: 1px solid #3B4252;
+		user-select: none;
+		position: sticky;
+		left: 0;
+		z-index: 1;
+	}
+
+	.cs-line-num {
+		line-height: 1.6;
+		font-size: 13px;
+	}
+
+	.cs-code {
+		flex: 1;
+		padding: .75rem 1rem;
+		white-space: pre;
+		overflow-x: visible;
+	}
+
+	.cs-line {
+		display: block;
+		min-height: 1.6em;
+	}
+</style>
