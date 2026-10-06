@@ -4,6 +4,7 @@
 @inject ICompilerService CompilerService
 @inject IToastService Toast
 @inject NavigationManager Nav
+@inject IThemeService ThemeService
 @using EPS.Blazor.Components
 
 <div class="main-page flex-col" style="height:100%;">
@@ -11,6 +12,26 @@
 	<!-- Toolbar -->
 	<div class="toolbar flex items-center gap-sm">
 		<div class="toolbar-group flex items-center gap-sm">
+			<!-- Theme -->
+			<div class="tooltip-wrapper">
+				<button class="btn-icon" @onclick="ToggleTheme" title="Toggle theme">
+					@if (ThemeService.CurrentTheme == "dark")
+					{
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="4" />
+							<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+						</svg>
+					}
+					else
+					{
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+						</svg>
+					}
+				</button>
+				<span class="tooltip-content">Toggle Theme</span>
+			</div>
+
 			<!-- Save -->
 			<div class="tooltip-wrapper">
 				<button class="btn-icon" disabled="@_busy" @onclick="SaveConfig" title="Save Configuration">
@@ -213,6 +234,11 @@
 		{
 			_busy = false;
 		}
+	}
+
+	private void ToggleTheme()
+	{
+		ThemeService.Toggle();
 	}
 }
 
