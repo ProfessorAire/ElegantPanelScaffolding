@@ -13,6 +13,12 @@ namespace EPS.CodeGen.Writers
 
         public List<string> Setter { get; } = new List<string>();
 
+        public List<string> SetterWhenSendingToPanel { get; } = new List<string>();
+
+        public bool UseSetterMethod { get; set; }
+
+        public string SetterMethodName { get; set; } = string.Empty;
+
         public string Name { get; set; } = "";
 
         public FieldWriter? BackingFieldWriter { get; set; }
@@ -63,6 +69,9 @@ namespace EPS.CodeGen.Writers
         public override string ToString(int indent)
         {
             _ = this.sb.Clear();
+            var hasExpandedSetter = this.HasSetter && (this.UsePropertyChangeEvent || this.ImplementINotifyPropertyChanged || this.Setter.Count > 0 || this.SetterWhenSendingToPanel.Count > 0);
+            var useSetterMethod = this.UseSetterMethod && hasExpandedSetter;
+            var setterMethodName = useSetterMethod ? this.GetSetterMethodName() : string.Empty;
 
             // Help Stuff.
             var prefix = this.HasGetter && !this.PrivateGetter ? "Gets" : string.Empty;
@@ -142,126 +151,22 @@ namespace EPS.CodeGen.Writers
                 // Setter.
                 if (this.HasSetter)
                 {
-                    if (this.UsePropertyChangeEvent || this.ImplementINotifyPropertyChanged || this.Setter.Count > 0)
+                    if (hasExpandedSetter)
                     {
                         _ = this.sb.Append(indent.GetTabs());
                         _ = this.sb.AppendLine($"{(this.PrivateSetter ? "private " : "")}set");
                         _ = this.sb.Append(indent.GetTabs());
                         _ = this.sb.AppendLine("{");
                         indent++;
-                        var fieldName = this.BackingFieldWriter?.Name ?? $"{this.Name.ToLower(CultureInfo.InvariantCulture)[0]}{this.Name.Substring(1)}";
-                        if (fieldName == "value")
-                        {
-                            fieldName = $"this.{fieldName}";
-                        }
 
-                        _ = this.sb.Append(indent.GetTabs());
-                        _ = this.sb.AppendLine($"var isChanged = {fieldName} != value;");
-
-                        if (this.BackingFieldWriter != null)
+                        if (useSetterMethod)
                         {
                             _ = this.sb.Append(indent.GetTabs());
-                            _ = this.sb.AppendLine($"this.{this.BackingFieldWriter.Name} = value;");
+                            _ = this.sb.AppendLine($"this.{setterMethodName}(value, true);");
                         }
-
-                        foreach (var l in this.Setter)
+                        else
                         {
-                            if (!string.IsNullOrEmpty(l))
-                            {
-                                _ = this.sb.AppendLine(SanitizeSpaces(l, indent));
-                                if (l.Contains("{"))
-                                {
-                                    indent++;
-                                }
-                                else if (l.Contains("}"))
-                                {
-                                    indent--;
-                                }
-                            }
-                            else
-                            {
-                                _ = this.sb.AppendLine();
-                            }
-                        }
-
-                        if (this.UsePropertyChangeEvent || this.ImplementINotifyPropertyChanged)
-                        {
-                            var argType = "Boolean";
-                            if (this.Type == "ushort")
-                            {
-                                argType = "UShort";
-                            }
-                            else if (this.Type == "string")
-                            {
-                                argType = "String";
-                            }
-
-                            // Check for notifications
-                            if (!this.AlwaysRaisePropertyChangeEvents)
-                            {
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine($"if(isChanged)");
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine("{");
-                                indent++;
-                            }
-
-                            if (this.UsePropertyChangeEvent)
-                            {
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine($"var changeEvent = {this.Name}Changed;");
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine($"if(changeEvent != null)");
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine("{");
-                                indent++;
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine($"changeEvent.Invoke(this, new {argType}ValueChangedEventArgs(value));");
-                                indent--;
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine("}");
-                            }
-
-                            if (this.ImplementINotifyPropertyChanged)
-                            {
-                                _ = this.sb.AppendLine();
-
-                                if (this.AlwaysRaisePropertyChangeEvents)
-                                {
-                                    _ = this.sb.Append(indent.GetTabs());
-                                    _ = this.sb.AppendLine($"if(isChanged)");
-                                    _ = this.sb.Append(indent.GetTabs());
-                                    _ = this.sb.AppendLine("{");
-                                    indent++;
-                                }
-
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine("var propertyChangeEvent = PropertyChanged;");
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine("if (propertyChangeEvent != null)");
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine("{");
-                                indent++;
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine($"propertyChangeEvent.Invoke(this, new PropertyChangedEventArgs(\"{this.Name}\"));");
-                                indent--;
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine("}");
-
-                                if (this.AlwaysRaisePropertyChangeEvents)
-                                {
-                                    indent--;
-                                    _ = this.sb.Append(indent.GetTabs());
-                                    _ = this.sb.AppendLine("}");
-                                }
-                            }
-
-                            if (!this.AlwaysRaisePropertyChangeEvents)
-                            {
-                                indent--;
-                                _ = this.sb.Append(indent.GetTabs());
-                                _ = this.sb.AppendLine("}");
-                            }
+                            this.AppendExpandedSetterBody(ref indent, false);
                         }
 
                         indent--;
@@ -279,9 +184,185 @@ namespace EPS.CodeGen.Writers
                 indent--;
                 _ = this.sb.Append(indent.GetTabs());
                 _ = this.sb.Append('}');
+
+                if (useSetterMethod)
+                {
+                    _ = this.sb.AppendLine();
+                    _ = this.sb.AppendLine();
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine($"private void {setterMethodName}({this.Type} value, bool sendToPanel)");
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("{");
+                    indent++;
+                    this.AppendExpandedSetterBody(ref indent, true);
+                    indent--;
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.Append('}');
+                }
             }
 
             return this.sb.ToString();
+        }
+
+        private void AppendExpandedSetterBody(ref int indent, bool useSendToPanelGuard)
+        {
+            var fieldName = this.BackingFieldWriter?.Name ?? $"{this.Name.ToLower(CultureInfo.InvariantCulture)[0]}{this.Name.Substring(1)}";
+            if (fieldName == "value")
+            {
+                fieldName = $"this.{fieldName}";
+            }
+
+            _ = this.sb.Append(indent.GetTabs());
+            _ = this.sb.AppendLine($"var isChanged = {fieldName} != value;");
+
+            if (this.BackingFieldWriter != null)
+            {
+                _ = this.sb.Append(indent.GetTabs());
+                _ = this.sb.AppendLine($"this.{this.BackingFieldWriter.Name} = value;");
+            }
+
+            if (useSendToPanelGuard && this.SetterWhenSendingToPanel.Count > 0)
+            {
+                _ = this.sb.Append(indent.GetTabs());
+                _ = this.sb.AppendLine("if(sendToPanel)");
+                _ = this.sb.Append(indent.GetTabs());
+                _ = this.sb.AppendLine("{");
+                indent++;
+                this.AppendConfiguredSetterLines(this.SetterWhenSendingToPanel, ref indent);
+                indent--;
+                _ = this.sb.Append(indent.GetTabs());
+                _ = this.sb.AppendLine("}");
+            }
+            else if (!useSendToPanelGuard && this.SetterWhenSendingToPanel.Count > 0)
+            {
+                this.AppendConfiguredSetterLines(this.SetterWhenSendingToPanel, ref indent);
+            }
+
+            this.AppendConfiguredSetterLines(this.Setter, ref indent);
+
+            if (this.UsePropertyChangeEvent || this.ImplementINotifyPropertyChanged)
+            {
+                var argType = "Boolean";
+                if (this.Type == "ushort")
+                {
+                    argType = "UShort";
+                }
+                else if (this.Type == "string")
+                {
+                    argType = "String";
+                }
+
+                // Check for notifications
+                if (!this.AlwaysRaisePropertyChangeEvents)
+                {
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("if(isChanged)");
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("{");
+                    indent++;
+                }
+
+                if (this.UsePropertyChangeEvent)
+                {
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine($"var changeEvent = {this.Name}Changed;");
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("if(changeEvent != null)");
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("{");
+                    indent++;
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine($"changeEvent.Invoke(this, new {argType}ValueChangedEventArgs(value));");
+                    indent--;
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("}");
+                }
+
+                if (this.ImplementINotifyPropertyChanged)
+                {
+                    _ = this.sb.AppendLine();
+
+                    if (this.AlwaysRaisePropertyChangeEvents)
+                    {
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine("if(isChanged)");
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine("{");
+                        indent++;
+                    }
+
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("var propertyChangeEvent = PropertyChanged;");
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("if (propertyChangeEvent != null)");
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("{");
+                    indent++;
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine($"propertyChangeEvent.Invoke(this, new PropertyChangedEventArgs(\"{this.Name}\"));");
+                    indent--;
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("}");
+
+                    if (this.AlwaysRaisePropertyChangeEvents)
+                    {
+                        indent--;
+                        _ = this.sb.Append(indent.GetTabs());
+                        _ = this.sb.AppendLine("}");
+                    }
+                }
+
+                if (!this.AlwaysRaisePropertyChangeEvents)
+                {
+                    indent--;
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("}");
+                }
+            }
+        }
+
+        private void AppendConfiguredSetterLines(IEnumerable<string> lines, ref int indent)
+        {
+            foreach (var l in lines)
+            {
+                if (!string.IsNullOrEmpty(l))
+                {
+                    _ = this.sb.AppendLine(SanitizeSpaces(l, indent));
+                    if (l.Contains("{"))
+                    {
+                        indent++;
+                    }
+                    else if (l.Contains("}"))
+                    {
+                        indent--;
+                    }
+                }
+                else
+                {
+                    _ = this.sb.AppendLine();
+                }
+            }
+        }
+
+        private string GetSetterMethodName()
+        {
+            if (!string.IsNullOrWhiteSpace(this.SetterMethodName))
+            {
+                return this.SetterMethodName;
+            }
+
+            var methodBaseName = this.Name.Contains('.') ? this.Name.Split('.')[^1] : this.Name;
+            var sanitizedNameBuilder = new StringBuilder(methodBaseName.Length);
+            foreach (var c in methodBaseName)
+            {
+                if (char.IsLetterOrDigit(c) || c == '_')
+                {
+                    sanitizedNameBuilder.Append(c);
+                }
+            }
+
+            var sanitizedName = sanitizedNameBuilder.Length > 0 ? sanitizedNameBuilder.ToString() : "Value";
+            return $"Set{sanitizedName}Value";
         }
 
         private static string SanitizeSpaces(string text, int indent) => $"{indent.GetTabs()}{text.Replace("\n", $"\n{indent.GetTabs()}")}";

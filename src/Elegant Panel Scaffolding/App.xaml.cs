@@ -32,5 +32,15 @@ namespace EPS
             var window = new UI.MainWindow();
             window.Show();
         }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            if (Services.GetService(typeof(IOptionsService)) is IOptionsService optionsService)
+            {
+                optionsService.SaveSession();
+            }
+
+            base.OnExit(e);
+        }
     }
 }

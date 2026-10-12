@@ -2,10 +2,13 @@
 @namespace EPS.Blazor.Pages
 @inject NavigationManager Nav
 
-<div class="preview-page flex" style="height:100%;">
+<div class="preview-page flex" style="height:100%;"
+	 @onmousemove="OnPageMouseMove"
+	 @onmouseup="OnPageMouseUp"
+	 @onmouseleave="OnPageMouseUp">
 
 	<!-- File list panel -->
-	<div class="preview-sidebar flex-col">
+	<div class="preview-sidebar flex-col" style="@SidebarStyle">
 		<div class="preview-sidebar-header">Generated Files</div>
 		<ul class="file-list flex-1 overflow-auto">
 			@foreach (var (file, idx) in _files.Select((f, i) => (f, i)))
@@ -13,7 +16,7 @@
 				<li class="@(idx == _selectedIndex ? "active" : "")"
 					@onclick="() => SelectFile(idx)"
 					title="@file.Path">
-					@file.Name
+					<span class="path-tail">@file.Path</span>
 				</li>
 			}
 		</ul>
@@ -24,6 +27,11 @@
 		</div>
 	</div>
 
+	<div class="preview-splitter"
+		 role="separator"
+		 aria-label="Resize file list"
+		 @onmousedown="OnSplitterMouseDown"></div>
+
 	<!-- Code viewer panel -->
 	<div class="preview-editor flex-1 flex-col" style="min-width:0;">
 		<CSharpViewer Value="@_content" />
@@ -31,9 +39,20 @@
 </div>
 
 @code {
+	private const double MinSidebarWidthPx = 160;
+	private const double MaxSidebarWidthPx = 900;
+	private const double ApproxCharWidthPx = 8;
+	private const double SidebarPaddingPx = 24;
+
 	private IReadOnlyList<GeneratedFile> _files = PreviewState.Files;
 	private int _selectedIndex = 0;
 	private string _content = PreviewState.Files.Count > 0 ? PreviewState.Files[0].Content : string.Empty;
+	private bool _isResizing;
+	private double? _sidebarWidthPx = PreviewState.ManualSidebarWidthPx;
+
+	private string SidebarStyle => _sidebarWidthPx.HasValue
+		? $"width: {_sidebarWidthPx.Value:0}px;"
+		: "width: max-content;";
 
 	private void SelectFile(int index)
 	{
@@ -41,20 +60,64 @@
 		if (index < _files.Count)
 			_content = _files[index].Content;
 	}
+
+	private void OnSplitterMouseDown(MouseEventArgs _)
+	{
+		_isResizing = true;
+		_sidebarWidthPx ??= EstimateAutoSidebarWidthPx();
+	}
+
+	private void OnPageMouseMove(MouseEventArgs e)
+	{
+		if (!_isResizing)
+			return;
+
+		_sidebarWidthPx = ClampSidebarWidth((_sidebarWidthPx ?? EstimateAutoSidebarWidthPx()) + e.MovementX);
+		PreviewState.ManualSidebarWidthPx = _sidebarWidthPx;
+	}
+
+	private void OnPageMouseUp(MouseEventArgs _)
+	{
+		_isResizing = false;
+	}
+
+	private double EstimateAutoSidebarWidthPx()
+	{
+		var maxPathLength = _files.Count == 0 ? 0 : _files.Max(f => f.Path?.Length ?? 0);
+		var estimated = (maxPathLength * ApproxCharWidthPx) + SidebarPaddingPx;
+		return ClampSidebarWidth(estimated);
+	}
+
+	private static double ClampSidebarWidth(double width)
+		=> Math.Clamp(width, MinSidebarWidthPx, MaxSidebarWidthPx);
 }
 
 <style>
 	.preview-page { background: var(--color-bg); }
 
 	.preview-sidebar {
-		width: 240px;
 		min-width: 160px;
-		max-width: 360px;
+		max-width: 900px;
+		overflow: hidden;
 		background: var(--color-surface);
 		border-right: 1px solid var(--color-border);
 		flex-shrink: 0;
 		display: flex;
 		flex-direction: column;
+	}
+
+	.preview-splitter {
+		width: 8px;
+		cursor: col-resize;
+		flex-shrink: 0;
+		background: transparent;
+		border-right: 1px solid transparent;
+	}
+
+	.preview-splitter:hover,
+	.preview-page:has(.preview-splitter:active) .preview-splitter {
+		background: color-mix(in srgb, var(--color-border) 45%, transparent);
+		border-right-color: var(--color-border);
 	}
 
 	.preview-sidebar-header {
@@ -72,6 +135,19 @@
 		padding: .5rem;
 		border-top: 1px solid var(--color-border);
 		flex-shrink: 0;
+	}
+
+	.file-list li {
+		overflow: hidden;
+	}
+
+	.path-tail {
+		display: block;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		direction: rtl;
+		text-align: left;
 	}
 
 	.preview-editor {
