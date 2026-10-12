@@ -1,5 +1,4 @@
-﻿using EPS.CodeGen.Builders;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
@@ -15,15 +14,24 @@ namespace EPS.CodeGen.Writers
 
         public List<string> SetterWhenSendingToPanel { get; } = new List<string>();
 
-        public bool UseSetterMethod { get; set; }
+        public bool UseSetterMethod
+        {
+            get; set;
+        }
 
         public string SetterMethodName { get; set; } = string.Empty;
 
         public string Name { get; set; } = "";
 
-        public FieldWriter? BackingFieldWriter { get; set; }
+        public FieldWriter? BackingFieldWriter
+        {
+            get; set;
+        }
 
-        public HelpWriter Help { get; set; }
+        public HelpWriter Help
+        {
+            get; set;
+        }
 
         public string Type { get; set; } = "";
 
@@ -33,15 +41,24 @@ namespace EPS.CodeGen.Writers
 
         public bool HasGetter { get; set; } = true;
 
-        public bool PrivateSetter { get; set; }
+        public bool PrivateSetter
+        {
+            get; set;
+        }
 
-        public bool PrivateGetter { get; set; }
+        public bool PrivateGetter
+        {
+            get; set;
+        }
 
         public bool UsePropertyChangeEvent { get; set; } = true;
 
         public bool AlwaysRaisePropertyChangeEvents { get; set; } = true;
 
-        public bool ImplementINotifyPropertyChanged { get; set; }
+        public bool ImplementINotifyPropertyChanged
+        {
+            get; set;
+        }
 
         private readonly int indentLevel;
 
@@ -189,6 +206,12 @@ namespace EPS.CodeGen.Writers
                 {
                     _ = this.sb.AppendLine();
                     _ = this.sb.AppendLine();
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("/// <summary>");
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("/// Sets the value of the property, optionally sending the value to the panel.");
+                    _ = this.sb.Append(indent.GetTabs());
+                    _ = this.sb.AppendLine("/// </summary>");
                     _ = this.sb.Append(indent.GetTabs());
                     _ = this.sb.AppendLine($"private void {setterMethodName}({this.Type} value, bool sendToPanel)");
                     _ = this.sb.Append(indent.GetTabs());
