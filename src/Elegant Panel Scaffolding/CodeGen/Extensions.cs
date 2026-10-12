@@ -12,7 +12,7 @@
             var tabs = "";
             for (var i = 1; i <= indentLevel; i++)
             {
-                tabs += "\t";
+                tabs += "    ";
             }
             return tabs;
         }

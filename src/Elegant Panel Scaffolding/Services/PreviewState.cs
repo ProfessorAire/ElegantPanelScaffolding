@@ -9,5 +9,8 @@ namespace EPS.Services
     public static class PreviewState
     {
         public static IReadOnlyList<GeneratedFile> Files { get; set; } = Array.Empty<GeneratedFile>();
+
+        // Session-lifetime only; reset when the app restarts.
+        public static double? ManualSidebarWidthPx { get; set; }
     }
 }

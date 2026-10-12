@@ -255,7 +255,17 @@ namespace EPS.CodeGen.Builders
                 // Next create the property and backing field writers.
                 var pw = this.GetPropertyWriter(fieldName);
 
-                pw.Setter.Add($"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({this.JoinNumber}{offsetText}), value);");
+                var sendToPanelLine = $"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({this.JoinNumber}{offsetText}), value);";
+                if (this.JoinDirection == JoinDirection.Both)
+                {
+                    pw.UseSetterMethod = true;
+                    pw.SetterMethodName = $"Set{propertyName}Value";
+                    pw.SetterWhenSendingToPanel.Add(sendToPanelLine);
+                }
+                else
+                {
+                    pw.Setter.Add(sendToPanelLine);
+                }
 
                 result.Add(pw);
 
@@ -311,6 +321,7 @@ namespace EPS.CodeGen.Builders
 
             var sigType = this.GetJoinTypeString();
             var fieldName = FormatFieldName(this.JoinName);
+            var propertyName = FormatPropertyName(this.JoinName);
 
             var changeEventName = this.ChangeEventName;
 
@@ -337,7 +348,14 @@ namespace EPS.CodeGen.Builders
 
             raiseMethod.AddParameter($"{sigType}", "value", "The new value of the property.");
 
-            raiseMethod.MethodLines.Add($"this.{this.JoinName} = value;");
+            if (this.JoinDirection == JoinDirection.Both)
+            {
+                raiseMethod.MethodLines.Add($"this.Set{propertyName}Value(value, false);");
+            }
+            else
+            {
+                raiseMethod.MethodLines.Add($"this.{propertyName} = value;");
+            }
             //raiseMethod.MethodLines.Add($"var changeEvent = {changeEventName};");
             //raiseMethod.MethodLines.Add($"if (changeEvent != null)");
             //raiseMethod.MethodLines.Add("{");

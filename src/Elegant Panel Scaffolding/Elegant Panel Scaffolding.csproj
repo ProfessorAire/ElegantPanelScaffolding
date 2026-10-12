@@ -21,7 +21,7 @@
 		<Authors>Christopher McNeely</Authors>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<AnalysisLevel>latest-recommended</AnalysisLevel>
-		<Version>0.2.0.1000</Version>
+		<Version>0.2.1.1000</Version>
 	</PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -57,28 +57,26 @@
     <None Remove="Licenses\SharpZipLib.License.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\DeviceHelper.g.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Markdig" Version="0.40.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="9.0.100" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\BooleanValueChangedEventArgs.g.cs" />
-    <Resource Include="Resources\IListItemProvider.g.cs" />
-    <Resource Include="Resources\ItemSelectionChangedEventArgs.g.cs" />
-    <Resource Include="Resources\ListBase.g.cs" />
-    <Resource Include="Resources\ListItemBase.g.cs" />
-    <Resource Include="Resources\ObjectEventArgs.g.cs" />
-    <Resource Include="Resources\PanelUIBase.g.cs" />
-    <Resource Include="Resources\PanelActions.g.cs" />
-    <Resource Include="Resources\SelectedItemChangedEventArgs.g.cs" />
-    <Resource Include="Resources\StringValueChangedEventArgs.g.cs" />
-    <Resource Include="Resources\UShortValueChangedEventArgs.g.cs" />
-    <Resource Include="Resources\ValueChangedEventArgs.g.cs" />
-    <Resource Include="Resources\ValueSourceChangedEventArgs.g.cs" />
+    <EmbeddedResource Include="Resources\BooleanValueChangedEventArgs.g.cs" />
+    <EmbeddedResource Include="Resources\IListItemProvider.g.cs" />
+    <EmbeddedResource Include="Resources\ItemSelectionChangedEventArgs.g.cs" />
+    <EmbeddedResource Include="Resources\ListBase.g.cs" />
+    <EmbeddedResource Include="Resources\ListItemBase.g.cs" />
+    <EmbeddedResource Include="Resources\ObjectEventArgs.g.cs" />
+    <EmbeddedResource Include="Resources\PanelUIBase.g.cs" />
+    <EmbeddedResource Include="Resources\PanelActions.g.cs" />
+    <EmbeddedResource Include="Resources\SelectedItemChangedEventArgs.g.cs" />
+    <EmbeddedResource Include="Resources\StringValueChangedEventArgs.g.cs" />
+    <EmbeddedResource Include="Resources\UShortValueChangedEventArgs.g.cs" />
+    <EmbeddedResource Include="Resources\ValueChangedEventArgs.g.cs" />
+    <EmbeddedResource Include="Resources\ValueSourceChangedEventArgs.g.cs" />
+    <EmbeddedResource Include="Resources\DeviceHelper.g.cs" />
     <EmbeddedResource Include="Help\Help.md" />
     <EmbeddedResource Include="Licenses\Elegant Panel Scaffolding.License.txt" />
     <EmbeddedResource Include="Licenses\Markdig.License.txt" />
