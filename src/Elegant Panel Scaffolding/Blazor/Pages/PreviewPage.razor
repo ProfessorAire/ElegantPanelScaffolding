@@ -1,6 +1,9 @@
 @page "/preview"
 @namespace EPS.Blazor.Pages
 @inject NavigationManager Nav
+@inject IOptionsService OptionsService
+@inject ICompilerService CompilerService
+@inject IToastService Toast
 
 <div class="preview-page flex" style="height:100%;"
 	 @onmousemove="OnPageMouseMove"
@@ -16,14 +19,22 @@
 				<li class="@(idx == _selectedIndex ? "active" : "")"
 					@onclick="() => SelectFile(idx)"
 					title="@file.Path">
-					<span class="path-tail">@file.Path</span>
+					<span class="path-tail">@GetDisplayPath(file.Path)</span>
 				</li>
 			}
 		</ul>
 		<div class="preview-sidebar-footer">
-			<button class="btn" style="width:100%;" @onclick='() => Nav.NavigateTo("/")'>
-				← Back
-			</button>
+			<div class="preview-sidebar-actions">
+				<button class="btn" @onclick='() => Nav.NavigateTo("/")'>
+					← Back
+				</button>
+				<button class="btn" disabled="@_busy" @onclick="RefreshPreviewAsync">
+					↻ Refresh
+				</button>
+				<button class="btn btn-primary" disabled="@_busy" @onclick="CompileAsync">
+					Compile
+				</button>
+			</div>
 		</div>
 	</div>
 
@@ -48,6 +59,7 @@
 	private int _selectedIndex = 0;
 	private string _content = PreviewState.Files.Count > 0 ? PreviewState.Files[0].Content : string.Empty;
 	private bool _isResizing;
+	private bool _busy;
 	private double? _sidebarWidthPx = PreviewState.ManualSidebarWidthPx;
 
 	private string SidebarStyle => _sidebarWidthPx.HasValue
@@ -83,9 +95,141 @@
 
 	private double EstimateAutoSidebarWidthPx()
 	{
-		var maxPathLength = _files.Count == 0 ? 0 : _files.Max(f => f.Path?.Length ?? 0);
+		var maxPathLength = _files.Count == 0 ? 0 : _files.Max(f => GetDisplayPath(f.Path).Length);
 		var estimated = (maxPathLength * ApproxCharWidthPx) + SidebarPaddingPx;
 		return ClampSidebarWidth(estimated);
+	}
+
+	private async Task RefreshPreviewAsync()
+	{
+		if (!File.Exists(OptionsService.Current.ApplicationTouchpanelPath))
+		{
+			Toast.Error("Touchpanel file not found. Check the Touchpanel Path.");
+			return;
+		}
+
+		_busy = true;
+		try
+		{
+			var files = await CompilerService.PreviewAsync(OptionsService.Current);
+			if (files.Count == 0)
+			{
+				Toast.Error("Preview failed — no output was generated.");
+				return;
+			}
+
+			PreviewState.Files = files;
+			_files = files;
+			_selectedIndex = 0;
+			_content = files[0].Content;
+			if (!_sidebarWidthPx.HasValue)
+			{
+				_sidebarWidthPx = EstimateAutoSidebarWidthPx();
+			}
+			Toast.Success("Preview refreshed.");
+		}
+		catch (Exception ex)
+		{
+			Toast.Error($"Preview failed: {ex.Message}");
+		}
+		finally
+		{
+			_busy = false;
+		}
+	}
+
+	private async Task CompileAsync()
+	{
+		if (!File.Exists(OptionsService.Current.ApplicationTouchpanelPath))
+		{
+			Toast.Error("Touchpanel file not found. Check the Touchpanel Path.");
+			return;
+		}
+		if (!Directory.Exists(OptionsService.Current.CompilePath))
+		{
+			Toast.Error("Destination path does not exist. Check the Destination Path.");
+			return;
+		}
+
+		_busy = true;
+		try
+		{
+			var result = await CompilerService.CompileAsync(OptionsService.Current);
+			if (result.Success)
+				Toast.Success("Compilation successful!");
+			else
+				Toast.Error($"Compilation failed: {result.ErrorMessage}");
+		}
+		catch (Exception ex)
+		{
+			Toast.Error($"Compilation failed: {ex.Message}");
+		}
+		finally
+		{
+			_busy = false;
+		}
+	}
+
+	private string GetDisplayPath(string fullPath)
+	{
+		if (string.IsNullOrWhiteSpace(fullPath))
+		{
+			return string.Empty;
+		}
+
+		if (TryTrimBasePath(fullPath, OptionsService.Current.CompilePath, out var trimmed))
+		{
+			return trimmed;
+		}
+
+		if (TryTrimBasePath(fullPath, OptionsService.Current.CommonPath, out trimmed))
+		{
+			return trimmed;
+		}
+
+		return fullPath;
+	}
+
+	private static bool TryTrimBasePath(string fullPath, string basePath, out string trimmedPath)
+	{
+		trimmedPath = fullPath;
+		if (string.IsNullOrWhiteSpace(basePath))
+		{
+			return false;
+		}
+
+		var normalizedFullPath = fullPath
+			.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
+			.TrimEnd(Path.DirectorySeparatorChar);
+		var normalizedBasePath = basePath
+			.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
+			.TrimEnd(Path.DirectorySeparatorChar);
+
+		if (!Path.IsPathRooted(normalizedFullPath) || !Path.IsPathRooted(normalizedBasePath))
+		{
+			return false;
+		}
+
+		if (normalizedFullPath.Equals(normalizedBasePath, StringComparison.OrdinalIgnoreCase))
+		{
+			trimmedPath = Path.GetFileName(normalizedFullPath);
+			return true;
+		}
+
+		var withSeparator = normalizedBasePath + Path.DirectorySeparatorChar;
+		if (!normalizedFullPath.StartsWith(withSeparator, StringComparison.OrdinalIgnoreCase))
+		{
+			return false;
+		}
+
+		var relative = normalizedFullPath.Substring(withSeparator.Length);
+		if (string.IsNullOrWhiteSpace(relative))
+		{
+			return false;
+		}
+
+		trimmedPath = relative;
+		return true;
 	}
 
 	private static double ClampSidebarWidth(double width)
@@ -135,6 +279,12 @@
 		padding: .5rem;
 		border-top: 1px solid var(--color-border);
 		flex-shrink: 0;
+	}
+
+	.preview-sidebar-actions {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		gap: .35rem;
 	}
 
 	.file-list li {
