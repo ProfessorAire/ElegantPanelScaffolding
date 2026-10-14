@@ -258,6 +258,16 @@ namespace EPS.CodeGen.Builders
                 var sendToPanelLine = $"ParentPanel.Send{smartSuffix}Value({smartValue}(ushort)({this.JoinNumber}{offsetText}), value);";
                 if (this.JoinDirection == JoinDirection.Both)
                 {
+                    var loopbackPropertyName = $"Is{propertyName}LoopbackEnabled";
+                    var loopbackProperty = new PropertyWriter(loopbackPropertyName, "bool", false)
+                    {
+                        UsePropertyChangeEvent = false,
+                        ImplementINotifyPropertyChanged = false,
+                    };
+
+                    loopbackProperty.Help.Summary = $"Gets or sets a value indicating whether touchpanel updates for <see cref=\"{propertyName}\"/> should be looped back to the touchpanel.";
+                    result.Add(loopbackProperty);
+
                     pw.UseSetterMethod = true;
                     pw.SetterMethodName = $"Set{propertyName}Value";
                     pw.SetterWhenSendingToPanel.Add(sendToPanelLine);
@@ -350,7 +360,7 @@ namespace EPS.CodeGen.Builders
 
             if (this.JoinDirection == JoinDirection.Both)
             {
-                raiseMethod.MethodLines.Add($"this.Set{propertyName}Value(value, false);");
+                raiseMethod.MethodLines.Add($"this.Set{propertyName}Value(value, this.Is{propertyName}LoopbackEnabled);");
             }
             else
             {
