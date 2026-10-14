@@ -21,7 +21,7 @@
 		<Authors>Christopher McNeely</Authors>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<AnalysisLevel>latest-recommended</AnalysisLevel>
-		<Version>0.2.1.1000</Version>
+		<Version>0.2.2.1000</Version>
 	</PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
