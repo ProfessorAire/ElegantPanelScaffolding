@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore ./src/'Elegant Panel Scaffolding.sln'
+
+      - name: Build
+        run: dotnet build ./src/'Elegant Panel Scaffolding.sln' --configuration Release --no-restore
+
+      - name: Test with coverage
+        run: dotnet test ./src/'Elegant Panel Scaffolding.sln' --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./src/coverage
