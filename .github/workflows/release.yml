@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.x
+
+      - name: Restore solution
+        shell: pwsh
+        run: dotnet restore src/Elegant\ Panel\ Scaffolding.sln
+
+      - name: Build solution
+        shell: pwsh
+        run: >-
+          dotnet build src/Elegant\ Panel\ Scaffolding.sln
+          --configuration Release
+          --no-restore
+          -p:EnableWindowsTargeting=true
+
+      - name: Prepare release assets
+        shell: pwsh
+        run: |
+          $projectRoot = 'src/Elegant Panel Scaffolding'
+          $buildRoot = Join-Path $projectRoot 'bin/Release/net10.0-windows'
+          $artifactRoot = 'artifacts'
+
+          if (-not (Test-Path $artifactRoot)) {
+            New-Item -ItemType Directory -Path $artifactRoot | Out-Null
+          }
+
+          $items = Get-ChildItem $buildRoot -Recurse -File
+          foreach ($item in $items) {
+            $destination = Join-Path $artifactRoot $item.Name
+            Copy-Item -Path $item.FullName -Destination $destination -Force
+          }
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**
+          generate_release_notes: true
+          fail_on_unmatched_files: false
