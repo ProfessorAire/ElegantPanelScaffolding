@@ -500,6 +500,14 @@ namespace EPS.CodeGen.Builders
                 initValuesMethod.MethodLines.Add($"{fw.Name}.InitializeValues();");
             }
 
+            if (this.Lists.Count > 0)
+            {
+                initValuesMethod.MethodLines.Add("foreach (var i in Items)");
+                initValuesMethod.MethodLines.Add("{");
+                initValuesMethod.MethodLines.Add("i.InitializeValues();");
+                initValuesMethod.MethodLines.Add("}");
+            }
+
             initValuesMethod.MethodLines.Add("this.IsUiInitialized = true;");
 
             // Add initialize values method
