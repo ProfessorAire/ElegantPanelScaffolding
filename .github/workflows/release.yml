@@ -27,38 +27,34 @@ jobs:
           dotnet-version: |
             10.0.x
 
-      - name: Restore solution
-        shell: pwsh
-        run: dotnet restore src/Elegant\ Panel\ Scaffolding.sln
-
-      - name: Build solution
-        shell: pwsh
-        run: >-
-          dotnet build src/Elegant\ Panel\ Scaffolding.sln
-          --configuration Release
-          --no-restore
-          -p:EnableWindowsTargeting=true
-
-      - name: Prepare release assets
+      - name: Publish application
         shell: pwsh
         run: |
-          $projectRoot = 'src/Elegant Panel Scaffolding'
-          $buildRoot = Join-Path $projectRoot 'bin/Release/net10.0-windows'
-          $artifactRoot = 'artifacts'
+          dotnet publish "src/Elegant Panel Scaffolding/Elegant Panel Scaffolding.csproj" `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained false `
+            --output "src/Elegant Panel Scaffolding/bin/Release/net10.0-windows/win-x64/publish" `
+            -p:EnableWindowsTargeting=true
 
-          if (-not (Test-Path $artifactRoot)) {
-            New-Item -ItemType Directory -Path $artifactRoot | Out-Null
+      - name: Package release binaries
+        shell: pwsh
+        run: |
+          $publishDir = 'src/Elegant Panel Scaffolding/bin/Release/net10.0-windows/win-x64/publish'
+          $releaseDir = 'release'
+          New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
+          $archivePath = Join-Path $releaseDir 'ElegantPanelScaffolding.zip'
+
+          if (Test-Path $archivePath) {
+            Remove-Item $archivePath -Force
           }
 
-          $items = Get-ChildItem $buildRoot -Recurse -File
-          foreach ($item in $items) {
-            $destination = Join-Path $artifactRoot $item.Name
-            Copy-Item -Path $item.FullName -Destination $destination -Force
-          }
+          Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $archivePath -Force
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**
+          files: |
+            release/*.zip
           generate_release_notes: true
           fail_on_unmatched_files: false
